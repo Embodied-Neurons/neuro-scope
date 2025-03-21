@@ -35,18 +35,16 @@ def get_activations(model):
 def get_model_structure(model):
     layers = []
     connections = []
-
-    prev_size = None
+    prev_name = None
 
     for name, layer in model.named_modules():
         if isinstance(layer, nn.Linear):
-            input_size, output_size = layer.in_features, layer.out_features
-            layers.append(output_size)
+            layers.append(name)
 
-            if prev_size is not None:
-                connections.append((prev_size, output_size))  # Connection between layers
+            if prev_name is not None:
+                connections.append((prev_name, name))
 
-            prev_size = output_size
+            prev_name = name
 
     return layers, connections
 
