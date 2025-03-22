@@ -35,3 +35,6 @@ media/
 # System files
 .DS_Store
 Thumbs.db
+
+# Compressed files
+*.gz
