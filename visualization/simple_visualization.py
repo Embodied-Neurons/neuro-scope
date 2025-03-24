@@ -2,7 +2,7 @@ from manim import *
 import random
 
 
-class NeuronLayers(Scene):
+class NeuronLayersInteractive(Scene):
     def __init__(self, *args):
         super().__init__(*args)
         self.neurons = []
