@@ -9,7 +9,7 @@ class NeuronLayersInteractive(Scene):
         self.edges = []
         self.no_neurons_layers = [9, 4, 9]
         self.finished = False
-
+        self.test = True
     def construct(self):
         self.create_neural_network()
         self.start()
