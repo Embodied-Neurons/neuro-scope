@@ -3,4 +3,4 @@ Notes:
 ```
     manim -qk -p --renderer=opengl .\demo.py
 ```
-in the terminal where `simple_visualization.py` is located.
+in the terminal where `.\demo.py` is located.
