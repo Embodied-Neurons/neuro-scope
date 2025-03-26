@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from neural_graph import NeuralGraph
+from scripts.neural_graph import NeuralGraph
 
 
 def get_model_structure(model):

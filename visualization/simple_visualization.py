@@ -1,37 +1,51 @@
 from manim import *
-import random
+import sys
+from scripts.neuron_compresser import *
+
+
+class Neuron(Circle):
+    def __init__(self, id, layer_id, **args):
+        super().__init__(**args)
+        self.id = id
+        self.layer_id = layer_id
 
 
 class NeuronLayersInteractive(Scene):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, no_neurons_layers, **args):
+        super().__init__(**args)
         self.neurons = []
         self.edges = []
-        self.no_neurons_layers = [9, 4, 9]
+        self.current_no_neuron_layer = compress_neuron_layers(no_neurons_layers)
+        self.history = []
         self.finished = False
-        self.test = True
+
     def construct(self):
         self.create_neural_network()
         self.start()
-        self.wait(5, frozen_frame=False)
+        self.wait(30, frozen_frame=False)
+        sys.exit()
 
     def create_neural_network(self):
-        # todo make it so neurons always fit on screen and are nicely spaced for numbers bigger then 9
-        max_neurons = max(self.no_neurons_layers)
+        max_neurons = 10
         radius = 0.2
         buff = 0.4
         y_max = (radius + 0.4 * buff) * max_neurons
-        x = (len(self.no_neurons_layers) - 1) * -1.5
-
-        for no_neurons_layer in self.no_neurons_layers:
-            offset = (max_neurons - no_neurons_layer) * (radius + 0.5 * buff)
+        x = (len(self.current_no_neuron_layer) - 1) * -1.5
+        layer_id = 0
+        for no_neurons_layer in self.current_no_neuron_layer:
+            offset = (max_neurons - no_neurons_layer[0]) * (radius + 0.5 * buff)
             layer = []
 
-            for _ in range(no_neurons_layer):
-                neuron = Circle(radius=radius, color=WHITE, fill_opacity=0.8)
+            for i in range(no_neurons_layer[0]):
+                neuron = Neuron(i + 1, layer_id, radius=radius, color=WHITE, fill_opacity=0.8)
                 neuron.move_to([x, y_max - offset, 0])
+                if i + 1 == no_neurons_layer[0] and no_neurons_layer[2] != 0:
+                    label = Text(str(no_neurons_layer[2]), font_size=18, color=RED)
+                else:
+                    label = Text(str(no_neurons_layer[1]), font_size=18, color=RED)
+                label.move_to(neuron.get_center())
                 offset += radius * 2 + buff
-                self.add(neuron)
+                self.add(neuron, label)
                 layer.append(neuron)
 
             self.neurons.append(layer)
@@ -52,6 +66,7 @@ class NeuronLayersInteractive(Scene):
                             buff=0.02,
                             stroke_width=3
                         ))
+            layer_id += 1
 
     def start(self):
         self.play([
@@ -68,23 +83,46 @@ class NeuronLayersInteractive(Scene):
         ])
         self.finished = True
 
-    def get_layers(self):
-        # it should load the neurons tied with summary neuron that was clicked, for now is uses random numbers
-        # todo make it so it uses real numbers of neurons
-        self.no_neurons_layers = [random.randint(1, 9) for _ in range(3)]
+    def zoom_in(self, id, layer_id):
+        layer = self.current_no_neuron_layer[layer_id]
+        # if we have to compress
+        if layer[1] != 1:
+            self.history.append(self.current_no_neuron_layer.copy())
+            # if this is last neuron in layer
+            if id == layer[0]:
+                # if last neuron deserves special treatment
+                if layer[2] == 0:
+                    self.current_no_neuron_layer[layer_id] = compress_neurons(layer[1])
+                else:
+                    self.current_no_neuron_layer[layer_id] = compress_neurons(layer[2])
+
+            else:
+                self.current_no_neuron_layer[layer_id] = compress_neurons(layer[1])
+        self.clear()
+        self.neurons = []
+        self.edges = []
+        self.create_neural_network()
+        self.finished = False
+        self.start()
+
+    def zoom_out(self):
+        if len(self.history) != 0:
+            self.current_no_neuron_layer = self.history.pop()
+        self.clear()
+        self.neurons = []
+        self.edges = []
+        self.create_neural_network()
+        self.finished = False
+        self.start()
 
     def on_mouse_press(self, point, button, modifiers):
         if button == "LEFT" and self.finished:
             for layer in self.neurons:
                 for neuron in layer:
                     if np.linalg.norm(self.mouse_point.get_center() - neuron.get_center()) < 0.2:
-                        self.clear()
-                        self.neurons = []
-                        self.edges = []
-                        self.get_layers()
-                        self.create_neural_network()
-                        self.finished = False
-                        self.start()
+                        self.zoom_in(neuron.id, neuron.layer_id)
+        if button == "RIGHT" and self.finished:
+            self.zoom_out()
 
 
 config.window_position = '460,240'
