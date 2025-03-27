@@ -86,6 +86,7 @@ class NeuronLayersInteractive(Scene):
         self.finished = True
 
     def zoom_in(self, id, layer_id):
+
         layer = self.current_no_neuron_layer[layer_id]
         # if we have to compress
         if layer[1] != 1:
@@ -100,12 +101,12 @@ class NeuronLayersInteractive(Scene):
 
             else:
                 self.current_no_neuron_layer[layer_id] = compress_neurons(layer[1])
-        self.clear()
-        self.neurons = []
-        self.edges = []
-        self.create_neural_network()
-        self.finished = False
-        self.start()
+            self.clear()
+            self.neurons = []
+            self.edges = []
+            self.create_neural_network()
+            self.finished = False
+            self.start()
 
     def zoom_out(self):
         if len(self.history) != 0:
