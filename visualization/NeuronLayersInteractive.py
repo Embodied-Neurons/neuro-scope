@@ -39,13 +39,15 @@ class NeuronLayersInteractive(Scene):
             for i in range(no_neurons_layer[0]):
                 neuron = Neuron(i + 1, layer_id, radius=radius, color=WHITE, fill_opacity=0.8)
                 neuron.move_to([x, y_max - offset, 0])
-                if i + 1 == no_neurons_layer[0] and no_neurons_layer[2] != 0:
-                    label = Text(str(no_neurons_layer[2]), font_size=18, color=RED)
-                else:
-                    label = Text(str(no_neurons_layer[1]), font_size=18, color=RED)
-                label.move_to(neuron.get_center())
+                if no_neurons_layer[1] != 1:
+                    if i + 1 == no_neurons_layer[0] and no_neurons_layer[2] != 0:
+                        label = Text(str(no_neurons_layer[2]), font_size=18, color=RED)
+                    else:
+                        label = Text(str(no_neurons_layer[1]), font_size=18, color=RED)
+                    label.move_to(neuron.get_center())
+                    self.add(label)
                 offset += radius * 2 + buff
-                self.add(neuron, label)
+                self.add(neuron)
                 layer.append(neuron)
 
             self.neurons.append(layer)

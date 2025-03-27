@@ -7,9 +7,7 @@ sys.path.append(parent)
 from scripts.simple_mnist import SimpleNN, model
 from scripts import extract_data as ed
 import torch
-from visualization.simple_visualization import NeuronLayersInteractive
-import sys
-import os
+from visualization.NeuronLayersInteractive import NeuronLayersInteractive
 
 s_model = SimpleNN()
 model.load_state_dict(torch.load("../data/models/mnist.pt"))
