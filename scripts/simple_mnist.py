@@ -4,13 +4,12 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-
+import os
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
 
-
-train_dataset = torchvision.datasets.MNIST(root="./data", train=True, transform=transform, download=True)
-test_dataset = torchvision.datasets.MNIST(root="./data", train=False, transform=transform, download=True)
+train_dataset = torchvision.datasets.MNIST(root="../data", train=True, transform=transform, download=True)
+test_dataset = torchvision.datasets.MNIST(root="../data", train=False, transform=transform, download=True)
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
@@ -55,5 +54,6 @@ def train_model(num_epochs=2):
         print(f"Epoch [{epoch + 1}/{num_epochs}], Average Loss: {avg_loss:.4f}")
 
 
-train_model()
-
+if not os.path.exists("../data/models/mnist.pt"):
+    train_model()
+    torch.save(model.state_dict(), "../data/models/mnist.pt")
