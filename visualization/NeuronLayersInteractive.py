@@ -28,8 +28,8 @@ class NeuronLayersInteractive(Scene):
     def create_neural_network(self):
         max_neurons = 10
         radius = 0.25
-        buff = 0.3
-        y_max = (radius + 0.4 * buff) * max_neurons
+        buff = 0.35
+        y_max = (radius + 0.5 * buff) * (max_neurons - 1)
         x = (len(self.current_no_neuron_layer) - 1) * -1.5
         layer_id = 0
         for no_neurons_layer in self.current_no_neuron_layer:
@@ -112,12 +112,12 @@ class NeuronLayersInteractive(Scene):
     def zoom_out(self):
         if len(self.history) != 0:
             self.current_no_neuron_layer = self.history.pop()
-        self.clear()
-        self.neurons = []
-        self.edges = []
-        self.create_neural_network()
-        self.finished = False
-        self.start()
+            self.clear()
+            self.neurons = []
+            self.edges = []
+            self.create_neural_network()
+            self.finished = False
+            self.start()
 
     def on_mouse_press(self, point, button, modifiers):
         if button == "LEFT" and self.finished:
@@ -130,3 +130,9 @@ class NeuronLayersInteractive(Scene):
 
 
 config.window_position = '460,240'
+config.pixel_width = 1920
+config.pixel_height = 1080
+config.frame_width = 16
+config.frame_height = 9
+config.frame_rate = 60
+config.preview = True
