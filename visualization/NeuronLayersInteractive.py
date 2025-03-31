@@ -125,14 +125,7 @@ class NeuronLayersInteractive(Scene):
                 for neuron in layer:
                     if np.linalg.norm(self.mouse_point.get_center() - neuron.get_center()) < 0.25:
                         self.zoom_in(neuron.id, neuron.layer_id)
+                        break
+        
         if button == "RIGHT" and self.finished:
             self.zoom_out()
-
-
-config.window_position = '460,240'
-config.pixel_width = 1920
-config.pixel_height = 1080
-config.frame_width = 16
-config.frame_height = 9
-config.frame_rate = 60
-config.preview = True
