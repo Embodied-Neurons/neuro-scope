@@ -1,9 +1,11 @@
 import sys
 import os
 
+# so that scripts module is accesible
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
+
 from scripts.simple_mnist import SimpleNN, model
 from scripts import extract_data as ed
 import torch
