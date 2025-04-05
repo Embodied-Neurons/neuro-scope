@@ -29,8 +29,9 @@ class NeuronLayersInteractive(Scene):
         max_neurons = 10
         radius = 0.25
         buff = 0.35
+        x_shift = 3 # sufficient for current_no_neuron_layer < 7 (x interval is [-8;8], can be changed in config)
         y_max = (radius + 0.5 * buff) * (max_neurons - 1)
-        x = (len(self.current_no_neuron_layer) - 1) * -1.5
+        x = (len(self.current_no_neuron_layer) - 1) * -0.5 * x_shift
         layer_id = 0
         for no_neurons_layer in self.current_no_neuron_layer:
             offset = (max_neurons - no_neurons_layer[0]) * (radius + 0.5 * buff)
@@ -51,7 +52,7 @@ class NeuronLayersInteractive(Scene):
                 layer.append(neuron)
 
             self.neurons.append(layer)
-            x += 3
+            x += x_shift
             layer_id += 1
 
         for i in range(len(self.neurons) - 1):
@@ -118,14 +119,7 @@ class NeuronLayersInteractive(Scene):
                 for neuron in layer:
                     if np.linalg.norm(self.mouse_point.get_center() - neuron.get_center()) < 0.25:
                         self.zoom_in(neuron.id, neuron.layer_id)
+                        break
+        
         if button == "RIGHT" and self.finished:
             self.zoom_out()
-
-
-config.window_position = '460,240'
-config.pixel_width = 1920
-config.pixel_height = 1080
-config.frame_width = 16
-config.frame_height = 9
-config.frame_rate = 60
-config.preview = True
