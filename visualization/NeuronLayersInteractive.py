@@ -75,8 +75,9 @@ class NeuronLayersInteractive(Scene):
         neurons_group = VGroup(*[neuron for layer in self.neurons for neuron in layer])
         edges_group = VGroup(*[edge for layer in self.edges for sublist in layer for edge in sublist])
 
-        self.play(Create(neurons_group))
-        self.play(Create(edges_group))
+
+        self.play(DrawBorderThenFill(neurons_group))
+        self.play(DrawBorderThenFill(edges_group))
         self.finished = True
 
     def zoom_in(self, id, layer_id):
