@@ -1,6 +1,8 @@
 from manim import *
 import sys
+
 from scripts.neuron_compresser import *
+from scripts.neurocon_normalaizer import *
 
 
 class Neuron(Circle):
@@ -10,11 +12,18 @@ class Neuron(Circle):
         self.layer_id = layer_id
 
 
+class NeuroCon(Line):
+    def __init__(self, value, **args):
+        super().__init__(**args)
+        self.value = value
+
+
 class NeuronLayersInteractive(Scene):
-    def __init__(self, no_neurons_layers, **args):
+    def __init__(self, no_neurons_layers, gradients, **args):
         super().__init__(**args)
         self.neurons = []
         self.edges = []
+        self.gradients = gradients
         self.current_no_neuron_layer = compress_neuron_layers(no_neurons_layers)
         self.history = []
         self.finished = False
@@ -29,7 +38,7 @@ class NeuronLayersInteractive(Scene):
         max_neurons = 10
         radius = 0.25
         buff = 0.35
-        x_shift = 3 # sufficient for current_no_neuron_layer < 7 (x interval is [-8;8], can be changed in config)
+        x_shift = 3  # sufficient for current_no_neuron_layer < 7 (x interval is [-8;8], can be changed in config)
         y_max = (radius + 0.5 * buff) * (max_neurons - 1)
         x = (len(self.current_no_neuron_layer) - 1) * -0.5 * x_shift
         layer_id = 0
@@ -56,21 +65,24 @@ class NeuronLayersInteractive(Scene):
             layer_id += 1
 
         for i in range(len(self.neurons) - 1):
+            val = normalize_neurocon(self.gradients[f"fc{i + 1}.weight"], self.current_no_neuron_layer[i],
+                                     self.current_no_neuron_layer[i + 1])
+            print(val)
             first_layer = self.neurons[i]
             second_layer = self.neurons[i + 1]
 
             self.edges.append([])
 
-            for fneuron in first_layer:
+            for j in range(len(first_layer)):
                 self.edges[-1].append([])
 
-                for sneuron in second_layer:
-                    self.edges[-1][-1].append(Line(
-                        fneuron.point_at_angle(0),
-                        sneuron.point_at_angle(PI),
-                        buff=0.02,
-                        stroke_width=3
-                    ))
+                for k in range(len(second_layer)):
+                    self.edges[-1][-1].append(NeuroCon(val[k][j],
+                                                       start=first_layer[j].point_at_angle(0),
+                                                       end=second_layer[k].point_at_angle(PI),
+                                                       buff=0.02,
+                                                       stroke_width=3
+                                                       ))
 
     def start(self):
         neurons_group = VGroup(*[neuron for layer in self.neurons for neuron in layer])
@@ -78,7 +90,13 @@ class NeuronLayersInteractive(Scene):
 
         self.play(Create(neurons_group))
         self.play(Create(edges_group))
+        self.play_gradients()
         self.finished = True
+
+    def play_gradients(self):
+        edge_animation = [ApplyFunction(self.animate_edge, neurocon)
+                          for layer in self.edges for sublist in layer for neurocon in sublist]
+        self.play(*edge_animation)
 
     def zoom_in(self, id, layer_id):
 
@@ -120,6 +138,12 @@ class NeuronLayersInteractive(Scene):
                     if np.linalg.norm(self.mouse_point.get_center() - neuron.get_center()) < 0.25:
                         self.zoom_in(neuron.id, neuron.layer_id)
                         break
-        
+
         if button == "RIGHT" and self.finished:
             self.zoom_out()
+
+    def animate_edge(self, edge: Line):
+        edge_color = interpolate_color(RED, GREEN, edge.value)
+        edge.set_color(edge_color)
+        edge.set_stroke(width=6)
+        return edge
