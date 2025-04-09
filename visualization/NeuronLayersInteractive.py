@@ -67,7 +67,6 @@ class NeuronLayersInteractive(Scene):
         for i in range(len(self.neurons) - 1):
             val = normalize_neurocon(self.gradients[f"fc{i + 1}.weight"], self.current_no_neuron_layer[i],
                                      self.current_no_neuron_layer[i + 1])
-            print(val)
             first_layer = self.neurons[i]
             second_layer = self.neurons[i + 1]
 
