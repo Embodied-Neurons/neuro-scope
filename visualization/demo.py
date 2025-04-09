@@ -14,5 +14,5 @@ from visualization.NeuronLayersInteractive import NeuronLayersInteractive
 s_model = SimpleNN()
 model.load_state_dict(torch.load("../data/models/mnist.pt"))
 ng = ed.get_model_structure(s_model)
-nl = NeuronLayersInteractive(ng.get_layer_size())
+nl = NeuronLayersInteractive(ng.get_layer_size(), ng.gradients)
 nl.render()
