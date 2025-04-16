@@ -1,125 +1,134 @@
-from manim import *
-import sys
-from scripts.neuron_compresser import *
+import dash
+from dash import html
+import dash_cytoscape as cyto
+import numpy as np
+from scripts.neuron_compresser import compress_neurons
+
+current_no_neuron_layer = None
+
+def set_neuron_layers(layers, compress=False):
+    global current_no_neuron_layer
+    if compress:
+        new_layers = []
+        for layer in layers:
+            compressed = compress_neurons(layer[0])
+            if isinstance(compressed, tuple):
+                compressed = compressed[0]
+            new_layers.append((compressed, layer[1], layer[2]))
+        current_no_neuron_layer = new_layers
+    else:
+        current_no_neuron_layer = layers
 
 
-class Neuron(Circle):
-    def __init__(self, id, layer_id, **args):
-        super().__init__(**args)
-        self.id = id
-        self.layer_id = layer_id
+def create_network_elements(neuron_layers):
+    elements = []
+    x_shift = 150
+    y_spacing = 20
+    x_start = 100
+    center_y = 400
+
+    # Create input node
+    elements.append({
+        'data': {'id': 'input', 'label': 'Input'},
+        'position': {'x': x_start - x_shift, 'y': center_y},
+        'classes': 'special'
+    })
+
+    output_pos = {'x': x_start + len(neuron_layers) * x_shift, 'y': center_y}
+    elements.append({
+        'data': {'id': 'output', 'label': 'Output'},
+        'position': output_pos,
+        'classes': 'special'
+    })
+
+    layer_positions = []
+    for layer_idx, layer in enumerate(neuron_layers):
+        num_neurons = layer[0]
+        total_height = (num_neurons - 1) * y_spacing if num_neurons > 0 else 0
+        y_start = center_y - total_height / 2
+        x_pos = x_start + layer_idx * x_shift
+        layer_pos = []
+        for i in range(num_neurons):
+            node_id = f"n_{layer_idx}_{i}"
+            y_pos = y_start + i * y_spacing
+            node = {
+                'data': {'id': node_id, 'label': ''},
+                'position': {'x': x_pos, 'y': y_pos}
+            }
+            elements.append(node)
+            layer_pos.append((node_id, x_pos, y_pos))
+        layer_positions.append(layer_pos)
+
+    for target_id, _, _ in layer_positions[0]:
+        elements.append({'data': {'source': 'input', 'target': target_id}})
+
+    for i in range(len(layer_positions) - 1):
+        for src_id, _, _ in layer_positions[i]:
+            for tgt_id, _, _ in layer_positions[i + 1]:
+                elements.append({'data': {'source': src_id, 'target': tgt_id}})
+
+    for source_id, _, _ in layer_positions[-1]:
+        elements.append({'data': {'source': source_id, 'target': 'output'}})
+
+    return elements
 
 
-class NeuronLayersInteractive(Scene):
-    def __init__(self, no_neurons_layers, **args):
-        super().__init__(**args)
-        self.neurons = []
-        self.edges = []
-        self.current_no_neuron_layer = compress_neuron_layers(no_neurons_layers)
-        self.history = []
-        self.finished = False
+app = dash.Dash(__name__)
 
-    def construct(self):
-        self.create_neural_network()
-        self.start()
-        self.wait(30, frozen_frame=False)
-        sys.exit()
+app.layout = html.Div([
+    html.H1("Neuron Layers Interactive (Dash Cytoscape)"),
+    cyto.Cytoscape(
+        id='cytoscape-graph',
+        layout={'name': 'preset'},
+        style={'width': '100%', 'height': '600px'},
+        elements=[],
+        stylesheet=[
+    {
+        'selector': 'node',
+        'style': {
+            'label': 'data(label)',
+            'width': '12px',
+            'height': '12px',
+            'background-color': '#0074D9',
+            'text-valign': 'center',
+            'color': 'white',
+            'font-size': '8px'
+        }
+    },
+    {
+        'selector': '.special',
+        'style': {
+            'width': '25px',
+            'height': '25px',
+            'background-color': '#FF4136',
+            'font-size': '12px',
+            'font-weight': 'bold'
+        }
+        },
+            {
+            'selector': 'edge',
+                'style': {
+                'line-color': '#B3B3B3',
+                'width': 0.7
+            }
+        }
+    ]
+    )
+])
 
-    def create_neural_network(self):
-        max_neurons = 10
-        radius = 0.25
-        buff = 0.35
-        x_shift = 3 # sufficient for current_no_neuron_layer < 7 (x interval is [-8;8], can be changed in config)
-        y_max = (radius + 0.5 * buff) * (max_neurons - 1)
-        x = (len(self.current_no_neuron_layer) - 1) * -0.5 * x_shift
-        layer_id = 0
-        for no_neurons_layer in self.current_no_neuron_layer:
-            offset = (max_neurons - no_neurons_layer[0]) * (radius + 0.5 * buff)
-            layer = []
-
-            for i in range(no_neurons_layer[0]):
-                neuron = Neuron(i + 1, layer_id, radius=radius, color=WHITE, fill_opacity=0.8)
-                neuron.move_to([x, y_max - offset, 0])
-                if no_neurons_layer[1] != 1:
-                    if i + 1 == no_neurons_layer[0] and no_neurons_layer[2] != 0:
-                        label = Text(str(no_neurons_layer[2]), font_size=15, color=RED)
-                    else:
-                        label = Text(str(no_neurons_layer[1]), font_size=15, color=RED)
-                    label.move_to(neuron.get_center())
-                    self.add(label)
-                offset += radius * 2 + buff
-                self.add(neuron)
-                layer.append(neuron)
-
-            self.neurons.append(layer)
-            x += x_shift
-            layer_id += 1
-
-        for i in range(len(self.neurons) - 1):
-            first_layer = self.neurons[i]
-            second_layer = self.neurons[i + 1]
-
-            self.edges.append([])
-
-            for fneuron in first_layer:
-                self.edges[-1].append([])
-
-                for sneuron in second_layer:
-                    self.edges[-1][-1].append(Line(
-                        fneuron.point_at_angle(0),
-                        sneuron.point_at_angle(PI),
-                        buff=0.02,
-                        stroke_width=3
-                    ))
-
-    def start(self):
-        neurons_group = VGroup(*[neuron for layer in self.neurons for neuron in layer])
-        edges_group = VGroup(*[edge for layer in self.edges for sublist in layer for edge in sublist])
-
-        self.play(Create(neurons_group))
-        self.play(Create(edges_group))
-        self.finished = True
-
-    def zoom_in(self, id, layer_id):
-
-        layer = self.current_no_neuron_layer[layer_id]
-        # if we have to compress
-        if layer[1] != 1:
-            self.history.append(self.current_no_neuron_layer.copy())
-            # if this is last neuron in layer
-            if id == layer[0]:
-                # if last neuron deserves special treatment
-                if layer[2] == 0:
-                    self.current_no_neuron_layer[layer_id] = compress_neurons(layer[1])
-                else:
-                    self.current_no_neuron_layer[layer_id] = compress_neurons(layer[2])
-
-            else:
-                self.current_no_neuron_layer[layer_id] = compress_neurons(layer[1])
-            self.clear()
-            self.neurons = []
-            self.edges = []
-            self.create_neural_network()
-            self.finished = False
-            self.start()
-
-    def zoom_out(self):
-        if len(self.history) != 0:
-            self.current_no_neuron_layer = self.history.pop()
-            self.clear()
-            self.neurons = []
-            self.edges = []
-            self.create_neural_network()
-            self.finished = False
-            self.start()
-
-    def on_mouse_press(self, point, button, modifiers):
-        if button == "LEFT" and self.finished:
-            for layer in self.neurons:
-                for neuron in layer:
-                    if np.linalg.norm(self.mouse_point.get_center() - neuron.get_center()) < 0.25:
-                        self.zoom_in(neuron.id, neuron.layer_id)
-                        break
-        
-        if button == "RIGHT" and self.finished:
-            self.zoom_out()
+@app.callback(
+    dash.dependencies.Output('cytoscape-graph', 'elements'),
+    dash.dependencies.Input('cytoscape-graph', 'id')
+)
+def update_elements(_):
+    global current_no_neuron_layer
+    if current_no_neuron_layer is None:
+        default_layers = [(5, 1, 0), (7, 1, 0), (3, 1, 0)]
+        elements = create_network_elements(
+            [(compress_neurons(layer[0]) if isinstance(compress_neurons(layer[0]), int)
+                else compress_neurons(layer[0])[0], layer[1], layer[2])
+             for layer in default_layers]
+        )
+    else:
+        elements = create_network_elements(current_no_neuron_layer)
+    return elements

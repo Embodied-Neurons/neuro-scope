@@ -1,79 +1,51 @@
+import torch
+from torch_geometric.data import Data
 import torch.nn as nn
-
-
-class Node:
-    def __init__(self, node_id, layer_name, layer_id):
-        self.id = node_id
-        self.layer = layer_name
-        self.layer_id = layer_id
-        self.connections = []
-
-    def add_connection(self, target):
-        self.connections.append(target)
-
 
 class NeuralGraph:
     def __init__(self):
-        self.nodes = []
-        self.node_dict = {}
-        self.activations = {}
-        self.gradients = {}
-        self.layers_size = []
-
-    def add_node(self, layer_name, layer_id):
-        node_id = len(self.nodes)
-        node = Node(node_id, layer_name, layer_id)
-        self.nodes.append(node)
-        self.node_dict[node_id] = node
-        return node_id
-
-    def add_edge(self, from_node, to_node):
-        if from_node in self.node_dict and to_node in self.node_dict:
-            self.node_dict[from_node].add_connection(to_node)
-            # self.node_dict[to_node].add_connection(from_node)
+        self.data = None
 
     def build_graph(self, model):
-        prev_neurons = []
-        layer_counter = 0
+        edge_list = []
+        layer_sizes = []
+        node_features = []
+        node_labels = []
+        node_index = 0
 
         first_linear = next((layer for layer in model.modules() if isinstance(layer, nn.Linear)), None)
-        if first_linear:
-            input_size = first_linear.in_features
-        else:
+        if first_linear is None:
             raise ValueError("Model must have at least one nn.Linear layer!")
+        input_size = first_linear.in_features
 
-        input_neurons = []
-        for i in range(input_size):
-            neuron_id = self.add_node("Input", layer_counter)
-            input_neurons.append(neuron_id)
-        prev_neurons = input_neurons
-        layer_counter += 1
+        input_nodes = list(range(node_index, node_index + input_size))
+        node_index += input_size
+        node_labels.extend(["Input"] * input_size)
+        node_features.extend([torch.zeros(1) for _ in range(input_size)])
+        prev_nodes = input_nodes
 
         for name, layer in model.named_modules():
             if isinstance(layer, nn.Linear):
-                current_neurons = []
-                self.layers_size.append(layer.in_features)
-                for i in range(layer.out_features):
-                    neuron_id = self.add_node(name, layer_counter)
-                    current_neurons.append(neuron_id)
+                current_nodes = list(range(node_index, node_index + layer.out_features))
+                node_index += layer.out_features
+                node_labels.extend([name] * layer.out_features)
+                node_features.extend([torch.zeros(1) for _ in range(layer.out_features)])
+                for src in prev_nodes:
+                    for dst in current_nodes:
+                        edge_list.append([src, dst])
+                layer_sizes.append(layer.out_features)
+                prev_nodes = current_nodes
 
-                    for prev_neuron in prev_neurons:
-                        self.add_edge(prev_neuron, neuron_id)
+        if edge_list:
+            edge_index = torch.tensor(edge_list, dtype=torch.long).t().contiguous()
+        else:
+            edge_index = torch.empty((2, 0), dtype=torch.long)
 
-                prev_neurons = current_neurons
-                layer_counter += 1
+        x = torch.stack(node_features, dim=0)
 
-        output_neurons = []
-        self.layers_size.append((len(prev_neurons)))
-        for i in range(len(prev_neurons)):
-            neuron_id = self.add_node("Output", layer_counter)
-            output_neurons.append(neuron_id)
+        self.data = Data(x=x, edge_index=edge_index)
+        self.data.node_labels = node_labels
+        self.data.layer_sizes = layer_sizes
 
-            for prev_neuron in prev_neurons:
-                self.add_edge(prev_neuron, neuron_id)
-
-    def get_structure(self):
-        return [(node.id, node.layer, node.layer_id, node.connections) for node in self.nodes]
-
-    def get_layer_size(self):
-        return self.layers_size
+    def get_data(self):
+        return self.data
