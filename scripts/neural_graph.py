@@ -23,6 +23,7 @@ class NeuralGraph:
         node_labels.extend(["Input"] * input_size)
         node_features.extend([torch.zeros(1) for _ in range(input_size)])
         prev_nodes = input_nodes
+        layer_sizes.append(input_size)
 
         for name, layer in model.named_modules():
             if isinstance(layer, nn.Linear):
