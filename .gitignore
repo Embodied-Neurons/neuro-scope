@@ -38,3 +38,6 @@ Thumbs.db
 
 # Compressed files
 *.gz
+
+# Node modules
+node_modules/

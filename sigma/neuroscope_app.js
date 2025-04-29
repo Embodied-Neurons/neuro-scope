@@ -1,8 +1,12 @@
-// max neuron groups
+const Graph = require('graphology');
+const Sigma = require('sigma').default;
+
 const MAX_GROUPS = 50;
+const CONTAINER_WIDTH = 960;
+const CONTAINER_HEIGHT = 720;
 
 function groupNeurons(nodes, layerSizes) {
-  const graph = new graphology.Graph();
+  const graph = new Graph();
   const maxNeurons = Math.max(...layerSizes);
   const neuronsPerGroup = Math.ceil(maxNeurons / MAX_GROUPS);
 
@@ -84,54 +88,121 @@ function groupNeurons(nodes, layerSizes) {
     })
   })
 
-  return graph;
+  let posInfo = [];
+
+  for(const layer of neuronLayers) {
+    let flag = true;
+    let x, minY, maxY;
+
+    for(const node of layer) {
+      if(flag) {
+        x = node.x;
+        minY = maxY = node.y;
+        flag = false;
+      } else {
+        if(node.y < minY) {
+          minY = node.y;
+        } else if(node.y > maxY) {
+          maxY = node.y;
+        }
+      }
+    }
+
+    posInfo.push({ 
+      "x": x / CONTAINER_WIDTH, 
+      "minY": minY / CONTAINER_HEIGHT, 
+      "maxY": maxY / CONTAINER_HEIGHT 
+    });
+  }
+
+  return { graph, posInfo };
+}
+
+function calculateDynamicBounds(x, y, ratio, posInfo) {
+  let newX = x;
+  let { minY, maxY } = findYExtremes(x, 0.05 * ratio, posInfo);
+  let newY = Math.max(Math.min(y, maxY), minY);
+
+  // subjectively chosen ranges
+  if(ratio >= 0.9) { // all layers are visible
+    if(x + 0.6 * ratio < posInfo[posInfo.length - 1].x) {
+      newX = posInfo[posInfo.length - 1].x - 0.55 * ratio;
+    } else if(x - 0.6 * ratio > posInfo[0].x) {
+      newX = posInfo[0].x + 0.55 * ratio;
+    }
+  } else if(ratio >= 0.5) { // all layers but one have to be visible
+    if(x + 0.6 * ratio  < posInfo[posInfo.length - 2].x) {
+      newX = posInfo[posInfo.length - 2].x - 0.55 * ratio;
+    } else if(x - 0.6 * ratio > posInfo[1].x) {
+      newX = posInfo[1].x + 0.55 * ratio;
+    }
+  } else {
+    if(x + 0.1 * ratio < posInfo[0].x) {
+      newX = posInfo[0].x - 0.05 * ratio;
+    } else if(x - 0.1 * ratio > posInfo[posInfo.length - 1].x) {
+      newX = posInfo[posInfo.length - 1].x + 0.05 * ratio;
+    }
+  }
+
+  return { newX, newY }
+}
+
+function findYExtremes(x, buff, posInfo) {
+  let minY, maxY;
+
+  if(x < posInfo[0].x) {
+    minY = posInfo[0].minY - buff;
+    maxY = posInfo[0].maxY + buff;
+    return { minY, maxY };
+  } else if(x > posInfo[posInfo.length - 1].x) {
+    minY = posInfo[posInfo.length - 1].minY - buff;
+    maxY = posInfo[posInfo.length - 1].maxY + buff;
+    return { minY, maxY };
+  } else {
+    for(let i = 0; i < posInfo.length - 1; i++) {
+      if(x >= posInfo[i].x && x < posInfo[i+1].x) {
+        const w1 = (x - posInfo[i].x) / (posInfo[i+1].x - posInfo[i].x);
+        const w2 = (posInfo[i+1].x - x) / (posInfo[i+1].x - posInfo[i].x);
+        minY = w2 * posInfo[i].minY + w1 * posInfo[i+1].minY + buff;
+        maxY = w2 * posInfo[i].maxY + w1 * posInfo[i+1].maxY - buff;
+        return { minY, maxY };
+      }
+    }
+  }
 }
 
 // Load the graph data
-fetch('/nn_visualization')
+fetch('http://127.0.0.1:5000/nn_visualization')
   .then(response => response.json())
   .then(graphData => {
     console.log('Graph Data:', graphData);
 
     // Create a new Graphology graph
-    const graph = groupNeurons(graphData.nodes, graphData.layer_sizes);
-    console.log('Graphology:', graphology);
-
+    const { graph, posInfo } = groupNeurons(graphData.nodes, graphData.layer_sizes);
+    console.log(posInfo);
     let selectedNode = null;
 
     // Set up Sigma.js renderer
     const container = document.getElementById('sigma-container');
     const renderer = new Sigma(graph, container, {
       minCameraRatio: 0.08, 
-      maxCameraRatio: 1.1,
+      maxCameraRatio: 1,
       zIndex: true 
     });
-    /*renderer.on("clickEdge", (event) => {
-      const edge = event.edge;
-      console.log(edge);
-      if(highlightedEdge != null) {
-        graph.setEdgeAttribute(highlightedEdge, 'color', '#2c2c2c');
-      }
-      highlightedEdge = edge;
-      graph.setEdgeAttribute(edge, 'color', '#c0c0c0');
-    });*/
 
     const camera = renderer.getCamera();
     camera.setState({ratio: 1.0});
 
-    document.addEventListener("mouseup", _ => {
-      const { x, y } = camera.getState();
-      const newX = Math.max(Math.min(x, 0.9), 0.1);
-      const newY = Math.max(Math.min(y, 0.6), 0.4);
-      container.style.pointerEvents = "none";
-      
+    camera.on("updated", () => {
       setTimeout(() => {
-        container.style.pointerEvents = "auto";
-        setTimeout(() => {
+        const { x, y, ratio } = camera.getState();
+        const { newX, newY } = calculateDynamicBounds(x, y, ratio, posInfo);
+        
+        if(newX !== x || newY !== y) {
           camera.setState({ x: newX, y: newY });
-        }, 200);
-      }, 200)
-    })
+        }
+      }, 100)
+    });
 
     renderer.on("clickNode", ({ node }) => {
       if(selectedNode != null) {
