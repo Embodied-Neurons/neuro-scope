@@ -20,6 +20,6 @@ all that is needed will be in _node_modules_ subdirectory.
 ---
 
 ### Known issues:
-- currently program has to be run on two terminals via two npm commands - I tried to connect and synchronize them (server has to be running before electron app starts), but haven't succeded yet. Fix welcome.
-- app is still using _localhost_, but now in a browser (per se), but in electron app window - should be convenient
+- currently program has to be run on two terminals via two npm commands - I tried to connect and synchronize them (server has to be running before electron app starts), but haven't succeeded yet. Fix welcome.
+- app is still using _localhost_, but not in a browser (per se), but in electron app window - should be convenient
 - limiting moving sigma container outside of the graph (so it is visible at all times) may seem aggressive and coefficients used to calculate bounds were selected experimentally - likely to fail for neural net of different structure

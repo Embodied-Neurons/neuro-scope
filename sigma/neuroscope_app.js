@@ -179,7 +179,6 @@ fetch('http://127.0.0.1:5000/nn_visualization')
 
     // Create a new Graphology graph
     const { graph, posInfo } = groupNeurons(graphData.nodes, graphData.layer_sizes);
-    console.log(posInfo);
     let selectedNode = null;
 
     // Set up Sigma.js renderer
