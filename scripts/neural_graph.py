@@ -2,6 +2,7 @@ import torch
 from torch_geometric.data import Data
 import torch.nn as nn
 
+
 class NeuralGraph:
     def __init__(self):
         self.data = None

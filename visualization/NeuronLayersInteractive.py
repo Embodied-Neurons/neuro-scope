@@ -3,6 +3,12 @@ from dash import html
 import dash_cytoscape as cyto
 import numpy as np
 from scripts.neuron_compresser import compress_neurons
+from dash.dependencies import Input, Output
+
+from dash import dcc
+import json
+import os
+
 
 current_no_neuron_layer = None
 
@@ -77,58 +83,77 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div([
     html.H1("Neuron Layers Interactive (Dash Cytoscape)"),
+
+    html.Label("Select Training Batch:"),
+    dcc.Dropdown(
+        id='batch-selector',
+        options=[
+            {'label': f'Batch {i}', 'value': i}
+            for i in range(50)
+        ],
+        value=0,
+        style={'width': '300px'}
+    ),
+
     cyto.Cytoscape(
         id='cytoscape-graph',
         layout={'name': 'preset'},
         style={'width': '100%', 'height': '600px'},
         elements=[],
         stylesheet=[
-    {
-        'selector': 'node',
-        'style': {
-            'label': 'data(label)',
-            'width': '12px',
-            'height': '12px',
-            'background-color': '#0074D9',
-            'text-valign': 'center',
-            'color': 'white',
-            'font-size': '8px'
-        }
-    },
-    {
-        'selector': '.special',
-        'style': {
-            'width': '25px',
-            'height': '25px',
-            'background-color': '#FF4136',
-            'font-size': '12px',
-            'font-weight': 'bold'
-        }
-        },
             {
-            'selector': 'edge',
+                'selector': 'node',
                 'style': {
-                'line-color': '#B3B3B3',
-                'width': 0.7
+                    'label': 'data(label)',
+                    'width': '12px',
+                    'height': '12px',
+                    'background-color': '#0074D9',
+                    'text-valign': 'center',
+                    'color': 'white',
+                    'font-size': '8px'
+                }
+            },
+            {
+                'selector': '.special',
+                'style': {
+                    'width': '25px',
+                    'height': '25px',
+                    'background-color': '#FF4136',
+                    'font-size': '12px',
+                    'font-weight': 'bold'
+                }
+            },
+            {
+                'selector': 'edge',
+                'style': {
+                    'line-color': '#B3B3B3',
+                    'width': 0.7
+                }
             }
-        }
-    ]
+        ]
     )
 ])
 
+
+
 @app.callback(
-    dash.dependencies.Output('cytoscape-graph', 'elements'),
-    dash.dependencies.Input('cytoscape-graph', 'id')
+    Output('cytoscape-graph', 'elements'),
+    Input('batch-selector', 'value')
 )
-def update_elements(_):
+def update_elements(batch_index):
     global current_no_neuron_layer
     if current_no_neuron_layer is None:
         default_layers = [(5, 1, 0), (7, 1, 0), (3, 1, 0)]
-        elements = create_network_elements(
-            [(compress_neurons(layer[0]) if isinstance(compress_neurons(layer[0]), int)
-                else compress_neurons(layer[0])[0], layer[1], layer[2])
-             for layer in default_layers]
-        )
+        layers = [(compress_neurons(l[0]) if isinstance(compress_neurons(l[0]), int)
+                   else compress_neurons(l[0])[0], l[1], l[2])
+                  for l in default_layers]
     else:
-        elements = create_network_elements(current_no_neuron_layer)
-    return elements
+        layers = current_no_neuron_layer
+
+    act_path = f"outputs/batch_{batch_index}_activations.json"
+    if os.path.exists(act_path):
+        with open(act_path, "r") as f:
+            activation_data = json.load(f)
+
+    return create_network_elements(layers)
+

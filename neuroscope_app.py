@@ -1,116 +1,142 @@
-from flask import Flask, jsonify
-from scripts.extract_data import get_model_structure
+import os
+import json
+from flask import Flask, jsonify, request
+import torch
 import torch.nn as nn
-import numpy as np
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+from scripts.extract_data import ActivationTracker, extract_graph_structure
+
+MODEL_PATH = os.path.join("data", "models", "mnist.pt")
+OUTPUT_DIR = os.path.join("visualization", "outputs")
+NUM_BATCHES_TO_SAVE = 100
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
+class NeuralNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(28 * 28, 128)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(128, 10)
+
+    def forward(self, x):
+        x = self.flatten(x)
+        x = self.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+
+
+def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
+    model = NeuralNet()
+    tracker = ActivationTracker(model)
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+    train_dataset = datasets.MNIST(root="../data", train=True, transform=transform, download=True)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+    model.train()
+    for batch_idx, (images, labels) in enumerate(train_loader):
+        if batch_idx >= num_batches:
+            break
+        optimizer.zero_grad()
+        tracker.clear()
+
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        tracker.save_to_json(batch_idx, save_dir=OUTPUT_DIR)
+
+    torch.save(model.state_dict(), MODEL_PATH)
+    tracker.remove_hooks()
+
+    extract_graph_structure(model, save_path=os.path.join(OUTPUT_DIR, "graph_structure.json"))
+
+
+train_and_save()
 
 app = Flask(__name__)
 
 
-def generate_mlp_layout(input_size, hidden_sizes, output_size):
+def generate_mlp_layout(layer_sizes):
     layout = []
-    max_neurons = max([input_size, output_size] + hidden_sizes)
-    num_layers = len(hidden_sizes) + 1
-    
-	# assuming height=720 and width=960 (as in HTML string)
-    x_start, y_start = 0, 0
-    x_move, y_move = 960 / num_layers, 720 / (max_neurons - 1)
+    max_neurons = max(layer_sizes)
+    num_layers = len(layer_sizes)
+    width, height = 960, 720
+    x_step = width / (num_layers - 1) if num_layers > 1 else 0
+    y_step = height / (max_neurons - 1) if max_neurons > 1 else 0
 
-	# input layer positions
-    y_offset = y_move * (max_neurons - input_size) / 2
-
-    for i in range(input_size):
-        y = y_start + y_offset + y_move * i
-        layout.append((x_start, y))
-        
-	# hidden layers positions
-    for i in range(len(hidden_sizes)):
-        y_offset = y_move * (max_neurons - hidden_sizes[i]) / 2
-        x = x_start + (i+1) * x_move
-
-        for j in range(hidden_sizes[i]):
-            y = y_start + y_offset + y_move * j
+    for layer_idx, size in enumerate(layer_sizes):
+        x = layer_idx * x_step
+        y_offset = (height - y_step * (size - 1)) / 2
+        for i in range(size):
+            y = y_offset + i * y_step
             layout.append((x, y))
-            
-	# output layer positions
-    y_offset = y_move * (max_neurons - output_size) / 2
-    x = x_start + num_layers * x_move
-
-    for i in range(output_size):
-        y = y_start + y_offset + y_move * i
-        layout.append((x, y))
-
     return layout
 
 
 @app.route('/nn_visualization', methods=['GET'])
 def graph_data():
-    class NeuralNet(nn.Module):
-        def __init__(self, input_size, hidden_sizes, output_size):
-            super(NeuralNet, self).__init__()
-            self.input_layer = nn.Linear(input_size, hidden_sizes[0])
-            self.hidden_layers = nn.ModuleList([
-                nn.Linear(hidden_sizes[i], hidden_sizes[i+1]) 
-                for i in range(len(hidden_sizes) - 1)
-            ])
-            self.output_layer = nn.Linear(hidden_sizes[-1], output_size)
-            self.relu = nn.ReLU()
+    graph_path = os.path.join(OUTPUT_DIR, "graph_structure.json")
+    if not os.path.exists(graph_path):
+        return jsonify({"error": "Graph structure not found"}), 404
+    with open(graph_path, 'r') as f:
+        structure = json.load(f)
 
-        def forward(self, x):
-            x = x.view(x.size(0), -1)
-            x = self.relu(self.input_layer(x))
-            for layer in self.hidden_layers:
-                x = self.relu(layer(x))
-            x = self.output_layer(x)
-            return x
 
-	# sizes of respective neuron layers
-    input_size = 784
-    hidden_sizes = [128]
-    output_size = 10
+    batch_id = request.args.get('batch', default=0, type=int)
+    act_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_activations.json")
+    grad_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_gradients.json")
 
-    model = NeuralNet(input_size, hidden_sizes, output_size)
-    data = get_model_structure(model)
+    activations = {}
+    gradients = {}
+    if os.path.exists(act_path) and os.path.exists(grad_path):
+        with open(act_path, 'r') as fa:
+            activations = json.load(fa)
+        with open(grad_path, 'r') as fg:
+            gradients = json.load(fg)
 
-    activations = {
-        k: (v.tolist() if isinstance(v, np.ndarray) else v)
-        for k, v in data.activations.items()
-    }
-    
-    gradients = {
-        k: (v.tolist() if isinstance(v, np.ndarray) else v)
-        for k, v in data.gradients.items()
-    }
-
-    graph_dict = {
-        "nodes": [],
-        "edges": [],
-        "activations": activations,
-        "gradients": gradients,
-        "node_labels": data.node_labels,
-        "layer_sizes": data.layer_sizes,
-    }
-
-    positions = generate_mlp_layout(input_size, hidden_sizes, output_size)
-
-    for i, label in enumerate(data.node_labels):
+    nodes = []
+    positions = generate_mlp_layout(structure['layer_sizes'])
+    for i, node in enumerate(structure['nodes']):
         x, y = positions[i]
-        graph_dict["nodes"].append({
-            "id": str(i),
-            "label": label,
-            "x": x,
-            "y": y,
+        nodes.append({
+            'id': str(i),
+            'label': node['label'],
+            'x': x,
+            'y': y
         })
 
-    if data.edge_index.numel() > 0:
-        edge_index = data.edge_index.numpy().T
-        for idx, (src, dst) in enumerate(edge_index):
-            graph_dict["edges"].append({
-                "id": f"e{idx}",
-                "source": str(src),
-                "target": str(dst),
-            })
-            
-    return jsonify(graph_dict)
+    edges = []
+    for idx, (src, dst) in enumerate(structure['edges']):
+        edges.append({
+            'id': f"e{idx}",
+            'source': str(src),
+            'target': str(dst)
+        })
+
+    return jsonify({
+        'nodes': nodes,
+        'edges': edges,
+        'activations': activations,
+        'gradients': gradients,
+        'layer_sizes': structure['layer_sizes'],
+        'node_labels': [n['label'] for n in structure['nodes']]
+    })
 
 
-app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
