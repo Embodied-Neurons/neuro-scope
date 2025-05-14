@@ -1,55 +1,136 @@
+// imports
 const Graph = require('graphology');
 const Sigma = require('sigma').default;
 
-const MAX_GROUPS = 50;
+// global consts
+const MAX_GROUPS = 28;
 const CONTAINER_WIDTH = 960;
 const CONTAINER_HEIGHT = 720;
 
-function groupNeurons(nodes, layerSizes) {
-  const graph = new Graph();
-  const maxNeurons = Math.max(...layerSizes);
-  const neuronsPerGroup = Math.ceil(maxNeurons / MAX_GROUPS);
+// helper functions
+function getAllNodesByLayers(nodes, layerSizes) {
+  const nodesByLayers = [];
+  let previousNeuronCount = 0;
 
-  let layerGroups = [];
-  let neuronLayers = [];
-  let neuronIndex = 0;
-  let edges = [];
+  for (const layerSize of layerSizes) {
+    nodesByLayers.push([]);
 
-  for (let size of layerSizes) {
-    layerGroups.push(Math.ceil(size / neuronsPerGroup));
+    for (let i = 0; i < layerSize; i++) {
+      nodesByLayers[nodesByLayers.length - 1].push(nodes[i + previousNeuronCount]);
+    }
+
+    previousNeuronCount += layerSize;
   }
+
+  return nodesByLayers;
+}
+
+
+function getNeuronsPosInfo(nodesByLayers) {
+  const posInfo = [];
+  let x, minY, maxY;
+
+  for (const nodesLayer of nodesByLayers) {
+    x = nodesLayer[0].x;
+    minY = nodesLayer[0].y;
+    maxY = nodesLayer[nodesLayer.length - 1].y;
+
+    posInfo.push({
+      x: x / CONTAINER_WIDTH,
+      minY: minY / CONTAINER_HEIGHT,
+      maxY: maxY / CONTAINER_HEIGHT
+    });
+  }
+
+  return posInfo;
+}
+
+
+function groupNeurons(visibleNodes, allNodes, originalSizes) {
+  const layerVisibility = []; 
+  let maxVisibleNeurons = -1;
+
+  for (const nodeLayer of visibleNodes) {
+    layerVisibility.push(nodeLayer.length > 0);
+    maxVisibleNeurons = Math.max(maxVisibleNeurons, nodeLayer.length);
+  }
+  
+  const neuronsPerGroup = Math.ceil(Math.max(...originalSizes) / MAX_GROUPS);
+  const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS);
+  let layerGroups = [];
+  let flag = false;
+  
+  for (let i = 0; i < visibleNodes.length; i++) {
+    if (layerVisibility[i]) {
+      const size = visibleNodes[i].length;
+      layerGroups.push(Math.ceil(size / visibleNeuronsPerGroup));
+      flag = true;
+    } else if (flag || (i < visibleNodes.length - 1 && layerVisibility[i + 1])) {
+      const size = originalSizes[i];
+      layerGroups.push(Math.ceil(size / neuronsPerGroup));
+      flag = false;
+    } else {
+      layerGroups.push(0);
+    }
+  }
+
+  let neuronLayers = [];
 
   for (let i = 0; i < layerGroups.length; i++) {
     neuronLayers.push([]);
+    let nodes;
+    let neuronIndex = 0;
+    let lastGroupShift;
 
-    for (let j = 0; j < layerGroups[i] - 1; j++, neuronIndex += neuronsPerGroup) {
-      neuronLayers[neuronLayers.length - 1].push({
-        id: nodes[neuronIndex].id,
-        x: nodes[neuronIndex].x,
-        y: nodes[neuronIndex + 0.5 * neuronsPerGroup].y,
-        size: nodes[neuronIndex + 0.5 * neuronsPerGroup].y - nodes[neuronIndex].y
-      });
-    }
+    if (layerVisibility[i]) {
+      nodes = visibleNodes[i];
+      let groupShift = Math.floor(0.5 * visibleNeuronsPerGroup);
 
-    const mod = layerSizes[i] % neuronsPerGroup;
-    if (mod) {
-      neuronLayers[neuronLayers.length - 1].push({
-        id: nodes[neuronIndex].id,
-        x: nodes[neuronIndex].x,
-        y: nodes[neuronIndex + 0.5 * mod].y,
-        size: nodes[neuronIndex + 0.5 * mod].y - nodes[neuronIndex].y
-      });
-      neuronIndex += mod;
+      for (let j = 0; j < layerGroups[i] - 1; j++, neuronIndex += visibleNeuronsPerGroup) {
+        neuronLayers[neuronLayers.length - 1].push({
+          id: nodes[neuronIndex].id,
+          x: nodes[neuronIndex].x,
+          y: nodes[neuronIndex + groupShift].y,
+          size: Math.max(1.4, 0.7 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+        });
+      }
+
+      if (nodes.length % visibleNeuronsPerGroup) {
+        lastGroupShift = Math.floor(0.5 * (nodes.length % visibleNeuronsPerGroup));
+      } else {
+        lastGroupShift = Math.floor(0.5 * visibleNeuronsPerGroup);
+      }
+    } else if (layerGroups[i] > 0) {
+      nodes = allNodes[i];
+      let groupShift = Math.floor(0.5 * neuronsPerGroup);
+
+      for (let j = 0; j < layerGroups[i] - 1; j++, neuronIndex += neuronsPerGroup) {
+        neuronLayers[neuronLayers.length - 1].push({
+          id: nodes[neuronIndex].id,
+          x: nodes[neuronIndex].x,
+          y: nodes[neuronIndex + groupShift].y,
+          size: Math.max(1.4, 0.7 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+        });
+      }
+
+      if (nodes.length % neuronsPerGroup) {
+        lastGroupShift = Math.floor(0.5 * (nodes.length % neuronsPerGroup));
+      } else {
+        lastGroupShift = Math.floor(0.5 * neuronsPerGroup);
+      }
     } else {
-      neuronLayers[neuronLayers.length - 1].push({
-        id: nodes[neuronIndex].id,
-        x: nodes[neuronIndex].x,
-        y: nodes[neuronIndex + 0.5 * neuronsPerGroup].y,
-        size: nodes[neuronIndex + 0.5 * neuronsPerGroup].y - nodes[neuronIndex].y
-      });
-      neuronIndex += neuronsPerGroup;
+      continue;
     }
+
+    neuronLayers[neuronLayers.length - 1].push({
+      id: nodes[neuronIndex].id,
+      x: nodes[neuronIndex].x,
+      y: nodes[neuronIndex + lastGroupShift].y,
+      size: Math.max(1.4, 0.7 * (nodes[neuronIndex + lastGroupShift].y - nodes[neuronIndex].y))
+    });
   }
+
+  let edges = [];
 
   for (let i = 0; i < layerGroups.length - 1; i++) {
     const first = neuronLayers[i];
@@ -65,6 +146,20 @@ function groupNeurons(nodes, layerSizes) {
       }
     }
   }
+
+  return { neuronLayers, edges };
+}
+
+
+function buildGraph(graph, neuronLayers, edges) {
+  // drop all current nodes (edges are dropped as well)
+  graph.forEachNode((node, _) => {
+    graph.dropNode(node);
+  });
+
+  // dummy nodes, otherwise sigma tries to be smart and scale coordinates
+  graph.addNode("dummy1", { x: 0, y: 0, color: '#ffffff' });
+  graph.addNode("dummy2", { x: CONTAINER_WIDTH, y: CONTAINER_HEIGHT, color: '#ffffff' });
 
   neuronLayers.forEach(layer => {
     layer.forEach(node => {
@@ -85,102 +180,141 @@ function groupNeurons(nodes, layerSizes) {
       color: '#2c2c2c'
     });
   });
-
-  let posInfo = [];
-
-  for (const layer of neuronLayers) {
-    let flag = true;
-    let x, minY, maxY;
-
-    for (const node of layer) {
-      if (flag) {
-        x = node.x;
-        minY = maxY = node.y;
-        flag = false;
-      } else {
-        if (node.y < minY) {
-          minY = node.y;
-        } else if (node.y > maxY) {
-          maxY = node.y;
-        }
-      }
-    }
-
-    posInfo.push({
-      x: x / CONTAINER_WIDTH,
-      minY: minY / CONTAINER_HEIGHT,
-      maxY: maxY / CONTAINER_HEIGHT
-    });
-  }
-
-  return { graph, posInfo };
 }
 
-function calculateDynamicBounds(x, y, ratio, posInfo) {
-  let newX = x;
-  let { minY, maxY } = findYExtremes(x, 0.05 * ratio, posInfo);
-  let newY = Math.max(Math.min(y, maxY), minY);
 
-  if (ratio >= 0.9) {
-    if (x + 0.6 * ratio < posInfo[posInfo.length - 1].x) {
-      newX = posInfo[posInfo.length - 1].x - 0.55 * ratio;
-    } else if (x - 0.6 * ratio > posInfo[0].x) {
-      newX = posInfo[0].x + 0.55 * ratio;
+function visibleNodesChanged(newNodes, oldNodes) {
+  for (let i = 0; i < newNodes.length; i++) {
+    if (newNodes[i].length !== oldNodes[i].length) {
+      return true;
     }
-  } else if (ratio >= 0.5) {
-    if (x + 0.6 * ratio < posInfo[posInfo.length - 2].x) {
-      newX = posInfo[posInfo.length - 2].x - 0.55 * ratio;
-    } else if (x - 0.6 * ratio > posInfo[1].x) {
-      newX = posInfo[1].x + 0.55 * ratio;
+  }
+
+  return false;
+}
+
+
+function anyNodeVisible(nodesByLayers) {
+  return nodesByLayers.map((layer) => layer.length).reduce((sum, el) => sum + el, 0);
+}
+
+
+function calculateDynamicBounds(x, y, ratio, posInfo) {
+  let newX, newY;
+  let { minY, maxY } = findYExtremes(x, posInfo);
+  newY = Math.max(Math.min(y, maxY), minY);
+
+  if (ratio >= 0.6) {
+    if (x - 0.4 * ratio > posInfo[posInfo.length - 2].x) {
+      newX = posInfo[posInfo.length - 2].x + 0.4 * ratio;
+    } else if (x + 0.4 * ratio < posInfo[1].x) {
+      newX = posInfo[1].x - 0.4 * ratio;
+    } else {
+      newX = x;
     }
   } else {
-    if (x + 0.1 * ratio < posInfo[0].x) {
-      newX = posInfo[0].x - 0.05 * ratio;
-    } else if (x - 0.1 * ratio > posInfo[posInfo.length - 1].x) {
-      newX = posInfo[posInfo.length - 1].x + 0.05 * ratio;
-    }
+    newX = Math.max(Math.min(x, posInfo[posInfo.length - 1].x), posInfo[0].x);
   }
 
   return { newX, newY };
 }
 
-function findYExtremes(x, buff, posInfo) {
-  let minY, maxY;
+
+function findYExtremes(x, posInfo) {
+  let minY, maxY, buff;
 
   if (x < posInfo[0].x) {
-    minY = posInfo[0].minY - buff;
-    maxY = posInfo[0].maxY + buff;
-    return { minY, maxY };
+    minY = posInfo[0].minY;
+    maxY = posInfo[0].maxY;
+    buff = 0.125 * (maxY - minY);
   } else if (x > posInfo[posInfo.length - 1].x) {
-    minY = posInfo[posInfo.length - 1].minY - buff;
-    maxY = posInfo[posInfo.length - 1].maxY + buff;
-    return { minY, maxY };
+    minY = posInfo[posInfo.length - 1].minY;
+    maxY = posInfo[posInfo.length - 1].maxY;
+    buff = 0.125 * (maxY - minY);
   } else {
     for (let i = 0; i < posInfo.length - 1; i++) {
-      if (x >= posInfo[i].x && x < posInfo[i + 1].x) {
+      if (x >= posInfo[i].x && x <= posInfo[i + 1].x) {
         const w1 = (x - posInfo[i].x) / (posInfo[i + 1].x - posInfo[i].x);
         const w2 = (posInfo[i + 1].x - x) / (posInfo[i + 1].x - posInfo[i].x);
-        minY = w2 * posInfo[i].minY + w1 * posInfo[i + 1].minY + buff;
-        maxY = w2 * posInfo[i].maxY + w1 * posInfo[i + 1].maxY - buff;
-        return { minY, maxY };
+        minY = w2 * posInfo[i].minY + w1 * posInfo[i + 1].minY;
+        maxY = w2 * posInfo[i].maxY + w1 * posInfo[i + 1].maxY;
+        buff = 0.125 * (maxY - minY);
+        break;
       }
     }
   }
+
+  return { minY: minY + buff, maxY: maxY - buff };
 }
+
+
+function getCenterCoords(renderer, container) {
+  return renderer.viewportToGraph({ 
+    x: container.offsetWidth / 2, 
+    y: container.offsetHeight / 2 
+  });
+}
+
+
+function getVisibilityRanges(camera, renderer, container) {
+  const { ratio } = camera.getState();
+  let { x, y } = getCenterCoords(renderer, container);
+
+  x /= CONTAINER_WIDTH;
+  y /= CONTAINER_HEIGHT;
+
+  return {
+    minX: x - 0.56 * ratio,
+    maxX: x + 0.56 * ratio,
+    minY: y - 0.6 * ratio,
+    maxY: y + 0.6 * ratio
+  }
+}
+
+
+function getVisibleNodes(nodes, visibilityRanges) {
+  const { minX, maxX, minY, maxY } = visibilityRanges;
+  const visibleNodes = [];
+
+  for (const nodeLayer of nodes) {
+    visibleNodes.push([]);
+
+    if (nodeLayer[0].x / CONTAINER_WIDTH < minX || nodeLayer[0].x / CONTAINER_WIDTH > maxX) {
+      continue;
+    }
+
+    for (const node of nodeLayer) {
+      if (node.y / CONTAINER_HEIGHT >= minY && node.y / CONTAINER_HEIGHT <= maxY) {
+        visibleNodes[visibleNodes.length - 1].push(node);
+      }
+    }
+  }
+
+  return visibleNodes;
+}
+
+// ------------------------------------------------------------
 
 // Get batch count first
 function fetchAndDisplayGraph(batch = 0) {
   fetch(`http://127.0.0.1:5000/nn_visualization?batch=${batch}`)
     .then(response => response.json())
     .then(data => {
-      const { graph, posInfo } = groupNeurons(data.nodes, data.layer_sizes);
+      const nodes = getAllNodesByLayers(data.nodes, data.layer_sizes);
+      const posInfo = getNeuronsPosInfo(nodes);
+      const { neuronLayers, edges } = groupNeurons(nodes, nodes, data.layer_sizes);
+      const graph = new Graph();
+
+      buildGraph(graph, neuronLayers, edges);
+
       let selectedNode = null;
+      let currentVisibleNodes = nodes;      
 
       const container = document.getElementById('sigma-container');
       container.innerHTML = '';
 
       const renderer = new Sigma(graph, container, {
-        minCameraRatio: 0.08,
+        minCameraRatio: 0.02,
         maxCameraRatio: 1,
         zIndex: true
       });
@@ -189,16 +323,30 @@ function fetchAndDisplayGraph(batch = 0) {
       camera.setState({ ratio: 1.0 });
 
       camera.on("updated", () => {
-        setTimeout(() => {
-          const { x, y, ratio } = camera.getState();
-          const { newX, newY } = calculateDynamicBounds(x, y, ratio, posInfo);
-          if (newX !== x || newY !== y) {
-            camera.setState({ x: newX, y: newY });
-          }
-        }, 100);
+        const { x, y, ratio } = camera.getState();
+        const { newX, newY } = calculateDynamicBounds(x, y, ratio, posInfo);
+
+        if (newX !== x || newY !== y) {
+          camera.setState({ x: newX, y: newY });
+        }
+
+        const visibilityRanges = getVisibilityRanges(camera, renderer, container);
+        const visibleNodes = getVisibleNodes(nodes, visibilityRanges);
+
+        if (visibleNodesChanged(visibleNodes, currentVisibleNodes) && anyNodeVisible(visibleNodes)) {
+          const { neuronLayers, edges } = groupNeurons(visibleNodes, nodes, data.layer_sizes);
+          buildGraph(graph, neuronLayers, edges);
+
+          currentVisibleNodes = visibleNodes;
+          selectedNode = null;
+        }
       });
 
       renderer.on("clickNode", ({ node }) => {
+        if (["dummy1", "dummy2"].includes(node)) {
+          return;
+        }
+
         if (selectedNode != null) {
           graph.setNodeAttribute(selectedNode, 'color', '#c0c0c0');
           const pastEdges = graph.edges(selectedNode);
@@ -230,18 +378,24 @@ function fetchAndDisplayGraph(batch = 0) {
 
 // UI bindings
 window.onload = () => {
-  const select = document.createElement('select');
-  select.id = 'batch-select';
-
   const button = document.createElement('button');
   button.textContent = 'Load Batch';
+  button.style.margin = '2px';
   button.id = 'load-btn';
 
+  const select = document.createElement('select');
+  select.style.margin = '2px';
+  select.id = 'batch-select';
+
   const controls = document.createElement('div');
-  controls.style.margin = '10px';
+  controls.style.margin = '0px 10px';
   controls.appendChild(select);
+  controls.appendChild(document.createElement('br'));
   controls.appendChild(button);
   document.body.insertBefore(controls, document.getElementById('sigma-container'));
+
+  // needs to be done after inserting into DOM
+  select.style.width = `${button.offsetWidth}px`;
 
   button.addEventListener('click', () => {
     const batch = parseInt(document.getElementById('batch-select').value);

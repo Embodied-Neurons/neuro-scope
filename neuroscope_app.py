@@ -9,7 +9,7 @@ from torchvision import datasets, transforms
 
 from scripts.extract_data import ActivationTracker, extract_graph_structure
 
-MODEL_PATH = os.path.join("data", "models", "mnist.pt")
+MODEL_PATH = os.path.join("..", "data", "models", "mnist.pt")
 OUTPUT_DIR = os.path.join("visualization", "outputs")
 NUM_BATCHES_TO_SAVE = 100
 
