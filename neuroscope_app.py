@@ -7,6 +7,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
+from scripts.group_normalizer import normalize_groups_grad, normalize_groups_act
+from scripts.neuron_compresser import compress_neuron_layers
 from scripts.extract_data import ActivationTracker, extract_graph_structure
 
 MODEL_PATH = os.path.join("..", "data", "models", "mnist.pt")
@@ -29,7 +31,6 @@ class NeuralNet(nn.Module):
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
         return x
-
 
 
 def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
@@ -96,7 +97,6 @@ def graph_data():
     with open(graph_path, 'r') as f:
         structure = json.load(f)
 
-
     batch_id = request.args.get('batch', default=0, type=int)
     act_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_activations.json")
     grad_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_gradients.json")
@@ -136,6 +136,48 @@ def graph_data():
         'layer_sizes': structure['layer_sizes'],
         'node_labels': [n['label'] for n in structure['nodes']]
     })
+
+
+@app.route('/nn_compressed', methods=['GET'])
+def nn_compressed():
+    batch_id = int(request.args.get('batch'))
+    layer_str = str(request.args.get("layers"))
+    layer_sizes = list(map(int, layer_str.split(',')))
+    layer_count = int(request.args.get('layer_count'))
+
+    act_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_activations.json")
+    grad_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_gradients.json")
+
+    activations = {}
+    gradients = {}
+    if os.path.exists(act_path) and os.path.exists(grad_path):
+        with open(act_path, 'r') as fa:
+            activations = json.load(fa)
+        with open(grad_path, 'r') as fg:
+            gradients = json.load(fg)
+
+    n = len(layer_sizes)
+    compressed = compress_neuron_layers(layer_sizes, layer_count)
+    grouped_gradients = {}
+    for i in range(1, n):
+        key = f"fc{i}.weight"
+        k = f"fc{i}.grad"
+        grouped_gradients[k] = normalize_groups_grad(gradients[key], compressed[i - 1], compressed[i]).tolist()
+
+    last_val = {}
+    for key in activations:
+        val = len(activations[key][0])
+        last_val[val] = key
+    grouped_activations = {}
+    i = 1
+    for key in activations:
+        if last_val[len(activations[key][0])] != key:
+            continue
+        k = f"fc{i}.activ"
+        grouped_activations[k] = normalize_groups_act(activations[key], compressed[i]).tolist()
+        i += 1
+    grouped = {"gradients": grouped_gradients, "activations": grouped_activations}
+    return grouped
 
 
 if __name__ == '__main__':
