@@ -21,6 +21,13 @@ media/
 *.gif
 *.png
 *.json
+<<<<<<< Updated upstream
+=======
+*.jpg
+*.jpeg
+*.webp
+model_path.txt
+>>>>>>> Stashed changes
 
 # Logs and databases
 *.log
