@@ -1,1 +1,0 @@
-C:/Users/glart/Documents/GitHub/ann-fmri/scripts/simple_mnist.py
