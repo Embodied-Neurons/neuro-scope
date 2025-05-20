@@ -341,15 +341,17 @@ function fetchAndDisplayGraph(batch = 0) {
 
             const camera = renderer.getCamera();
             camera.setState({ratio: 1.0});
-
-            camera.on("updated", async () => {
+            camera.on("updated", () => {
                 const {x, y, ratio} = camera.getState();
                 const {newX, newY} = calculateDynamicBounds(x, y, ratio, posInfo);
 
                 if (newX !== x || newY !== y) {
                     camera.setState({x: newX, y: newY});
                 }
+            });
 
+            let buildGraphHandler = async function(event) {
+                console.log(event);
                 const visibilityRanges = getVisibilityRanges(camera, renderer, container);
                 const visibleNodes = getVisibleNodes(nodes, visibilityRanges);
 
@@ -360,6 +362,22 @@ function fetchAndDisplayGraph(batch = 0) {
                     currentVisibleNodes = visibleNodes;
                     selectedNode = null;
                 }
+            };
+
+            let debounceTimer;
+
+            renderer.on("upStage", () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    buildGraphHandler("event");
+                }, 1000);
+            });
+
+            renderer.on("wheelStage", () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    buildGraphHandler("event");
+                }, 1000);
             });
 
             renderer.on("clickNode", ({node}) => {
