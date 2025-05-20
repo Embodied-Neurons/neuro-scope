@@ -6,68 +6,91 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
+import importlib.util
+import sys
+import inspect
 
 from scripts.group_normalizer import normalize_groups_grad, normalize_groups_act
 from scripts.neuron_compresser import compress_neuron_layers
 from scripts.extract_data import ActivationTracker, extract_graph_structure
 
-MODEL_PATH = os.path.join("..", "data", "models", "mnist.pt")
+MODEL_PATH = os.path.join("data", "models", "mnist.pt")
 OUTPUT_DIR = os.path.join("visualization", "outputs")
 NUM_BATCHES_TO_SAVE = 100
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-class NeuralNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(28 * 28, 128)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(128, 10)
 
-    def forward(self, x):
-        x = self.flatten(x)
-        x = self.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+def load_user_model():
+    model_path_file = "model_path.txt"
+    if not os.path.exists(model_path_file):
+        raise FileNotFoundError("No model_path.txt found. Please select a model using the menu.")
+
+    with open(model_path_file, "r") as f:
+        full_model_path = f.read().strip()
+
+    if not os.path.exists(full_model_path):
+        raise FileNotFoundError(f"Model file does not exist at:\n{full_model_path}")
+
+    spec = importlib.util.spec_from_file_location("custom_model", full_model_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["custom_model"] = module
+    spec.loader.exec_module(module)
+
+    if not hasattr(module, "NeuralNet"):
+        raise AttributeError("User model must contain a class named 'NeuralNet'")
+
+    return module.NeuralNet()
 
 
 def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
-    model = NeuralNet()
+
+    if os.path.exists(OUTPUT_DIR) and any(
+            f.endswith(".json") for f in os.listdir(OUTPUT_DIR)
+    ):
+        print("[INFO] Outputs already exist. Skipping training.")
+        return
+
+    # Load user module
+    model_path_file = "model_path.txt"
+    if not os.path.exists(model_path_file):
+        raise FileNotFoundError("No model_path.txt found. Please select a model using the menu.")
+
+    with open(model_path_file, "r") as f:
+        full_model_path = f.read().strip()
+
+    if not os.path.exists(full_model_path):
+        raise FileNotFoundError(f"Model file does not exist at:\n{full_model_path}")
+
+    spec = importlib.util.spec_from_file_location("custom_model", full_model_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["custom_model"] = module
+    spec.loader.exec_module(module)
+
+    # Enforce required interface
+    if not hasattr(module, "NeuralNet") or not callable(module.NeuralNet):
+        raise AttributeError("User model file must define a class 'NeuralNet'.")
+
+    if not hasattr(module, "train") or not callable(module.train):
+        raise AttributeError("User model file must define a function 'train(model, tracker, num_batches)'.")
+
+    # Create model & tracker
+    model = module.NeuralNet()
     tracker = ActivationTracker(model)
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
-    train_dataset = datasets.MNIST(root="../data", train=True, transform=transform, download=True)
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    # Run training
+    print("Running user-defined training function...")
+    module.train(model, tracker, num_batches)
 
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-    model.train()
-    for batch_idx, (images, labels) in enumerate(train_loader):
-        if batch_idx >= num_batches:
-            break
-        optimizer.zero_grad()
-        tracker.clear()
-
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        tracker.save_to_json(batch_idx, save_dir=OUTPUT_DIR)
-
+    # Save model and graph structure
     torch.save(model.state_dict(), MODEL_PATH)
     tracker.remove_hooks()
 
     extract_graph_structure(model, save_path=os.path.join(OUTPUT_DIR, "graph_structure.json"))
 
 
-train_and_save()
+
 
 app = Flask(__name__)
 
@@ -180,5 +203,27 @@ def nn_compressed():
     return grouped
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--train", action="store_true",
+        help="Train the model and exit"
+    )
+    parser.add_argument(
+        "--serve", action="store_true",
+        help="Run the Flask server"
+    )
+    args = parser.parse_args()
+
+    if args.train:
+        train_and_save()
+        sys.exit(0)
+
+    if args.serve:
+        app.run(debug=True)
+
+    train_and_save()
     app.run(debug=True)
+
