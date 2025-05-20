@@ -8,9 +8,11 @@ import os
 
 from model_interface import NeuralNetInterface, TrainerInterface
 from scripts.extract_data import extract_graph_structure, ActivationTracker
+from registry import register_model, register_trainer
 
 
-# Define model using the NeuralNetInterface
+
+@register_model
 class SimpleNN(NeuralNetInterface):
     def __init__(self):
         super(SimpleNN, self).__init__()
@@ -27,7 +29,8 @@ class SimpleNN(NeuralNetInterface):
         return x
 
 
-# Define Trainer class conforming to the TrainerInterface
+
+@register_trainer
 class Trainer(TrainerInterface):
     @staticmethod
     def train(model: NeuralNetInterface, tracker: ActivationTracker, num_batches: int):

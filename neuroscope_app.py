@@ -14,12 +14,14 @@ from scripts.group_normalizer import normalize_groups_grad, normalize_groups_act
 from scripts.neuron_compresser import compress_neuron_layers
 from scripts.extract_data import ActivationTracker, extract_graph_structure
 
+from registry import model_registry, trainer_registry
+
+
 MODEL_PATH = os.path.join("data", "models", "mnist.pt")
-OUTPUT_DIR = os.path.join("visualization", "outputs")
+OUTPUT_DIR = os.path.join("outputs")
 NUM_BATCHES_TO_SAVE = 100
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
 
 
 def load_user_model():
@@ -38,21 +40,19 @@ def load_user_model():
     sys.modules["custom_model"] = module
     spec.loader.exec_module(module)
 
-    if not hasattr(module, "NeuralNet"):
-        raise AttributeError("User model must contain a class named 'NeuralNet'")
+    model_cls = model_registry.get("model")
+    if not model_cls:
+        raise AttributeError("No model registered. Use @register_model on your NeuralNet class.")
 
-    return module.NeuralNet()
+    return model_cls()
 
 
 def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
-
     if os.path.exists(OUTPUT_DIR) and any(
-            f.endswith(".json") for f in os.listdir(OUTPUT_DIR)
-    ):
+            f.endswith(".json") for f in os.listdir(OUTPUT_DIR)):
         print("[INFO] Outputs already exist. Skipping training.")
         return
 
-    # Load user module
     model_path_file = "model_path.txt"
     if not os.path.exists(model_path_file):
         raise FileNotFoundError("No model_path.txt found. Please select a model using the menu.")
@@ -63,31 +63,33 @@ def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
     if not os.path.exists(full_model_path):
         raise FileNotFoundError(f"Model file does not exist at:\n{full_model_path}")
 
+    # Dynamically load the module
     spec = importlib.util.spec_from_file_location("custom_model", full_model_path)
     module = importlib.util.module_from_spec(spec)
     sys.modules["custom_model"] = module
     spec.loader.exec_module(module)
 
-    # Enforce required interface
-    if not hasattr(module, "NeuralNet") or not callable(module.NeuralNet):
-        raise AttributeError("User model file must define a class 'NeuralNet'.")
+    model_cls = model_registry.get("model")
+    trainer_cls = trainer_registry.get("trainer")
 
-    if not hasattr(module, "train") or not callable(module.train):
-        raise AttributeError("User model file must define a function 'train(model, tracker, num_batches)'.")
+    if not model_cls:
+        raise AttributeError("No model registered. Use @register_model on your NeuralNet class.")
+    if not trainer_cls:
+        raise AttributeError("No trainer registered. Use @register_trainer on your Trainer class.")
 
-    # Create model & tracker
-    model = module.NeuralNet()
-    tracker = ActivationTracker(model)
 
-    # Run training
     print("Running user-defined training function...")
-    module.train(model, tracker, num_batches)
 
-    # Save model and graph structure
-    torch.save(model.state_dict(), MODEL_PATH)
+    dummy_model = model_cls(*[], **{})
+    tracker = ActivationTracker(dummy_model)
+
+    trainer_cls.train(dummy_model, tracker, num_batches)
+
+
+    torch.save(dummy_model.state_dict(), MODEL_PATH)
     tracker.remove_hooks()
+    extract_graph_structure(dummy_model, save_path=os.path.join(OUTPUT_DIR, "graph_structure.json"))
 
-    extract_graph_structure(model, save_path=os.path.join(OUTPUT_DIR, "graph_structure.json"))
 
 
 
