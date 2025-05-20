@@ -46,17 +46,25 @@ function getNeuronsPosInfo(nodesByLayers) {
 }
 
 
-async function groupNeurons(visibleNodes, allNodes, originalSizes, batch) {
+async function groupNeurons(visibleNodes, allNodes, originalSizes, batch, zoomRatio = 1.0) {
     const layerVisibility = [];
-    let maxVisibleNeurons = -1;
+    let maxVisibleNeurons = 0;
+    let yExtent = 1;
 
-    for (const nodeLayer of visibleNodes) {
+    for (let i = 0; i < visibleNodes.length; i++) {
+        const nodeLayer = visibleNodes[i];
         layerVisibility.push(nodeLayer.length > 0);
-        maxVisibleNeurons = Math.max(maxVisibleNeurons, nodeLayer.length);
+
+        if (nodeLayer.length > maxVisibleNeurons) {
+            maxVisibleNeurons = nodeLayer.length;
+            yExtent = nodeLayer[nodeLayer.length - 1].y - nodeLayer[0].y;
+        }
     }
 
+    yExtent = Math.min(1, yExtent / CONTAINER_HEIGHT / zoomRatio);
+
     const neuronsPerGroup = Math.ceil(Math.max(...originalSizes) / MAX_GROUPS);
-    const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS);
+    const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS / yExtent);
     let layerGroups = [];
     let flag = false;
 
@@ -130,26 +138,30 @@ async function groupNeurons(visibleNodes, allNodes, originalSizes, batch) {
             weight: 0
         });
     }
-    const edges = await fetchCompressedEdges(batch, originalSizes, visibleNeuronsPerGroup, layerGroups, neuronLayers);
 
+    const edges = await fetchCompressedEdges(batch, originalSizes, visibleNeuronsPerGroup, layerGroups, neuronLayers, layerVisibility);
 
     return {neuronLayers, edges};
 }
 
-async function fetchCompressedEdges(batch, originalSizes, visibleNeuronsPerGroup, layerGroups, neuronLayers) {
-    let edges = [];
-
+async function fetchCompressedEdges(batch, originalSizes, visibleNeuronsPerGroup, layerGroups, neuronLayers, layerVisibility) {
+    const edges = [];
     const response = await fetch(`http://127.0.0.1:5000/nn_compressed?batch=${batch}&layers=${originalSizes}&layer_count=${visibleNeuronsPerGroup}`);
     const data = await response.json();
     const grad = data["gradients"]
     const activ = data["activations"]
+
+    // color dict
+    const color_dict = { false: '#c2c2c2', true: '#2c2c2c' };
+
     for (let i = 0; i < layerGroups.length - 1; i++) {
         const first = neuronLayers[i];
         const second = neuronLayers[i + 1];
         const gradKey = `fc${i + 1}.grad`;
         const activKey = `fc${i + 1}.activ`;
         const matrixGrad = grad[gradKey];
-        const listActiv = activ[activKey]
+        const listActiv = activ[activKey];
+        const color = color_dict[layerVisibility[i] && layerVisibility[i + 1]];
 
         for (let j = 0; j < first.length; j++) {
             for (let k = 0; k < second.length; k++) {
@@ -160,6 +172,7 @@ async function fetchCompressedEdges(batch, originalSizes, visibleNeuronsPerGroup
                     src: fneuron.id,
                     tgt: sneuron.id,
                     id: 'edge' + '_' + fneuron.id + '-' + sneuron.id,
+                    color: color,
                     weight: matrixGrad[k][j]
                 });
             }
@@ -196,7 +209,7 @@ function buildGraph(graph, neuronLayers, edges) {
             id: edge.id,
             size: 0.5,
             zIndex: 0,
-            color: '#2c2c2c',
+            color: edge.color,
             weight: edge.weight
         });
     });
@@ -328,6 +341,7 @@ function fetchAndDisplayGraph(batch = 0) {
             buildGraph(graph, neuronLayers, edges);
 
             let selectedNode = null;
+            let selectedEdgesColors = [];
             let currentVisibleNodes = nodes;
 
             const container = document.getElementById('sigma-container');
@@ -350,17 +364,18 @@ function fetchAndDisplayGraph(batch = 0) {
                 }
             });
 
-            let buildGraphHandler = async function(event) {
-                console.log(event);
+            let buildGraphHandler = async function() {
                 const visibilityRanges = getVisibilityRanges(camera, renderer, container);
                 const visibleNodes = getVisibleNodes(nodes, visibilityRanges);
 
                 if (visibleNodesChanged(visibleNodes, currentVisibleNodes) && anyNodeVisible(visibleNodes)) {
-                    const {neuronLayers, edges} = await groupNeurons(visibleNodes, nodes, data.layer_sizes, batch);
+                    const {ratio} = camera.getState();
+                    const {neuronLayers, edges} = await groupNeurons(visibleNodes, nodes, data.layer_sizes, batch, ratio);
                     buildGraph(graph, neuronLayers, edges);
 
                     currentVisibleNodes = visibleNodes;
                     selectedNode = null;
+                    selectedEdgesColors = [];
                 }
             };
 
@@ -369,15 +384,15 @@ function fetchAndDisplayGraph(batch = 0) {
             renderer.on("upStage", () => {
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
-                    buildGraphHandler("event");
-                }, 1000);
+                    buildGraphHandler();
+                }, 500);
             });
 
             renderer.on("wheelStage", () => {
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
-                    buildGraphHandler("event");
-                }, 1000);
+                    buildGraphHandler();
+                }, 500);
             });
 
             renderer.on("clickNode", ({node}) => {
@@ -388,8 +403,10 @@ function fetchAndDisplayGraph(batch = 0) {
                 if (selectedNode != null) {
                     graph.setNodeAttribute(selectedNode, 'color', '#c0c0c0');
                     const pastEdges = graph.edges(selectedNode);
-                    for (let edge of pastEdges) {
-                        graph.setEdgeAttribute(edge, 'color', '#2c2c2c');
+                    
+                    for (let i = 0; i < pastEdges.length; i++) {
+                        const edge = pastEdges[i];
+                        graph.setEdgeAttribute(edge, 'color', selectedEdgesColors[i]);
                         graph.setEdgeAttribute(edge, 'size', 0.5);
                         graph.setEdgeAttribute(edge, 'zIndex', 0);
                     }
@@ -397,6 +414,8 @@ function fetchAndDisplayGraph(batch = 0) {
 
                 if (selectedNode !== node) {
                     selectedNode = node;
+                    selectedEdgesColors = [];
+
                     const weight = graph.getNodeAttribute(node, 'weight') || 0;
                     const r = Math.round(255 * (1 - weight));
                     const g = Math.round(255 * weight);
@@ -404,6 +423,10 @@ function fetchAndDisplayGraph(batch = 0) {
                     const color = `rgb(${r},${g},${b})`;
                     graph.setNodeAttribute(node, 'color', color);
                     const edges = graph.edges(node);
+                    edges.forEach(edge => {
+                        selectedEdgesColors.push(graph.getEdgeAttribute(edge, 'color'));
+                    });
+
                     for (let edge of edges) {
                         const weight = graph.getEdgeAttribute(edge, 'weight') || 0;
 
@@ -418,6 +441,7 @@ function fetchAndDisplayGraph(batch = 0) {
                     }
                 } else {
                     selectedNode = null;
+                    selectedEdgesColors = [];
                 }
             });
         })
