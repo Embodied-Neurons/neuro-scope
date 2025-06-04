@@ -90,6 +90,7 @@ class NeuronLayersInteractive(Scene):
         self.play(Create(neurons_group))
         self.play(Create(edges_group))
         self.play_gradients()
+
         self.finished = True
 
     def play_gradients(self):
