@@ -49,16 +49,19 @@ class NeuronLayersInteractive(Scene):
             for i in range(no_neurons_layer[0]):
                 neuron = Neuron(i + 1, layer_id, radius=radius, color=WHITE, fill_opacity=0.8)
                 neuron.move_to([x, y_max - offset, 0])
+                group = VGroup(neuron)
+
                 if no_neurons_layer[1] != 1:
                     if i + 1 == no_neurons_layer[0] and no_neurons_layer[2] != 0:
-                        label = Text(str(no_neurons_layer[2]), font_size=15, color=RED)
+                        label = Text(str(no_neurons_layer[2]), font_size=15, color=RED, fill_opacity=0.72)
                     else:
-                        label = Text(str(no_neurons_layer[1]), font_size=15, color=RED)
+                        label = Text(str(no_neurons_layer[1]), font_size=15, color=RED, fill_opacity=0.72)
                     label.move_to(neuron.get_center())
-                    self.add(label)
+                    group.add(label)
+
                 offset += radius * 2 + buff
-                self.add(neuron)
-                layer.append(neuron)
+                self.add(group)
+                layer.append(group)
 
             self.neurons.append(layer)
             x += x_shift
@@ -77,8 +80,8 @@ class NeuronLayersInteractive(Scene):
 
                 for k in range(len(second_layer)):
                     self.edges[-1][-1].append(NeuroCon(val[k][j],
-                                                       start=first_layer[j].point_at_angle(0),
-                                                       end=second_layer[k].point_at_angle(PI),
+                                                       start=first_layer[j][0].point_at_angle(0),
+                                                       end=second_layer[k][0].point_at_angle(PI),
                                                        buff=0.02,
                                                        stroke_width=3
                                                        ))
@@ -87,8 +90,8 @@ class NeuronLayersInteractive(Scene):
         neurons_group = VGroup(*[neuron for layer in self.neurons for neuron in layer])
         edges_group = VGroup(*[edge for layer in self.edges for sublist in layer for edge in sublist])
 
-        self.play(Create(neurons_group))
-        self.play(Create(edges_group))
+        self.play(DrawBorderThenFill(neurons_group))
+        self.play(DrawBorderThenFill(edges_group))
         self.play_gradients()
 
         self.finished = True
@@ -99,7 +102,6 @@ class NeuronLayersInteractive(Scene):
         self.play(*edge_animation)
 
     def zoom_in(self, id, layer_id):
-
         layer = self.current_no_neuron_layer[layer_id]
         # if we have to compress
         if layer[1] != 1:
@@ -136,7 +138,7 @@ class NeuronLayersInteractive(Scene):
             for layer in self.neurons:
                 for neuron in layer:
                     if np.linalg.norm(self.mouse_point.get_center() - neuron.get_center()) < 0.25:
-                        self.zoom_in(neuron.id, neuron.layer_id)
+                        self.zoom_in(neuron[0].id, neuron[0].layer_id)
                         break
 
         if button == "RIGHT" and self.finished:
@@ -145,5 +147,5 @@ class NeuronLayersInteractive(Scene):
     def animate_edge(self, edge: Line):
         edge_color = interpolate_color(RED, GREEN, edge.value)
         edge.set_color(edge_color)
-        edge.set_stroke(width=6)
+        edge.set_stroke(width=5)
         return edge
