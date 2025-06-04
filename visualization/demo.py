@@ -1,7 +1,6 @@
 import sys
 import os
 
-# so that scripts module is accesible
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
@@ -9,10 +8,17 @@ sys.path.append(parent)
 from scripts.simple_mnist import SimpleNN, model
 from scripts import extract_data as ed
 import torch
-from visualization.NeuronLayersInteractive import NeuronLayersInteractive
+from visualization.NeuronLayersInteractive import app, set_neuron_layers
 
 s_model = SimpleNN()
-model.load_state_dict(torch.load("../data/models/mnist.pt"))
+model_path = os.path.join("..", "data", "models", "mnist.pt")
+model.load_state_dict(torch.load(model_path))
+
+
 ng = ed.get_model_structure(s_model)
-nl = NeuronLayersInteractive(ng.get_layer_size(), ng.gradients)
-nl.render()
+layer_sizes = [50] * 50
+no_neurons_layers = [(size, 1, 0) for size in layer_sizes]
+set_neuron_layers(no_neurons_layers)
+
+if __name__ == '__main__':
+    app.run(debug=True)
