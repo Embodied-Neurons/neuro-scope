@@ -1,6 +1,6 @@
 ### In order to run the program:
 - you have _Node.js_ and _npm_ installed and working
-- in this directory, run
+- **in this directory** (_important!_), run
 ```bash
     npm install sigma
     npm install graphology
@@ -11,15 +11,20 @@ all that is needed will be in _node_modules_ subdirectory.
 - in _package.json_ file, change **scripts** section so it looks as follows:
 ```
 "scripts": {
-    "prep_data": "py ../neuroscope_app.py",
+    "train": "py ../neuroscope_app.py --train",
+    "serve": "py ../neuroscope_app.py --serve",
     "start": "electron index.js"
 },
 ```
-- for now: run `npm run prep_data` and wait for logs to appear (server providing endpoint to data is now running). Then in **separate** terminal run `npm start`. Electron app window should appear. Et voila.
+- in the **main** project directory (you can use `cd ..` in the terminal) run:
+```bash
+    python menu.py
+```
+a window with quite intuitive interface should appear. Follow the instructions (i.e. provide model file) and if your model is compliant with our interface, start the application using the corresponding button. Et voila.
 
 ---
 
 ### Known issues:
-- currently program has to be run on two terminals via two npm commands - I tried to connect and synchronize them (server has to be running before electron app starts), but haven't succeeded yet. Fix welcome.
 - app is still using _localhost_, but not in a browser (per se), but in electron app window - should be convenient
-- limiting moving sigma container outside of the graph (so it is visible at all times) may seem aggressive and coefficients used to calculate bounds were selected experimentally - likely to fail for neural net of different structure
+- sometimes scroll event is not detected properly and because of it no proper graph interaction happens
+- optimization is welcome, as the way gradients and activations are calculated and prepared right now is quite computationally demanding - it is hard to find simple solution for that case
