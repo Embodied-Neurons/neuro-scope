@@ -1,10 +1,8 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import json
 import os
-from scripts.neural_graph import NeuralGraph
 
+from models.neural_graph import NeuralGraph
 
 
 class ActivationTracker:
@@ -15,10 +13,12 @@ class ActivationTracker:
         self.handles = []
         self._register_hooks()
 
+
     def _save_activation(self, name):
         def hook(module, input, output):
             self.activations[name] = output.detach().cpu().numpy().tolist()
         return hook
+
 
     def _save_gradient(self, name):
         def hook(grad_output):
@@ -26,7 +26,9 @@ class ActivationTracker:
                 self.gradients[name] = grad_output[0].detach().cpu().numpy().tolist()
             else:
                 self.gradients[name] = grad_output.detach().cpu().numpy().tolist()
+
         return hook
+
 
     def _register_hooks(self):
         for name, module in self.model.named_modules():
@@ -36,9 +38,11 @@ class ActivationTracker:
         for name, param in self.model.named_parameters():
             self.handles.append(param.register_hook(self._save_gradient(name)))
 
+
     def clear(self):
         self.activations.clear()
         self.gradients.clear()
+
 
     def save_to_json(self, batch_idx, save_dir="outputs"):
         os.makedirs(save_dir, exist_ok=True)
@@ -46,6 +50,7 @@ class ActivationTracker:
             json.dump(self.activations, fa)
         with open(os.path.join(save_dir, f"batch_{batch_idx}_gradients.json"), "w") as fg:
             json.dump(self.gradients, fg)
+
 
     def remove_hooks(self):
         for handle in self.handles:

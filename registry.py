@@ -2,20 +2,21 @@ import inspect
 import ast
 import warnings
 
+
 model_registry = {}
 trainer_registry = {}
 
 
 def _check_train_fn(fn):
-
     src = inspect.getsource(fn)
     tree = ast.parse(src)
-
     assigns = [n for n in ast.walk(tree) if isinstance(n, ast.Assign)]
+
     models_reassigned = any(
         any(isinstance(t, ast.Name) and t.id == "model" for t in a.targets)
         for a in assigns
     )
+
     trackers_reassigned = any(
         any(isinstance(t, ast.Name) and t.id == "tracker" for t in a.targets)
         for a in assigns
@@ -34,6 +35,7 @@ def register_trainer(cls):
     train_fn = getattr(cls, "train", None)
     if train_fn:
         _check_train_fn(cls)
+        
     trainer_registry["trainer"] = cls
     return cls
 

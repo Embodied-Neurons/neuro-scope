@@ -1,9 +1,9 @@
-
 import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
 import sys
+
 
 MODEL_PATH_FILE = "model_path.txt"
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))

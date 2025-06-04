@@ -7,6 +7,7 @@ class NeuralGraph:
     def __init__(self):
         self.data = None
 
+
     def build_graph(self, model):
         edge_list = []
         layer_sizes = []
@@ -32,9 +33,11 @@ class NeuralGraph:
                 node_index += layer.out_features
                 node_labels.extend([name] * layer.out_features)
                 node_features.extend([torch.zeros(1) for _ in range(layer.out_features)])
+
                 for src in prev_nodes:
                     for dst in current_nodes:
                         edge_list.append([src, dst])
+                        
                 layer_sizes.append(layer.out_features)
                 prev_nodes = current_nodes
 
@@ -48,6 +51,7 @@ class NeuralGraph:
         self.data = Data(x=x, edge_index=edge_index)
         self.data.node_labels = node_labels
         self.data.layer_sizes = layer_sizes
+
 
     def get_data(self):
         return self.data

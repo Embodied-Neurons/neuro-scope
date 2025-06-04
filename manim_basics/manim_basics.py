@@ -1,6 +1,7 @@
 from manim import *
 import random
 
+
 # simple class
 class NeuronLayer(Scene):
     def construct(self):
@@ -18,6 +19,7 @@ class NeuronLayer(Scene):
             neurons.append(neuron)
         
         self.play([Create(neuron) for neuron in neurons])
+
 
 # let's do more layers
 class NeuronLayers(Scene):
@@ -86,7 +88,7 @@ class NeuronLayers(Scene):
                         fneuron.point_at_angle(0), 
                         sneuron.point_at_angle(PI), 
                         buff=0.02, 
-                        stroke_width = 3
+                        stroke_width=3
                     ))
         
         # putting neurons on a scene
@@ -122,6 +124,7 @@ class NeuronLayers(Scene):
             ])
 
         self.wait(0.5)
+
 
     # helper function - otherwise only last animation counts
     def animate_edge(self, edge):

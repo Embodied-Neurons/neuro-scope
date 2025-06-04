@@ -10,16 +10,12 @@ from scripts.extract_data import extract_graph_structure, ActivationTracker
 from registry import register_model, register_trainer
 
 
-
-
 data_dir = 'data/Jute_Pest_Dataset'
 train_dir = os.path.join(data_dir, 'train')
 val_dir = os.path.join(data_dir, 'val')
 test_dir = os.path.join(data_dir, 'test')
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 
 @register_model
@@ -35,17 +31,15 @@ class SimpleCNN(NeuralNetInterface):
             nn.Linear(256, num_classes)
         )
 
+
     def forward(self, x):
         return self.model(x)
-
-
 
 
 @register_trainer
 class Trainer(TrainerInterface):
     @staticmethod
-    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_batches=int, epochs=1):
-
+    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_batches: int, epochs=1):
         transform = transforms.Compose([
             transforms.Resize((128, 128)),
             transforms.ToTensor(),
@@ -71,6 +65,7 @@ class Trainer(TrainerInterface):
             model.train()
             running_loss = 0.0
             batch_count = 0
+
             for images, labels in tqdm(loader, desc=f"Epoch {epoch+1}"):
                 images, labels = images.to(device), labels.to(device)
                 optimizer.zero_grad()
@@ -88,10 +83,10 @@ class Trainer(TrainerInterface):
 
             print(f"Epoch {epoch+1}, Loss: {running_loss/len(loader):.4f}")
 
-
             model.eval()
             correct = 0
             total = 0
+
             with torch.no_grad():
                 for images, labels in val_loader:
                     images, labels = images.to(device), labels.to(device)
@@ -99,6 +94,7 @@ class Trainer(TrainerInterface):
                     _, predicted = torch.max(outputs, 1)
                     total += labels.size(0)
                     correct += (predicted == labels).sum().item()
+                    
             print(f'Validation Accuracy: {100 * correct / total:.2f}%')
 
         tracker.remove_hooks()

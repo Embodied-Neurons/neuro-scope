@@ -1,15 +1,12 @@
-import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-import os
 
 from model_interface import NeuralNetInterface, TrainerInterface
 from scripts.extract_data import extract_graph_structure, ActivationTracker
 from registry import register_model, register_trainer
-
 
 
 @register_model
@@ -21,13 +18,13 @@ class SimpleNN(NeuralNetInterface):
         self.relu = nn.ReLU()
         self.fc2 = nn.Linear(128, 10)
 
+
     def forward(self, x):
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
         return x
-
 
 
 @register_trainer
@@ -53,6 +50,7 @@ class Trainer(TrainerInterface):
         model.train()
 
         batch_count = 0
+
         for batch_idx, (images, labels) in enumerate(train_loader):
             if batch_count >= num_batches:
                 break
@@ -70,4 +68,3 @@ class Trainer(TrainerInterface):
 
         print(f"✅ Finished training. {batch_count} batches processed.")
         tracker.remove_hooks()
-

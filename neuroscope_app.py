@@ -2,18 +2,12 @@ import os
 import json
 from flask import Flask, jsonify, request
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 import importlib.util
 import sys
-import inspect
 
 from scripts.group_normalizer import normalize_groups_grad, normalize_groups_act
 from scripts.neuron_compresser import compress_neuron_layers
 from scripts.extract_data import ActivationTracker, extract_graph_structure
-
 from registry import model_registry, trainer_registry
 
 
@@ -77,7 +71,6 @@ def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
     if not trainer_cls:
         raise AttributeError("No trainer registered. Use @register_trainer on your Trainer class.")
 
-
     print("Running user-defined training function...")
 
     dummy_model = model_cls(*[], **{})
@@ -85,13 +78,9 @@ def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
 
     trainer_cls.train(dummy_model, tracker, num_batches)
 
-
     torch.save(dummy_model.state_dict(), MODEL_PATH)
     tracker.remove_hooks()
     extract_graph_structure(dummy_model, save_path=os.path.join(OUTPUT_DIR, "graph_structure.json"))
-
-
-
 
 
 app = Flask(__name__)
@@ -108,9 +97,11 @@ def generate_mlp_layout(layer_sizes):
     for layer_idx, size in enumerate(layer_sizes):
         x = layer_idx * x_step
         y_offset = (height - y_step * (size - 1)) / 2
+
         for i in range(size):
             y = y_offset + i * y_step
             layout.append((x, y))
+
     return layout
 
 
@@ -128,6 +119,7 @@ def graph_data():
 
     activations = {}
     gradients = {}
+
     if os.path.exists(act_path) and os.path.exists(grad_path):
         with open(act_path, 'r') as fa:
             activations = json.load(fa)
@@ -136,6 +128,7 @@ def graph_data():
 
     nodes = []
     positions = generate_mlp_layout(structure['layer_sizes'])
+
     for i, node in enumerate(structure['nodes']):
         x, y = positions[i]
         nodes.append({
@@ -175,6 +168,7 @@ def nn_compressed():
 
     activations = {}
     gradients = {}
+
     if os.path.exists(act_path) and os.path.exists(grad_path):
         with open(act_path, 'r') as fa:
             activations = json.load(fa)
@@ -184,6 +178,7 @@ def nn_compressed():
     n = len(layer_sizes)
     compressed = compress_neuron_layers(layer_sizes, layer_count)
     grouped_gradients = {}
+
     for i in range(1, n):
         key = f"fc{i}.weight"
         k = f"fc{i}.grad"
@@ -193,14 +188,18 @@ def nn_compressed():
     for key in activations:
         val = len(activations[key][0])
         last_val[val] = key
+
     grouped_activations = {}
     i = 1
+
     for key in activations:
         if last_val[len(activations[key][0])] != key:
             continue
+
         k = f"fc{i}.activ"
         grouped_activations[k] = normalize_groups_act(activations[key], compressed[i]).tolist()
         i += 1
+
     grouped = {"gradients": grouped_gradients, "activations": grouped_activations}
     return grouped
 
@@ -209,14 +208,17 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
         "--train", action="store_true",
         help="Train the model and exit"
     )
+
     parser.add_argument(
         "--serve", action="store_true",
         help="Run the Flask server"
     )
+
     args = parser.parse_args()
 
     if args.train:
@@ -228,4 +230,3 @@ if __name__ == "__main__":
 
     train_and_save()
     app.run(debug=True)
-
