@@ -23,19 +23,21 @@ function fetchAndDisplayGraph(batch = 0) {
     fetch(`http://127.0.0.1:5000/nn_visualization?batch=${batch}`)
         .then(response => response.json())
         .then(async data => {
+            const container = document.getElementById('sigma-container');
+            container.innerHTML = '';
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+
             const nodes = getAllNodesByLayers(data.nodes, data.layer_sizes);
-            const posInfo = getNodesPosInfo(nodes);
-            const {neuronLayers, edges} = await groupNeurons(nodes, nodes, data.layer_sizes, batch);
+            const posInfo = getNodesPosInfo(nodes, containerWidth, containerHeight);
+            const {neuronLayers, edges} = await groupNeurons(nodes, nodes, containerHeight, data.layer_sizes, batch);
             const graph = new Graph();
 
-            buildGraph(graph, neuronLayers, edges);
+            buildGraph(graph, containerWidth, containerHeight, neuronLayers, edges);
 
             let selectedNode = null;
             let selectedEdgesColors = [];
             let currentVisibleNodes = nodes;
-
-            const container = document.getElementById('sigma-container');
-            container.innerHTML = '';
 
             const renderer = new Sigma(graph, container, {
                 minCameraRatio: 0.02,
@@ -57,12 +59,12 @@ function fetchAndDisplayGraph(batch = 0) {
 
             let buildGraphHandler = async function() {
                 const visibilityRanges = getVisibilityRanges(camera, renderer, container);
-                const visibleNodes = getVisibleNodes(nodes, visibilityRanges);
+                const visibleNodes = getVisibleNodes(nodes, containerWidth, containerHeight, visibilityRanges);
 
                 if (visibleNodesChanged(visibleNodes, currentVisibleNodes) && anyNodeVisible(visibleNodes)) {
                     const {ratio} = camera.getState();
-                    const {neuronLayers, edges} = await groupNeurons(visibleNodes, nodes, data.layer_sizes, batch, ratio);
-                    buildGraph(graph, neuronLayers, edges);
+                    const {neuronLayers, edges} = await groupNeurons(visibleNodes, nodes, containerHeight, data.layer_sizes, batch, ratio);
+                    buildGraph(graph, containerWidth, containerHeight, neuronLayers, edges);
 
                     currentVisibleNodes = visibleNodes;
                     selectedNode = null;
@@ -157,7 +159,7 @@ window.onload = () => {
     controls.appendChild(select);
     controls.appendChild(document.createElement('br'));
     controls.appendChild(button);
-    document.body.insertBefore(controls, document.getElementById('sigma-container'));
+    document.getElementById('batch-panel').appendChild(controls);
 
     // Needs to be done after inserting into DOM
     select.style.width = `${button.offsetWidth}px`;
@@ -191,7 +193,9 @@ window.onload = () => {
                 detectBatches();
             })
             .catch(() => {
-                if (batch > 0) fetchAndDisplayGraph(0);
+                if (batch > 0) {
+                    alert(`All ${batch} batches detected.`);
+                }
             });
     })();
 };

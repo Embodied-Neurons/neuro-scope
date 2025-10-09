@@ -1,6 +1,3 @@
-const { CONTAINER_WIDTH, CONTAINER_HEIGHT } = require('./consts.js');
-
-
 const getAllNodesByLayers = function(nodes, layerSizes) {
     const nodesByLayers = [];
     let previousNeuronCount = 0;
@@ -19,7 +16,7 @@ const getAllNodesByLayers = function(nodes, layerSizes) {
 }
 
 
-const getNodesPosInfo = function(nodesByLayers) {
+const getNodesPosInfo = function(nodesByLayers, containerWidth, containerHeight) {
     const posInfo = [];
     let x, minY, maxY;
 
@@ -29,9 +26,9 @@ const getNodesPosInfo = function(nodesByLayers) {
         maxY = nodesLayer[nodesLayer.length - 1].y;
 
         posInfo.push({
-            x: x / CONTAINER_WIDTH,
-            minY: minY / CONTAINER_HEIGHT,
-            maxY: maxY / CONTAINER_HEIGHT
+            x: x / containerWidth,
+            minY: minY / containerHeight,
+            maxY: maxY / containerHeight
         });
     }
 
@@ -55,19 +52,19 @@ const anyNodeVisible = function(nodesByLayers) {
 }
 
 
-const getVisibleNodes = function(nodes, visibilityRanges) {
+const getVisibleNodes = function(nodes, containerWidth, containerHeight, visibilityRanges) {
     const {minX, maxX, minY, maxY} = visibilityRanges;
     const visibleNodes = [];
 
     for (const nodeLayer of nodes) {
         visibleNodes.push([]);
 
-        if (nodeLayer[0].x / CONTAINER_WIDTH < minX || nodeLayer[0].x / CONTAINER_WIDTH > maxX) {
+        if (nodeLayer[0].x / containerWidth < minX || nodeLayer[0].x / containerWidth > maxX) {
             continue;
         }
 
         for (const node of nodeLayer) {
-            if (node.y / CONTAINER_HEIGHT >= minY && node.y / CONTAINER_HEIGHT <= maxY) {
+            if (node.y / containerHeight >= minY && node.y / containerHeight <= maxY) {
                 visibleNodes[visibleNodes.length - 1].push(node);
             }
         }

@@ -1,7 +1,7 @@
-const { MAX_GROUPS, CONTAINER_WIDTH, CONTAINER_HEIGHT } = require('./consts.js')
+const { MAX_GROUPS } = require('./consts.js')
 
 
-const groupNeurons = async function(visibleNodes, allNodes, originalSizes, batch, zoomRatio = 1.0) {
+const groupNeurons = async function(visibleNodes, allNodes, containerHeight, originalSizes, batch, zoomRatio = 1.0) {
     const layerVisibility = [];
     let maxVisibleNeurons = 0;
     let yExtent = 1;
@@ -16,7 +16,7 @@ const groupNeurons = async function(visibleNodes, allNodes, originalSizes, batch
         }
     }
 
-    yExtent = Math.min(1, yExtent / CONTAINER_HEIGHT / zoomRatio);
+    yExtent = Math.min(1, yExtent / containerHeight / zoomRatio);
 
     const neuronsPerGroup = Math.ceil(Math.max(...originalSizes) / MAX_GROUPS);
     const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS / yExtent);
@@ -138,7 +138,7 @@ async function fetchCompressedEdges(batch, originalSizes, visibleNeuronsPerGroup
 }
 
 
-const buildGraph = function(graph, neuronLayers, edges) {
+const buildGraph = function(graph, containerWidth, containerHeight, neuronLayers, edges) {
     // drop all current nodes (edges are dropped as well)
     graph.forEachNode((node, _) => {
         graph.dropNode(node);
@@ -146,7 +146,7 @@ const buildGraph = function(graph, neuronLayers, edges) {
 
     // dummy nodes, otherwise sigma tries to be smart and scale coordinates
     graph.addNode("dummy1", {x: 0, y: 0, color: '#ffffff'});
-    graph.addNode("dummy2", {x: CONTAINER_WIDTH, y: CONTAINER_HEIGHT, color: '#ffffff'});
+    graph.addNode("dummy2", {x: containerWidth, y: containerHeight, color: '#ffffff'});
 
     neuronLayers.forEach(layer => {
         layer.forEach(node => {

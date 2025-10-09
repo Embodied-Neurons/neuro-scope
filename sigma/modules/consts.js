@@ -1,5 +1,3 @@
 const MAX_GROUPS = 28;
-const CONTAINER_WIDTH = 960;
-const CONTAINER_HEIGHT = 720;
 
-module.exports = { MAX_GROUPS, CONTAINER_WIDTH, CONTAINER_HEIGHT };
+module.exports = { MAX_GROUPS };

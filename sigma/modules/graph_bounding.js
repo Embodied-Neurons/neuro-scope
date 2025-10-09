@@ -1,6 +1,3 @@
-const { CONTAINER_WIDTH, CONTAINER_HEIGHT } = require('./consts.js');
-
-
 const calculateDynamicBounds = function(x, y, ratio, posInfo) {
     let newX, newY;
     let {minY, maxY} = findYExtremes(x, posInfo);
@@ -62,8 +59,8 @@ const getVisibilityRanges = function(camera, renderer, container) {
     const {ratio} = camera.getState();
     let {x, y} = getCenterCoords(renderer, container);
 
-    x /= CONTAINER_WIDTH;
-    y /= CONTAINER_HEIGHT;
+    x /= container.offsetWidth;
+    y /= container.offsetHeight;
 
     return {
         minX: x - 0.56 * ratio,
