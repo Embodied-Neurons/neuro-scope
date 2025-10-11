@@ -11,7 +11,11 @@ import socket
 
 MODEL_PATH_FILE = "model_path.txt"
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR = os.path.join("outputs")
 SIGMA_START = "cd sigma && npm start"
+PORT = 5000
+WIDTH = 400
+HEIGHT = 200
 
 if sys.platform == "win32":
     NEW_CONSOLE = subprocess.CREATE_NEW_CONSOLE
@@ -32,8 +36,8 @@ def is_port_open(port):
 
 class MenuApp:
     def __init__(self):
-        self.train = None
-        self.sigma = None
+        self.sigma_start = None
+        self.overlay = None
 
 
     def select_model(self):
@@ -66,6 +70,35 @@ class MenuApp:
                 stdout=DEVNULL,
                 stderr=DEVNULL,
             )
+    
+
+    def create_overlay(self, info):
+        if self.overlay is None:
+            # creating overlay during training/starting server
+            self.overlay = tk.Frame(self.root)
+            self.overlay.place(x=0, y=0, relwidth=1.0, relheight=1.0)
+            self.overlay.lift()
+
+            # adding info text
+            label = tk.Label(self.overlay, text=info, font=("Arial", 18))
+            label.place(relx=.5, rely=.5, anchor=tk.CENTER)
+
+            # grabbing focus to overlay
+            self.root.protocol("WM_DELETE_WINDOW", lambda: None)
+            self.overlay.grab_set()
+            self.overlay.focus_set()
+    
+
+    def destroy_overlay(self):
+        if self.overlay is not None:
+            try:
+                self.overlay.grab_release()
+            except Exception:
+                pass
+
+            self.overlay.destroy()
+            self.root.protocol("WM_DELETE_WINDOW", self.close_app)
+            self.overlay = None
 
 
     def start_app(self):
@@ -74,50 +107,80 @@ class MenuApp:
         if not os.path.exists(model_file):
             messagebox.showerror("No Model", "Please select a model file before starting the app.")
             return
-        
-        # 'disable' start button, 'activate' stop button after starting the server
-        self.start_button.pack_forget()
-        self.root.update()
 
         try:
-            self.train = self.create_subprocess(SIGMA_TRAIN)
-
-            if not is_port_open(5000):
-                # display info message while waiting for the server to start
-                info_label = tk.Label(
-                    self.root, 
-                    text="Waiting for server to start...", 
-                    font=("Arial", 14)
-                )
-
-                info_label.place(relx=.5, rely=.67, anchor=tk.CENTER)
-                self.root.update()
-                self.root.after(250, info_label.destroy)
-                self.create_subprocess(SIGMA_SERVE)
-
-                while not is_port_open(5000):
-                    sleep(0.25)
-
-            # launching sigma application in a separate thread for two-way stop
-            self.sigma = self.create_subprocess(SIGMA_START)
-            threading.Thread(target=self.sigma_wait, daemon=True).start()
-            self.stop_button.pack(pady=10)
-
+            # start training, next stages are performed sequentially
+            self.start_training()
         except Exception as e:
             # 'activate' start button and 'disable' stop button in case of failure
+            self.destroy_overlay()  
             self.stop_button.pack_forget()
             self.start_button.pack(pady=10)
+            self.root.update()
 
             messagebox.showerror("Error", f"Failed to launch processes:\n{e}")
+    
+
+    def start_training(self):
+        # check if training is needed
+        if not (os.path.exists(OUTPUT_DIR) and any(f.endswith(".json") for f in os.listdir(OUTPUT_DIR))):
+            # create overlay with info message
+            self.create_overlay("Training in progress...")
+
+            # wait for training to complete
+            self.training_subprocess = self.create_subprocess(SIGMA_TRAIN)
+            threading.Thread(target=self.training_wait, daemon=True).start()
+        else:
+            self.start_server()
+
+
+    def training_wait(self):
+        self.training_subprocess.wait()
+        self.destroy_overlay()
+        self.start_server()
+
+
+    def start_server(self):
+        # it is here to decrease delay caused by 'is_open_port' function
+        self.start_button.config(state=tk.DISABLED)
+        self.root.update()
+
+        # check if server is running
+        if not is_port_open(PORT):
+            # create overlay with info message
+            self.create_overlay("Starting server...")
+
+            # wait for server to start
+            self.create_subprocess(SIGMA_SERVE)
+            self.poll_port()
+        else:
+            self.start_sigma()
+
+    
+    def poll_port(self):
+        if is_port_open(PORT):
+            self.destroy_overlay()
+            self.start_sigma()
+        else:
+            self.root.after(250, self.poll_port)
+
+
+    def start_sigma(self):
+        # launching sigma application in a separate thread for two-way stop
+        self.sigma_start = self.create_subprocess(SIGMA_START)
+        threading.Thread(target=self.sigma_wait, daemon=True).start()
+        self.start_button.pack_forget()
+        self.start_button.config(state=tk.NORMAL)
+        self.stop_button.pack(pady=10)
 
 
     def sigma_wait(self):
-        self.sigma.wait()
-        self.sigma = None
-        self.root.after(0, self.stop_app)
+        self.sigma_start.wait()
+        self.sigma_start = None
+        self.stop_app()
 
 
-    # killing subprocesses depending on a platform
+    # killing sigma subprocess depending on a platform
     def stop_app(self):
         # 'activate' start button and 'disable' stop button after stopping the app
         self.stop_button.pack_forget()
@@ -125,32 +188,19 @@ class MenuApp:
         self.root.update()
 
         try:
-            if sys.platform == "win32":
-                if self.train is not None: 
+            if sys.platform == "win32":                
+                if self.sigma_start is not None:
                     subprocess.run(
-                        ["taskkill", "/PID", str(self.train.pid), "/T", "/F"],
+                        ["taskkill", "/PID", str(self.sigma_start.pid), "/T", "/F"],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                         creationflags=subprocess.CREATE_NO_WINDOW
                     )
-                    self.train = None
-                
-                if self.sigma is not None:
-                    subprocess.run(
-                        ["taskkill", "/PID", str(self.sigma.pid), "/T", "/F"],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        creationflags=subprocess.CREATE_NO_WINDOW
-                    )
-                    self.sigma = None
-            elif sys.platform == "linux":
-                if self.train is not None: 
-                    os.killpg(os.getpgid(self.train.pid), signal.SIGTERM)
-                    self.train = None
-                
-                if self.sigma is not None: 
-                    os.killpg(os.getpgid(self.sigma.pid), signal.SIGTERM)
-                    self.sigma = None
+                    self.sigma_start = None
+            elif sys.platform == "linux":                
+                if self.sigma_start is not None: 
+                    os.killpg(os.getpgid(self.sigma_start.pid), signal.SIGTERM)
+                    self.sigma_start = None
         except Exception as e:
             print(f"Error while closing subprocess: {e}")
 
@@ -160,10 +210,28 @@ class MenuApp:
         self.root.destroy()
 
 
+    # blocking window resize in linux
+    def on_configure_linux(self, event):
+        if event.width != WIDTH or event.height != HEIGHT:
+            if getattr(self, "root_after_id", None):
+                self.root.after_cancel(self.root_after_id)
+            
+            self.root_after_id = self.root.after(20, lambda: self.root.geometry(f"{WIDTH}x{HEIGHT}"))
+
+
     def build_gui(self):
         self.root = tk.Tk()
         self.root.title("Neuroscope App Menu")
-        self.root.geometry("400x200")
+
+        x = int((self.root.winfo_screenwidth() / 2) - (WIDTH / 2))
+        y = int((self.root.winfo_screenheight() / 2) - (HEIGHT / 2))
+        self.root.geometry(f"{WIDTH}x{HEIGHT}+{x}+{y}")
+
+        # blocking window resize depending on a platform
+        if sys.platform == "win32":
+            self.root.resizable(False, False)
+        elif sys.platform == "linux":
+            self.root.bind("<Configure>", self.on_configure_linux)
 
         tk.Label(self.root, text="Neuroscope App Menu", font=("Arial", 16)).pack(pady=10)
         tk.Button(self.root, text="Select Model File", command=self.select_model, width=30).pack(pady=10)

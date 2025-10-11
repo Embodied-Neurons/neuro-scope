@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 import torch
 import importlib.util
 import sys
+import argparse
 
 from scripts.group_normalizer import normalize_groups_grad, normalize_groups_act
 from scripts.neuron_compresser import compress_neuron_layers
@@ -42,12 +43,8 @@ def load_user_model():
 
 
 def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
-    if os.path.exists(OUTPUT_DIR) and any(
-            f.endswith(".json") for f in os.listdir(OUTPUT_DIR)):
-        print("[INFO] Outputs already exist. Skipping training.")
-        return
-
     model_path_file = "model_path.txt"
+    
     if not os.path.exists(model_path_file):
         raise FileNotFoundError("No model_path.txt found. Please select a model using the menu.")
 
@@ -205,8 +202,6 @@ def nn_compressed():
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -223,10 +218,6 @@ if __name__ == "__main__":
 
     if args.train:
         train_and_save()
-        sys.exit(0)
 
     if args.serve:
         app.run(debug=True)
-
-    train_and_save()
-    app.run(debug=True)

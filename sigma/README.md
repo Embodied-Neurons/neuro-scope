@@ -11,16 +11,18 @@ all that is needed will be in _node_modules_ subdirectory.
 - in _package.json_ file, change **scripts** section so it looks as follows:
 ```
 "scripts": {
-    "train": "py ../neuroscope_app.py --train",
-    "serve": "py ../neuroscope_app.py --serve",
+    "train": "cd .. && py neuroscope_app.py --train",
+    "train-linux": "cd .. && python3 neuroscope_app.py --train",
+    "serve": "cd .. && py neuroscope_app.py --serve",
+    "serve-linux": "cd .. && python3 neuroscope_app.py --serve",
     "start": "electron index.js"
 },
 ```
 - in the **main** project directory (you can use `cd ..` in the terminal) run:
 ```bash
-    python menu.py
+    py menu.py
 ```
-a window with quite intuitive interface should appear. Follow the instructions (i.e. provide model file) and if your model is compliant with our interface, start the application using the corresponding button. Et voila.
+or equivalent (e.g. `python3 menu.py`). A window with quite intuitive interface should appear. Follow the instructions (i.e. provide model file) and if your model is compliant with our interface, start the application using the corresponding button. Et voila.
 
 ---
 
