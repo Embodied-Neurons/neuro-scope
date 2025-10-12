@@ -26,3 +26,23 @@ div {
 #side-panel h1 {
     margin-top: 0;
 }
+#info-content {
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: #333;
+}
+
+#info-content table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#info-content td {
+    padding: 4px 2px;
+    vertical-align: top;
+}
+
+#info-content tr td:first-child {
+    font-weight: bold;
+    width: 40%;
+}
