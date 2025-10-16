@@ -21,6 +21,11 @@ media/
 *.gif
 *.png
 *.json
+*.jpg
+*.jpeg
+*.webp
+model_path.txt
+
 
 # Logs and databases
 *.log
@@ -38,3 +43,6 @@ Thumbs.db
 
 # Compressed files
 *.gz
+
+# Node modules
+node_modules/

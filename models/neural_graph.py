@@ -2,9 +2,11 @@ import torch
 from torch_geometric.data import Data
 import torch.nn as nn
 
+
 class NeuralGraph:
     def __init__(self):
         self.data = None
+
 
     def build_graph(self, model):
         edge_list = []
@@ -23,6 +25,7 @@ class NeuralGraph:
         node_labels.extend(["Input"] * input_size)
         node_features.extend([torch.zeros(1) for _ in range(input_size)])
         prev_nodes = input_nodes
+        layer_sizes.append(input_size)
 
         for name, layer in model.named_modules():
             if isinstance(layer, nn.Linear):
@@ -30,9 +33,11 @@ class NeuralGraph:
                 node_index += layer.out_features
                 node_labels.extend([name] * layer.out_features)
                 node_features.extend([torch.zeros(1) for _ in range(layer.out_features)])
+
                 for src in prev_nodes:
                     for dst in current_nodes:
                         edge_list.append([src, dst])
+                        
                 layer_sizes.append(layer.out_features)
                 prev_nodes = current_nodes
 
@@ -46,6 +51,7 @@ class NeuralGraph:
         self.data = Data(x=x, edge_index=edge_index)
         self.data.node_labels = node_labels
         self.data.layer_sizes = layer_sizes
+
 
     def get_data(self):
         return self.data

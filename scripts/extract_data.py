@@ -1,65 +1,75 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from scripts.neural_graph import NeuralGraph
+import json
+import os
 
-def save_activation(name, activations):
-    def hook(module, input, output):
-        activations[name] = output.detach().cpu().numpy()
-    return hook
+from models.neural_graph import NeuralGraph
 
-def extract_activation(model, activations):
-    for name, module in model.named_modules():
-        if isinstance(module, (nn.ReLU, nn.Linear)):
-            module.register_forward_hook(save_activation(name, activations))
 
-def save_gradient(name, gradients):
-    def hook(grad_output):
-        if isinstance(grad_output, tuple):
-            gradients[name] = grad_output[0].detach().cpu().numpy()
-        else:
-            gradients[name] = grad_output.detach().cpu().numpy()
-    return hook
+class ActivationTracker:
+    def __init__(self, model):
+        self.model = model
+        self.activations = {}
+        self.gradients = {}
+        self.handles = []
+        self._register_hooks()
 
-def extract_gradients(model, gradients):
-    for name, param in model.named_parameters():
-        param.register_hook(save_gradient(name, gradients))
 
-def get_model_structure(model):
+    def _save_activation(self, name):
+        def hook(module, input, output):
+            self.activations[name] = output.detach().cpu().numpy().tolist()
+        return hook
+
+
+    def _save_gradient(self, name):
+        def hook(grad_output):
+            if isinstance(grad_output, tuple):
+                self.gradients[name] = grad_output[0].detach().cpu().numpy().tolist()
+            else:
+                self.gradients[name] = grad_output.detach().cpu().numpy().tolist()
+
+        return hook
+
+
+    def _register_hooks(self):
+        for name, module in self.model.named_modules():
+            if isinstance(module, (nn.ReLU, nn.Linear)):
+                self.handles.append(module.register_forward_hook(self._save_activation(name)))
+
+        for name, param in self.model.named_parameters():
+            self.handles.append(param.register_hook(self._save_gradient(name)))
+
+
+    def clear(self):
+        self.activations.clear()
+        self.gradients.clear()
+
+
+    def save_to_json(self, batch_idx, save_dir="outputs"):
+        os.makedirs(save_dir, exist_ok=True)
+        with open(os.path.join(save_dir, f"batch_{batch_idx}_activations.json"), "w") as fa:
+            json.dump(self.activations, fa)
+        with open(os.path.join(save_dir, f"batch_{batch_idx}_gradients.json"), "w") as fg:
+            json.dump(self.gradients, fg)
+
+
+    def remove_hooks(self):
+        for handle in self.handles:
+            handle.remove()
+
+
+def extract_graph_structure(model, save_path="outputs/graph_structure.json"):
     graph = NeuralGraph()
     graph.build_graph(model)
 
-    activations = {}
-    gradients = {}
-
-    extract_activation(model, activations)
-    extract_gradients(model, gradients)
-
-    dummy_input = torch.randn(1, 1, 28, 28)
-    dummy_output = model(dummy_input)
-
-    target = torch.tensor([3])
-    loss = F.cross_entropy(dummy_output, target)
-    loss.backward()
-
     data = graph.get_data()
-    data.activations = activations
-    data.gradients = gradients
+    structure = {
+        "nodes": [{"label": label} for label in data.node_labels],
+        "edges": data.edge_index.t().tolist(),
+        "layer_sizes": data.layer_sizes
+    }
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(save_path, "w") as f:
+        json.dump(structure, f)
 
     return data
-
-if __name__ == '__main__':
-    class SimpleNet(nn.Module):
-        def __init__(self):
-            super(SimpleNet, self).__init__()
-            self.fc1 = nn.Linear(28 * 28, 128)
-            self.relu = nn.ReLU()
-            self.fc2 = nn.Linear(128, 10)
-
-        def forward(self, x):
-            x = x.view(x.size(0), -1)
-            x = self.fc1(x)
-            x = self.relu(x)
-            x = self.fc2(x)
-            return x
-
