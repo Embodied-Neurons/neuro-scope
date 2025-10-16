@@ -92,15 +92,16 @@ function fetchAndDisplayGraph(batch = 0) {
             });
 
             renderer.on("clickNode", ({node}) => {
-                const infoPanel = document.getElementById('info-content');
+                const detailsPanel = document.getElementById("details-content");
+
                 if (selectedNode != null) {
-                    graph.setNodeAttribute(selectedNode, 'color', '#c0c0c0');
+                    graph.setNodeAttribute(selectedNode, "color", "#c0c0c0");
                     const pastEdges = graph.edges(selectedNode);
                     for (let i = 0; i < pastEdges.length; i++) {
                         const edge = pastEdges[i];
-                        graph.setEdgeAttribute(edge, 'color', selectedEdgesColors[i]);
-                        graph.setEdgeAttribute(edge, 'size', 0.5);
-                        graph.setEdgeAttribute(edge, 'zIndex', 0);
+                        graph.setEdgeAttribute(edge, "color", selectedEdgesColors[i]);
+                        graph.setEdgeAttribute(edge, "size", 0.5);
+                        graph.setEdgeAttribute(edge, "zIndex", 0);
                     }
                 }
 
@@ -109,40 +110,88 @@ function fetchAndDisplayGraph(batch = 0) {
                     selectedEdgesColors = [];
 
                     const nodeData = graph.getNodeAttributes(node);
-                    const {x, y, size, color, weight} = nodeData;
+                    const {x, y, size, color, weight, activation, mean, min, max,} = nodeData;
 
-                    const highlightColor = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`;
-                    graph.setNodeAttribute(node, 'color', highlightColor);
+                    const highlightColor = `rgb(${Math.round(255 * (1 - (weight || 0)))}, ${Math.round(255 * (weight || 0))}, 0)`;
+                    graph.setNodeAttribute(node, "color", highlightColor);
 
-                    const edges = graph.edges(node);
-                    edges.forEach(edge => {
-                        selectedEdgesColors.push(graph.getEdgeAttribute(edge, 'color'));
+                    const connectedEdges = graph.edges(node);
+
+                    connectedEdges.forEach(edge => {
+                        selectedEdgesColors.push(graph.getEdgeAttribute(edge, "color"));
                     });
-                    for (let edge of edges) {
-                        const weight = graph.getEdgeAttribute(edge, 'weight') || 0;
-                        const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`;
-                        graph.setEdgeAttribute(edge, 'color', color);
-                        graph.setEdgeAttribute(edge, 'size', 1);
-                        graph.setEdgeAttribute(edge, 'zIndex', 1);
-                    }
 
-                    infoPanel.innerHTML = `
-            <h2 style="margin-top:0;">Neuron ${node}</h2>
-            <table>
-                <tr><td>ID:</td><td>${node}</td></tr>
-                <tr><td>X:</td><td>${x.toFixed(2)}</td></tr>
-                <tr><td>Y:</td><td>${y.toFixed(2)}</td></tr>
-                <tr><td>Size:</td><td>${size}</td></tr>
-                <tr><td>Color:</td><td>${color}</td></tr>
-                <tr><td>Weight:</td><td>${weight.toFixed(3)}</td></tr>
-            </table>
-        `;
+                    const edgeStats = [];
+
+                    connectedEdges.forEach(edge => {
+                        const attrs = graph.getEdgeAttributes(edge);
+                        const w = attrs.weight || 0;
+                        const gradMean = attrs.gradMean ?? "—";
+                        const gradMin = attrs.gradMin ?? "—";
+                        const gradMax = attrs.gradMax ?? "—";
+
+                        const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`;
+
+                        graph.setEdgeAttribute(edge, "color", color);
+                        graph.setEdgeAttribute(edge, "size", 1.5);
+                        graph.setEdgeAttribute(edge, "zIndex", 2);
+
+                        edgeStats.push({
+                            id: attrs.id,
+                            weight: w.toFixed(3),
+                            gradMean: gradMean.toFixed ? gradMean.toFixed(3) : gradMean,
+                            gradMin: gradMin.toFixed ? gradMin.toFixed(3) : gradMin,
+                            gradMax: gradMax.toFixed ? gradMax.toFixed(3) : gradMax
+                        });
+                    });
+
+
+                    detailsPanel.innerHTML = `
+      <h2 style="margin-top:0;">Neuron ${node}</h2>
+      <table>
+        <tr><td><b>ID:</b></td><td>${node}</td></tr>
+        <tr><td><b>X:</b></td><td>${x.toFixed(2)}</td></tr>
+        <tr><td><b>Y:</b></td><td>${y.toFixed(2)}</td></tr>
+        <tr><td><b>Size:</b></td><td>${size}</td></tr>
+        <tr><td><b>Activation (norm):</b></td><td>${(weight ?? 0).toFixed(3)}</td></tr>
+        <tr><td><b>Mean:</b></td><td>${(mean ?? 0).toFixed(3)}</td></tr>
+        <tr><td><b>Min:</b></td><td>${(min ?? 0).toFixed(3)}</td></tr>
+        <tr><td><b>Max:</b></td><td>${(max ?? 0).toFixed(3)}</td></tr>
+      </table>
+      <h3>Connected Edges (${edgeStats.length})</h3>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid #ccc;">
+            <th align="left">Edge ID</th>
+            <th align="left">Weight</th>
+            <th align="left">Mean</th>
+            <th align="left">Min</th>
+            <th align="left">Max</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${edgeStats
+                        .map(
+                            e => `
+              <tr>
+                <td>${e.id}</td>
+                <td>${e.weight}</td>
+                <td>${e.gradMean}</td>
+                <td>${e.gradMin}</td>
+                <td>${e.gradMax}</td>
+              </tr>`
+                        )
+                        .join("")}
+        </tbody>
+      </table>
+    `;
                 } else {
                     selectedNode = null;
                     selectedEdgesColors = [];
-                    infoPanel.innerHTML = `<p>Select a neuron to see details.</p>`;
+                    detailsPanel.innerHTML = `<p>Select a neuron to see details.</p>`;
                 }
             });
+
         })
         .catch(error => {
             console.error('Error loading graph data:', error);
