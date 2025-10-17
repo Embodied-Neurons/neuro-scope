@@ -1,7 +1,7 @@
-const { MAX_GROUPS } = require('./consts.js')
+const {MAX_GROUPS} = require('./consts.js')
 
 
-const groupNeurons = async function(visibleNodes, allNodes, containerHeight, originalSizes, batch, zoomRatio = 1.0) {
+const groupNeurons = async function (visibleNodes, allNodes, containerHeight, originalSizes, batch, zoomRatio = 1.0) {
     const layerVisibility = [];
     let maxVisibleNeurons = 0;
     let yExtent = 1;
@@ -102,43 +102,76 @@ const groupNeurons = async function(visibleNodes, allNodes, containerHeight, ori
 
 async function fetchCompressedEdges(batch, originalSizes, visibleNeuronsPerGroup, layerGroups, neuronLayers, layerVisibility) {
     const edges = [];
-    const response = await fetch(`http://127.0.0.1:5000/nn_compressed?batch=${batch}&layers=${originalSizes}&layer_count=${visibleNeuronsPerGroup}`);
-    const data = await response.json();
-    const grad = data["gradients"]
-    const activ = data["activations"]
 
-    // color dict
-    const color_dict = { false: '#c2c2c2', true: '#2c2c2c' };
+    try {
+        const url = `http://127.0.0.1:5000/nn_compressed?batch=${batch}&layers=${originalSizes}&layer_count=${visibleNeuronsPerGroup}`;
+        const response = await fetch(url);
 
-    for (let i = 0; i < layerGroups.length - 1; i++) {
-        const first = neuronLayers[i];
-        const second = neuronLayers[i + 1];
-        const gradKey = `fc${i + 1}.grad`;
-        const activKey = `fc${i + 1}.activ`;
-        const matrixGrad = grad[gradKey];
-        const listActiv = activ[activKey];
-        const color = color_dict[layerVisibility[i] && layerVisibility[i + 1]];
 
-        for (let j = 0; j < first.length; j++) {
-            for (let k = 0; k < second.length; k++) {
-                const fneuron = first[j];
-                const sneuron = second[k];
-                sneuron.weight = listActiv[k]
-                edges.push({
-                    src: fneuron.id,
-                    tgt: sneuron.id,
-                    id: 'edge' + '_' + fneuron.id + '-' + sneuron.id,
-                    color: color,
-                    weight: matrixGrad[k][j]
-                });
+        if (!response.ok) {
+            console.error("Failed to fetch", response.status, response.statusText);
+            return edges;
+        }
+
+        const data = await response.json();
+        console.log(data)
+        const gradients = data.gradients || {};
+        const activations = data.activations || {};
+
+        const colorDict = {false: '#c2c2c2', true: '#2c2c2c'};
+
+        for (let i = 0; i < layerGroups.length - 1; i++) {
+            const first = neuronLayers[i];
+            const second = neuronLayers[i + 1];
+            const gradKey = `fc${i + 1}.grad`;
+            const activKey = `fc${i + 1}.activ`;
+
+            const gradMatrix = gradients[gradKey];
+            const activList = activations[activKey];
+            const color = colorDict[layerVisibility[i] && layerVisibility[i + 1]];
+
+            if (!gradMatrix || !activList) continue;
+
+            for (let j = 0; j < first.length; j++) {
+                for (let k = 0; k < second.length; k++) {
+                    const fNeuron = first[j];
+                    const sNeuron = second[k];
+
+                    const activStats = activList[k];
+                    const gradStats = gradMatrix[k][j];
+
+                    sNeuron.activation = activStats?.value ?? 0;
+                    sNeuron.mean = activStats?.mean ?? 0;
+                    sNeuron.min = activStats?.min ?? 0;
+                    sNeuron.max = activStats?.max ?? 0;
+                    sNeuron.weight = activStats?.normalized ?? 0
+
+                    const weight = gradStats?.normalized ?? 0;
+
+                    edges.push({
+                        id: `edge_${fNeuron.id}-${sNeuron.id}`,
+                        src: fNeuron.id,
+                        tgt: sNeuron.id,
+                        color: color,
+                        weight: weight,
+                        gradValue: gradStats?.value ?? 0,
+                        gradMean: gradStats?.mean ?? 0,
+                        gradMin: gradStats?.min ?? 0,
+                        gradMax: gradStats?.max ?? 0,
+                    });
+                }
             }
         }
+
+        return edges;
+    } catch (err) {
+        console.error("Error fetching compressed edges:", err);
+        return edges;
     }
-    return edges;
 }
 
 
-const buildGraph = function(graph, containerWidth, containerHeight, neuronLayers, edges) {
+const buildGraph = function (graph, containerWidth, containerHeight, neuronLayers, edges) {
     // drop all current nodes (edges are dropped as well)
     graph.forEachNode((node, _) => {
         graph.dropNode(node);
@@ -155,7 +188,12 @@ const buildGraph = function(graph, containerWidth, containerHeight, neuronLayers
                 y: node.y,
                 size: node.size,
                 color: '#c0c0c0',
-                weight: node.weight
+                weight: node.weight,
+                activation: node.activation,
+                mean: node.mean,
+                min: node.min,
+                max: node.max
+
             });
         });
     });
@@ -166,9 +204,13 @@ const buildGraph = function(graph, containerWidth, containerHeight, neuronLayers
             size: 0.5,
             zIndex: 0,
             color: edge.color,
-            weight: edge.weight
+            weight: edge.weight,
+            gradValue: edge.gradValue,
+            gradMean: edge.gradMean,
+            gradMin: edge.gradMin,
+            gradMax: edge.gradMax
         });
     });
 }
 
-module.exports = { groupNeurons, buildGraph };
+module.exports = {groupNeurons, buildGraph};

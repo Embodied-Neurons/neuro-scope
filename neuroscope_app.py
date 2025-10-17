@@ -6,11 +6,9 @@ import importlib.util
 import sys
 import argparse
 
-from scripts.group_normalizer import normalize_groups_grad, normalize_groups_act
-from scripts.neuron_compresser import compress_neuron_layers
+from scripts.neuron_utils import normalize_groups_grad, normalize_groups_act, compress_neuron_layers
 from scripts.extract_data import ActivationTracker, extract_graph_structure
 from registry import model_registry, trainer_registry
-
 
 MODEL_PATH = os.path.join("data", "models", "mnist.pt")
 OUTPUT_DIR = os.path.join("outputs")
@@ -44,7 +42,7 @@ def load_user_model():
 
 def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
     model_path_file = "model_path.txt"
-    
+
     if not os.path.exists(model_path_file):
         raise FileNotFoundError("No model_path.txt found. Please select a model using the menu.")
 
@@ -155,50 +153,68 @@ def graph_data():
 
 @app.route('/nn_compressed', methods=['GET'])
 def nn_compressed():
-    batch_id = int(request.args.get('batch'))
-    layer_str = str(request.args.get("layers"))
-    layer_sizes = list(map(int, layer_str.split(',')))
-    layer_count = int(request.args.get('layer_count'))
+    try:
 
-    act_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_activations.json")
-    grad_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_gradients.json")
+        batch_id = int(request.args.get('batch', 0))
+        layer_str = request.args.get("layers", "")
+        layer_sizes = [int(x) for x in layer_str.split(',') if x.strip()]
+        layer_count = int(request.args.get('layer_count', len(layer_sizes)))
 
-    activations = {}
-    gradients = {}
+        if not layer_sizes:
+            return jsonify({"error": "Missing or invalid 'layers' parameter"}), 400
 
-    if os.path.exists(act_path) and os.path.exists(grad_path):
+        act_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_activations.json")
+        grad_path = os.path.join(OUTPUT_DIR, f"batch_{batch_id}_gradients.json")
+
+        if not (os.path.exists(act_path) and os.path.exists(grad_path)):
+            return jsonify({"error": "Activation or gradient data not found"}), 404
+
         with open(act_path, 'r') as fa:
             activations = json.load(fa)
         with open(grad_path, 'r') as fg:
             gradients = json.load(fg)
 
-    n = len(layer_sizes)
-    compressed = compress_neuron_layers(layer_sizes, layer_count)
-    grouped_gradients = {}
+        compressed = compress_neuron_layers(layer_sizes, layer_count)
 
-    for i in range(1, n):
-        key = f"fc{i}.weight"
-        k = f"fc{i}.grad"
-        grouped_gradients[k] = normalize_groups_grad(gradients[key], compressed[i - 1], compressed[i]).tolist()
+        grouped_gradients = {}
+        grouped_activations = {}
 
-    last_val = {}
-    for key in activations:
-        val = len(activations[key][0])
-        last_val[val] = key
+        for i in range(1, len(layer_sizes)):
+            weight_key = f"fc{i}.weight"
+            grad_key = f"fc{i}.grad"
 
-    grouped_activations = {}
-    i = 1
+            if weight_key not in gradients:
+                continue
 
-    for key in activations:
-        if last_val[len(activations[key][0])] != key:
-            continue
+            grouped_gradients[grad_key] = normalize_groups_grad(
+                gradients[weight_key],
+                compressed[i - 1],
+                compressed[i]
+            )
 
-        k = f"fc{i}.activ"
-        grouped_activations[k] = normalize_groups_act(activations[key], compressed[i]).tolist()
-        i += 1
+        last_val = {len(v[0]): k for k, v in activations.items()}
 
-    grouped = {"gradients": grouped_gradients, "activations": grouped_activations}
-    return grouped
+        layer_idx = 1
+        for key, value in activations.items():
+            if last_val[len(value[0])] != key:
+                continue
+
+            act_key = f"fc{layer_idx}.activ"
+            grouped_activations[act_key] = normalize_groups_act(
+                value,
+                compressed[layer_idx]
+            )
+            layer_idx += 1
+
+        result = {
+            "gradients": grouped_gradients,
+            "activations": grouped_activations,
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

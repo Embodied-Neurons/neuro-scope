@@ -26,3 +26,94 @@ div {
 #side-panel h1 {
     margin-top: 0;
 }
+
+#details-content {
+    font-family: 'Inter', 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #1e1e1e;
+    border-radius: 12px;
+    padding: 16px 20px;
+    transition: all 0.3s ease;
+    overflow-y: auto;
+    max-height: 85vh;
+}
+
+#details-content h2,
+#details-content h3 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: #111;
+}
+
+#details-content h2 {
+    font-size: 1.2rem;
+    border-bottom: 2px solid #007bff33;
+    padding-bottom: 6px;
+}
+
+#details-content h3 {
+    font-size: 1rem;
+    margin-top: 18px;
+    color: #007bff;
+}
+
+#details-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#details-content th,
+#details-content td {
+    padding: 6px 8px;
+    text-align: left;
+}
+
+#details-content thead {
+    background: linear-gradient(90deg, #f4f7fb, #e9edf5);
+    font-weight: 600;
+    color: #333;
+}
+
+#details-content tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#details-content tbody tr:hover {
+    background-color: #eef4ff;
+    transition: background 0.2s ease;
+}
+
+#details-content tr td:first-child {
+    font-weight: 600;
+    color: #444;
+    width: 38%;
+}
+
+#details-content td {
+    color: #222;
+}
+
+#details-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#details-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
+}
+
+#details-content::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 8px;
+}
+
+#details-content::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+

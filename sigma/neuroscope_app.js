@@ -3,19 +3,19 @@ const Graph = require('graphology');
 const Sigma = require('sigma').default;
 
 // graph building functions
-const { groupNeurons, buildGraph } = require('./modules/graph_building.js');
+const {groupNeurons, buildGraph} = require('./modules/graph_building.js');
 
 // node functions
-const { 
-    getAllNodesByLayers, 
-    getNodesPosInfo, 
-    visibleNodesChanged, 
+const {
+    getAllNodesByLayers,
+    getNodesPosInfo,
+    visibleNodesChanged,
     anyNodeVisible,
     getVisibleNodes
 } = require('./modules/node_manipulation.js');
 
 // graph bounds & ranges functions
-const { calculateDynamicBounds, getVisibilityRanges } = require('./modules/graph_bounding.js');
+const {calculateDynamicBounds, getVisibilityRanges} = require('./modules/graph_bounding.js');
 
 
 // Get batch count first
@@ -57,13 +57,16 @@ function fetchAndDisplayGraph(batch = 0) {
                 }
             });
 
-            let buildGraphHandler = async function() {
+            let buildGraphHandler = async function () {
                 const visibilityRanges = getVisibilityRanges(camera, renderer, container);
                 const visibleNodes = getVisibleNodes(nodes, containerWidth, containerHeight, visibilityRanges);
 
                 if (visibleNodesChanged(visibleNodes, currentVisibleNodes) && anyNodeVisible(visibleNodes)) {
                     const {ratio} = camera.getState();
-                    const {neuronLayers, edges} = await groupNeurons(visibleNodes, nodes, containerHeight, data.layer_sizes, batch, ratio);
+                    const {
+                        neuronLayers,
+                        edges
+                    } = await groupNeurons(visibleNodes, nodes, containerHeight, data.layer_sizes, batch, ratio);
                     buildGraph(graph, containerWidth, containerHeight, neuronLayers, edges);
 
                     currentVisibleNodes = visibleNodes;
@@ -89,19 +92,16 @@ function fetchAndDisplayGraph(batch = 0) {
             });
 
             renderer.on("clickNode", ({node}) => {
-                if (["dummy1", "dummy2"].includes(node)) {
-                    return;
-                }
+                const detailsPanel = document.getElementById("details-content");
 
                 if (selectedNode != null) {
-                    graph.setNodeAttribute(selectedNode, 'color', '#c0c0c0');
+                    graph.setNodeAttribute(selectedNode, "color", "#c0c0c0");
                     const pastEdges = graph.edges(selectedNode);
-                    
                     for (let i = 0; i < pastEdges.length; i++) {
                         const edge = pastEdges[i];
-                        graph.setEdgeAttribute(edge, 'color', selectedEdgesColors[i]);
-                        graph.setEdgeAttribute(edge, 'size', 0.5);
-                        graph.setEdgeAttribute(edge, 'zIndex', 0);
+                        graph.setEdgeAttribute(edge, "color", selectedEdgesColors[i]);
+                        graph.setEdgeAttribute(edge, "size", 0.5);
+                        graph.setEdgeAttribute(edge, "zIndex", 0);
                     }
                 }
 
@@ -109,34 +109,89 @@ function fetchAndDisplayGraph(batch = 0) {
                     selectedNode = node;
                     selectedEdgesColors = [];
 
-                    const weight = graph.getNodeAttribute(node, 'weight') || 0;
-                    const r = Math.round(255 * (1 - weight));
-                    const g = Math.round(255 * weight);
-                    const b = 0;
-                    const color = `rgb(${r},${g},${b})`;
-                    graph.setNodeAttribute(node, 'color', color);
-                    const edges = graph.edges(node);
-                    edges.forEach(edge => {
-                        selectedEdgesColors.push(graph.getEdgeAttribute(edge, 'color'));
+                    const nodeData = graph.getNodeAttributes(node);
+                    const {x, y, size, color, weight, activation, mean, min, max,} = nodeData;
+
+                    const highlightColor = `rgb(${Math.round(255 * (1 - (weight || 0)))}, ${Math.round(255 * (weight || 0))}, 0)`;
+                    graph.setNodeAttribute(node, "color", highlightColor);
+
+                    const connectedEdges = graph.edges(node);
+
+                    connectedEdges.forEach(edge => {
+                        selectedEdgesColors.push(graph.getEdgeAttribute(edge, "color"));
                     });
 
-                    for (let edge of edges) {
-                        const weight = graph.getEdgeAttribute(edge, 'weight') || 0;
+                    const edgeStats = [];
 
-                        const r = Math.round(255 * (1 - weight));
-                        const g = Math.round(255 * weight);
-                        const b = 0;
-                        const color = `rgb(${r},${g},${b})`;
+                    connectedEdges.forEach(edge => {
+                        const attrs = graph.getEdgeAttributes(edge);
+                        const w = attrs.weight || 0;
+                        const gradMean = attrs.gradMean ?? "—";
+                        const gradMin = attrs.gradMin ?? "—";
+                        const gradMax = attrs.gradMax ?? "—";
 
-                        graph.setEdgeAttribute(edge, 'color', color);
-                        graph.setEdgeAttribute(edge, 'size', 1);
-                        graph.setEdgeAttribute(edge, 'zIndex', 1);
-                    }
+                        const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`;
+
+                        graph.setEdgeAttribute(edge, "color", color);
+                        graph.setEdgeAttribute(edge, "size", 1.5);
+                        graph.setEdgeAttribute(edge, "zIndex", 2);
+
+                        edgeStats.push({
+                            id: attrs.id,
+                            weight: w.toFixed(3),
+                            gradMean: gradMean.toFixed ? gradMean.toFixed(3) : gradMean,
+                            gradMin: gradMin.toFixed ? gradMin.toFixed(3) : gradMin,
+                            gradMax: gradMax.toFixed ? gradMax.toFixed(3) : gradMax
+                        });
+                    });
+
+
+                    detailsPanel.innerHTML = `
+      <h2 style="margin-top:0;">Neuron ${node}</h2>
+      <table>
+        <tr><td><b>ID:</b></td><td>${node}</td></tr>
+        <tr><td><b>X:</b></td><td>${x.toFixed(2)}</td></tr>
+        <tr><td><b>Y:</b></td><td>${y.toFixed(2)}</td></tr>
+        <tr><td><b>Size:</b></td><td>${size}</td></tr>
+        <tr><td><b>Activation (norm):</b></td><td>${(weight ?? 0).toFixed(3)}</td></tr>
+        <tr><td><b>Mean:</b></td><td>${(mean ?? 0).toFixed(3)}</td></tr>
+        <tr><td><b>Min:</b></td><td>${(min ?? 0).toFixed(3)}</td></tr>
+        <tr><td><b>Max:</b></td><td>${(max ?? 0).toFixed(3)}</td></tr>
+      </table>
+      <h3>Connected Edges (${edgeStats.length})</h3>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid #ccc;">
+            <th align="left">Edge ID</th>
+            <th align="left">Weight</th>
+            <th align="left">Mean</th>
+            <th align="left">Min</th>
+            <th align="left">Max</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${edgeStats
+                        .map(
+                            e => `
+              <tr>
+                <td>${e.id}</td>
+                <td>${e.weight}</td>
+                <td>${e.gradMean}</td>
+                <td>${e.gradMin}</td>
+                <td>${e.gradMax}</td>
+              </tr>`
+                        )
+                        .join("")}
+        </tbody>
+      </table>
+    `;
                 } else {
                     selectedNode = null;
                     selectedEdgesColors = [];
+                    detailsPanel.innerHTML = `<p>Select a neuron to see details.</p>`;
                 }
             });
+
         })
         .catch(error => {
             console.error('Error loading graph data:', error);
