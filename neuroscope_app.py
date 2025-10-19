@@ -10,11 +10,9 @@ from scripts.neuron_utils import normalize_groups_grad, normalize_groups_act, co
 from scripts.extract_data import ActivationTracker, extract_graph_structure
 from registry import model_registry, trainer_registry
 
-MODEL_PATH = os.path.join("data", "models", "mnist.pt")
-OUTPUT_DIR = os.path.join("outputs")
-NUM_BATCHES_TO_SAVE = 100
-
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+MODEL_PATH = "./data/models/"
+OUTPUT_DIR = "./"
+NUM_BATCHES = 10
 
 
 def load_user_model():
@@ -40,7 +38,7 @@ def load_user_model():
     return model_cls()
 
 
-def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
+def train_and_save(num_batches=NUM_BATCHES):
     model_path_file = "model_path.txt"
 
     if not os.path.exists(model_path_file):
@@ -71,7 +69,7 @@ def train_and_save(num_batches=NUM_BATCHES_TO_SAVE):
     dummy_model = model_cls(*[], **{})
     tracker = ActivationTracker(dummy_model)
 
-    trainer_cls.train(dummy_model, tracker, num_batches)
+    trainer_cls.train(dummy_model, tracker, num_batches, OUTPUT_DIR)
 
     torch.save(dummy_model.state_dict(), MODEL_PATH)
     tracker.remove_hooks()
@@ -154,7 +152,6 @@ def graph_data():
 @app.route('/nn_compressed', methods=['GET'])
 def nn_compressed():
     try:
-
         batch_id = int(request.args.get('batch', 0))
         layer_str = request.args.get("layers", "")
         layer_sizes = [int(x) for x in layer_str.split(',') if x.strip()]
@@ -230,7 +227,23 @@ if __name__ == "__main__":
         help="Run the Flask server"
     )
 
+    parser.add_argument(
+        "--model-path", required=True,
+        help="Path to save the model file"
+    )
+
+    parser.add_argument(
+        "--output-dir", required=True,
+        help="Path to save batches and graph structure in json"
+    )
+
     args = parser.parse_args()
+    args_ = vars(args)
+
+    MODEL_PATH += args_['model_path']
+    OUTPUT_DIR += args_['output_dir']
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     if args.train:
         train_and_save()

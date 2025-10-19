@@ -1,3 +1,4 @@
+import os
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
@@ -7,6 +8,10 @@ from torch.utils.data import DataLoader
 from model_interface import NeuralNetInterface, TrainerInterface
 from scripts.extract_data import extract_graph_structure, ActivationTracker
 from registry import register_model, register_trainer
+
+# changing to main directory if it is not current working directory
+if os.getcwd().endswith("models"):
+    os.chdir(os.path.join(".."))
 
 
 @register_model
@@ -30,21 +35,21 @@ class SimpleNN(NeuralNetInterface):
 @register_trainer
 class Trainer(TrainerInterface):
     @staticmethod
-    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_batches: int):
+    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_batches: int, output_dir: str):
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
         ])
 
         train_dataset = torchvision.datasets.MNIST(
-            root="../data", train=True, transform=transform, download=True)
+            root="./data", train=True, transform=transform, download=True)
         train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.001)
 
         print("🔍 Extracting model structure...")
-        extract_graph_structure(model, save_path="outputs/graph_structure.json")
+        extract_graph_structure(model, save_path=f"./{output_dir}/graph_structure.json")
 
         print("📦 Training started...")
         model.train()
@@ -63,7 +68,7 @@ class Trainer(TrainerInterface):
             loss.backward()
             optimizer.step()
 
-            tracker.save_to_json(batch_count, save_dir="outputs")
+            tracker.save_to_json(batch_count, save_dir=f"{output_dir}")
             batch_count += 1
 
         print(f"✅ Finished training. {batch_count} batches processed.")
