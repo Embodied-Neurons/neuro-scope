@@ -3,31 +3,24 @@ div {
 }
 
 #batch-panel {
-    width: 9%;
-    height: 96vh;
-    margin: auto;
+    width: 7.5vw;
+    min-height: 97vh;
+    max-height: 97vh;
 }
 
 
 #sigma-container {
-    width: 65%;
-    height: 96vh;
-    margin: auto;
+    width: 60vw;
+    min-height: 97vh;
+    max-height: 97vh;
     border: 1px solid #ccc;
 }
 
-#side-panel {
-    width: 24%;
-    height: 96vh;
-    margin: auto;
-    text-align: center;
-}
-
-#side-panel h1 {
-    margin-top: 0;
-}
-
 #details-content {
+    width: 26.5vw;
+    min-height: 91vh;
+    max-height: 91vh;
+    text-align: center;
     font-family: 'Inter', 'Roboto', sans-serif;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -36,7 +29,6 @@ div {
     padding: 16px 20px;
     transition: all 0.3s ease;
     overflow-y: auto;
-    max-height: 85vh;
 }
 
 #details-content h2,

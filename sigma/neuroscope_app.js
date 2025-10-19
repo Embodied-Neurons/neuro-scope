@@ -210,7 +210,7 @@ window.onload = () => {
     select.id = 'batch-select';
 
     const controls = document.createElement('div');
-    controls.style.margin = '0px 10px';
+    controls.style.margin = '0';
     controls.appendChild(select);
     controls.appendChild(document.createElement('br'));
     controls.appendChild(button);
