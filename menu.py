@@ -1,6 +1,5 @@
 import threading
 import subprocess
-from time import sleep
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
@@ -11,7 +10,6 @@ import socket
 
 MODEL_PATH_FILE = "model_path.txt"
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join("outputs")
 SIGMA_START = "cd sigma && npm start"
 PORT = 5000
 WIDTH = 400
@@ -38,6 +36,7 @@ class MenuApp:
     def __init__(self):
         self.sigma_start = None
         self.overlay = None
+        self.suffix = None
 
 
     def select_model(self):
@@ -55,14 +54,14 @@ class MenuApp:
     def create_subprocess(self, command):
         if sys.platform == "win32":
             return subprocess.Popen(
-                command,
+                command + f" -- --model-path={self.suffix}.pt --output-dir=outputs_{self.suffix}",
                 cwd=PROJECT_ROOT,
                 shell=True,
                 creationflags=NEW_CONSOLE | NEW_PROCESS_GROUP
             )
         elif sys.platform == "linux":
             return subprocess.Popen(
-                command,
+                command + f" -- --model-path={self.suffix}.pt --output-dir=outputs_{self.suffix}",
                 cwd=PROJECT_ROOT,
                 shell=True,
                 preexec_fn=os.setsid,
@@ -108,6 +107,11 @@ class MenuApp:
             messagebox.showerror("No Model", "Please select a model file before starting the app.")
             return
 
+        # setting unique suffix for directories and files associated with model
+        if self.suffix is None:
+            with open(os.path.join(PROJECT_ROOT, MODEL_PATH_FILE), "r") as f:
+                self.suffix = f.readline().split('/')[-1].split('.')[0]
+
         try:
             # start training, next stages are performed sequentially
             self.start_training()
@@ -123,7 +127,10 @@ class MenuApp:
 
     def start_training(self):
         # check if training is needed
-        if not (os.path.exists(OUTPUT_DIR) and any(f.endswith(".json") for f in os.listdir(OUTPUT_DIR))):
+        if not (
+            os.path.exists(f"outputs_{self.suffix}") and\
+            any(f.endswith(".json") for f in os.listdir(f"outputs_{self.suffix}"))
+        ):
             # create overlay with info message
             self.create_overlay("Training in progress...")
 
