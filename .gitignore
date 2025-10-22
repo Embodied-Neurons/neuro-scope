@@ -20,11 +20,13 @@ media/
 *.mp4
 *.gif
 *.png
-*.json
 *.jpg
 *.jpeg
 *.webp
-model_path.txt
+
+# JSON rules
+*.json
+!**/package.json
 
 
 # Logs and databases
@@ -46,3 +48,6 @@ Thumbs.db
 
 # Node modules
 node_modules/
+
+# Model path
+model_path.txt
