@@ -10,21 +10,28 @@ export type ChunkGroup = ChunkStats[][]
 
 type LayerSize = [number, number, number]
 
+
 function min(arr: number[]): number {
   return Math.min(...arr)
 }
+
 
 function max(arr: number[]): number {
   return Math.max(...arr)
 }
 
+
 function mean(arr: number[]): number {
+  // czy to zadziała dla pustej tablicy/tablicy z 1 elementem?
   return arr.reduce((a, b) => a + b, 0) / arr.length
 }
 
+
 function sum(arr: number[]): number {
+  // tutaj podobne pytanie
   return arr.reduce((a, b) => a + b, 0)
 }
+
 
 export function normalizeGroupsGrad(
   neurocons: number[][],
@@ -52,8 +59,8 @@ export function sumChunksStats(
 
     for (const colCount of colChunks) {
       const colEnd = colStart + colCount
-
       const chunk: number[] = []
+
       for (let i = rowStart; i < rowEnd; i++) {
         chunk.push(...matrix[i].slice(colStart, colEnd))
       }
@@ -90,11 +97,10 @@ export function sumChunksStats(
   return result
 }
 
-export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize) {
-  const chunks = getChunks(startSize)
 
+export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize): ChunkStats[] {
+  const chunks = getChunks(startSize)
   const cols = matrix[0].length
-  const rows = matrix.length
   const colMeans = Array(cols)
     .fill(0)
     .map((_, j) => mean(matrix.map((row) => row[j])))
@@ -111,6 +117,7 @@ export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize) {
       mean: mean(group),
       normalized: 0
     })
+
     index += size
   }
 
@@ -125,24 +132,31 @@ export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize) {
   return grouped
 }
 
+
 export function compressNeuronLayers(noNeuronLayers: number[], groupSize: number): LayerSize[] {
   return noNeuronLayers.map((layerSize) => compressNeurons(layerSize, groupSize))
 }
+
 
 export function compressNeurons(layerSize: number, groupSize: number): LayerSize {
   if (layerSize % groupSize === 0) {
     return [layerSize / groupSize, groupSize, 0]
   }
+
   if (layerSize < groupSize) {
     return [1, layerSize, 0]
   }
+
   return [Math.floor(layerSize / groupSize) + 1, groupSize, layerSize % groupSize]
 }
 
+
 export function getChunks(size: LayerSize): number[] {
   const [a, b, c] = size
+
   if (a === 1) return [b]
   if (c === 0) return Array(a).fill(b)
+  
   return Array(a - 1)
     .fill(b)
     .concat([c])

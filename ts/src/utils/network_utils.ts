@@ -1,5 +1,6 @@
-import path = require('path')
-import fs = require('fs/promises')
+import path from 'path'
+import fs from 'fs/promises'
+
 import {
   normalizeGroupsGrad,
   normalizeGroupsAct,
@@ -7,6 +8,7 @@ import {
   ChunkStats,
   ChunkGroup
 } from './neuron_utils'
+
 
 // todo !!
 const MODEL_PATH = ''
@@ -18,7 +20,7 @@ interface NodeInfo {
 }
 
 interface GraphStructure {
-  layer_sizes: number[]
+  layerSizes: number[]
   nodes: NodeInfo[]
   edges: [number, number][]
 }
@@ -46,14 +48,15 @@ interface NeuralNetworkData {
   edges: EdgeLayout[]
   activations: Record<string, number[][]>
   gradients: Record<string, number[][]>
-  layer_sizes: number[]
-  node_labels: string[]
+  layerSizes: number[]
+  nodeLabels: string[]
 }
 
 interface CompressedData {
   gradients: Record<string, ChunkGroup>
   activations: Record<string, ChunkStats[]>
 }
+
 
 function generateMlpLayout(layerSizes: number[]): Position[] {
   const layout: Position[] = []
@@ -79,7 +82,10 @@ function generateMlpLayout(layerSizes: number[]): Position[] {
   return layout
 }
 
-export async function getNeuralNetworkVisualization(batchId = 0): Promise<NeuralNetworkData> {
+
+export async function getNeuralNetworkVisualization(
+  batchId: number = 0
+): Promise<NeuralNetworkData> {
   const graphPath = path.join(OUTPUT_DIR, 'graph_structure.json')
 
   try {
@@ -102,7 +108,7 @@ export async function getNeuralNetworkVisualization(batchId = 0): Promise<Neural
   const activations: Record<string, number[][]> = JSON.parse(actRaw)
   const gradients: Record<string, number[][]> = JSON.parse(gradRaw)
 
-  const positions = generateMlpLayout(structure.layer_sizes)
+  const positions = generateMlpLayout(structure.layerSizes)
   const nodes: NodeLayout[] = structure.nodes.map((node, i) => ({
     id: String(i),
     label: node.label,
@@ -121,10 +127,11 @@ export async function getNeuralNetworkVisualization(batchId = 0): Promise<Neural
     edges,
     activations,
     gradients,
-    layer_sizes: structure.layer_sizes,
-    node_labels: structure.nodes.map((n) => n.label)
+    layerSizes: structure.layerSizes,
+    nodeLabels: structure.nodes.map((n) => n.label)
   }
 }
+
 
 export async function getCompressedNeuralNetworkData(
   layerSizes: number[],
@@ -142,7 +149,7 @@ export async function getCompressedNeuralNetworkData(
   let gradientsRaw: string
 
   try {
-    ;[activationsRaw, gradientsRaw] = await Promise.all([
+    [activationsRaw, gradientsRaw] = await Promise.all([
       fs.readFile(actPath, 'utf-8'),
       fs.readFile(gradPath, 'utf-8')
     ])
@@ -172,14 +179,17 @@ export async function getCompressedNeuralNetworkData(
   }
 
   const lastVal: Record<number, string> = {}
+
   for (const [key, value] of Object.entries(activations)) {
     const len = value[0]?.length ?? 0
     lastVal[len] = key
   }
 
   let layerIdx = 1
+
   for (const [key, value] of Object.entries(activations)) {
     const len = value[0]?.length ?? 0
+    
     if (lastVal[len] !== key) continue
 
     const actKey = `fc${layerIdx}.activ`
