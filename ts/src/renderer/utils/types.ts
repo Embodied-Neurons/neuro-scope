@@ -1,5 +1,5 @@
 /*
-    Common/more important types are defined here.
+    Common/more important types for renderer utils are defined here.
 */
 
 import type SigmaDefault from 'sigma';

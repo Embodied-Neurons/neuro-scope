@@ -1,5 +1,5 @@
 import MAX_GROUPS from './consts';
-import * as types from './types/index';
+import * as types from './types';
 
 
 async function groupNeurons(
