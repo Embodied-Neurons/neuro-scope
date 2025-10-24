@@ -10,27 +10,24 @@ export type ChunkGroup = ChunkStats[][]
 
 type LayerSize = [number, number, number]
 
-
 function min(arr: number[]): number {
   return Math.min(...arr)
 }
-
 
 function max(arr: number[]): number {
   return Math.max(...arr)
 }
 
-
 function mean(arr: number[]): number {
-  // czy to zadziała dla pustej tablicy?
+  if (arr.length == 0) {
+    return 0
+  }
   return arr.reduce((a, b) => a + b, 0) / arr.length
 }
-
 
 function sum(arr: number[]): number {
   return arr.reduce((a, b) => a + b, 0)
 }
-
 
 export function normalizeGroupsGrad(
   neurocons: number[][],
@@ -96,7 +93,6 @@ export function sumChunksStats(
   return result
 }
 
-
 export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize): ChunkStats[] {
   const chunks = getChunks(startSize)
   const cols = matrix[0].length
@@ -131,11 +127,9 @@ export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize): Ch
   return grouped
 }
 
-
 export function compressNeuronLayers(noNeuronLayers: number[], groupSize: number): LayerSize[] {
   return noNeuronLayers.map((layerSize) => compressNeurons(layerSize, groupSize))
 }
-
 
 export function compressNeurons(layerSize: number, groupSize: number): LayerSize {
   if (layerSize % groupSize === 0) {
@@ -149,13 +143,12 @@ export function compressNeurons(layerSize: number, groupSize: number): LayerSize
   return [Math.floor(layerSize / groupSize) + 1, groupSize, layerSize % groupSize]
 }
 
-
 export function getChunks(size: LayerSize): number[] {
   const [a, b, c] = size
 
   if (a === 1) return [b]
   if (c === 0) return Array(a).fill(b)
-  
+
   return Array(a - 1)
     .fill(b)
     .concat([c])

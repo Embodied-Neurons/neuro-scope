@@ -1,7 +1,12 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
+import path, { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import {
+  getNeuralNetworkVisualization,
+  getCompressedNeuralNetworkData
+} from '../renderer/utils/network_utils'
 
+export const OUTPUT_DIR = path.join(app.getAppPath(), '..', 'outputs')
 
 function createWindow(): void {
   // Create the browser window.
@@ -9,7 +14,6 @@ function createWindow(): void {
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -50,7 +54,16 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('getNeuralNetworkVisualization', (_event, batch: number) => {
+    return getNeuralNetworkVisualization(batch)
+  })
 
+  ipcMain.handle(
+    'getCompressedNeuralNetworkData',
+    (_event, sizes: number[], count?: number, batch?: number) => {
+      return getCompressedNeuralNetworkData(sizes, count, batch)
+    }
+  )
   createWindow()
 
   app.on('activate', function () {
