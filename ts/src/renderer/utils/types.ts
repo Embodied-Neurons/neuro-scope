@@ -2,31 +2,31 @@
     Common/more important types for renderer utils are defined here.
 */
 
-import type SigmaDefault from 'sigma';
-import type GraphDefault from 'graphology';
-import type { RefObject } from 'react';
+import type SigmaDefault from 'sigma'
+import type GraphDefault from 'graphology'
+import type { RefObject } from 'react'
 
 
 // Attributes type, used in Sigma
-export type Attributes = Record<string, any>;
+export type Attributes = Record<string, any>
 
 // Graph type
-export type Graph = GraphDefault<Attributes, Attributes>;
+export type Graph = GraphDefault<Attributes, Attributes>
 
 // Sigma renderer type
-export type SigmaRenderer = SigmaDefault<Attributes, Attributes, Attributes>;
+export type SigmaRenderer = SigmaDefault<Attributes, Attributes, Attributes>
 
 // Camera type
-export type Camera = ReturnType<SigmaRenderer['getCamera']>;
+export type Camera = ReturnType<SigmaRenderer['getCamera']>
 
 // HTML div and corresponding React component types
-export type Div = HTMLDivElement;
-export type DivRef = RefObject<HTMLDivElement>;
+export type Div = HTMLDivElement
+export type DivRef = RefObject<HTMLDivElement>
 
-// Position info array type
-export type PosInfoArray = Array<{ x: number, minY: number, maxY: number }>;
+// Position info type
+export type PosInfo = { x: number, minY: number, maxY: number }
 
-// Node & nodes array type
+// Node type
 export type Node = {
     id: string, 
     x: number, 
@@ -38,12 +38,10 @@ export type Node = {
     mean?: number,
     min?: number,
     max?: number
-};
+}
 
-export type NodesArray = Array<Node>;
-
-// Edges array type
-export type EdgesArray = Array<{ 
+// Edge type
+export type Edge = { 
     id: string, 
     src: string, 
     tgt: string, 
@@ -53,9 +51,13 @@ export type EdgesArray = Array<{
     gradMean: number,
     gradMin: number,
     gradMax: number
-}>;
+}
 
 // Gradient/activation statistics type
 export type Stats = { 
-    value: number, mean: number, min: number, max: number, normalized: number 
-};
+    value: number,
+    mean: number,
+    min: number,
+    max: number,
+    normalized: number 
+}

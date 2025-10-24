@@ -22,13 +22,12 @@ function max(arr: number[]): number {
 
 
 function mean(arr: number[]): number {
-  // czy to zadziała dla pustej tablicy/tablicy z 1 elementem?
+  // czy to zadziała dla pustej tablicy?
   return arr.reduce((a, b) => a + b, 0) / arr.length
 }
 
 
 function sum(arr: number[]): number {
-  // tutaj podobne pytanie
   return arr.reduce((a, b) => a + b, 0)
 }
 

@@ -1,92 +1,86 @@
 import * as types from './types';
 
 
-function getAllNodesByLayers(
-    nodes: types.NodesArray, layerSizes: Array<number>
-): Array<types.NodesArray> {
-    const nodesByLayers: Array<types.NodesArray> = [];
-    let previousNeuronCount: number = 0;
+export function getAllNodesByLayers(nodes: types.Node[], layerSizes: number[]): types.Node[][] {
+    const nodesByLayers: types.Node[][] = []
+    let previousNeuronCount = 0
 
     for (const layerSize of layerSizes) {
-        nodesByLayers.push([]);
+        nodesByLayers.push([])
 
         for (let i = 0; i < layerSize; i++) {
-            nodesByLayers[nodesByLayers.length - 1].push(nodes[i + previousNeuronCount]);
+            nodesByLayers[nodesByLayers.length - 1].push(nodes[i + previousNeuronCount])
         }
 
-        previousNeuronCount += layerSize;
+        previousNeuronCount += layerSize
     }
 
-    return nodesByLayers;
+    return nodesByLayers
 }
 
 
-function getNodesPosInfo(
-    nodesByLayers: Array<types.NodesArray>, containerWidth: number, containerHeight: number
-): types.PosInfoArray {
-    const posInfo: types.PosInfoArray = [];
-    let x: number, minY: number, maxY: number;
+export function getNodesPosInfo(
+    nodesByLayers: types.Node[][],
+    containerWidth: number,
+    containerHeight: number
+): types.PosInfo[] {
+    const posInfo: types.PosInfo[] = []
+    let x: number, minY: number, maxY: number
 
     for (const nodesLayer of nodesByLayers) {
-        x = nodesLayer[0].x;
-        minY = nodesLayer[0].y;
-        maxY = nodesLayer[nodesLayer.length - 1].y;
+        x = nodesLayer[0].x
+        minY = nodesLayer[0].y
+        maxY = nodesLayer[nodesLayer.length - 1].y
 
         posInfo.push({
             x: x / containerWidth,
             minY: minY / containerHeight,
             maxY: maxY / containerHeight
-        });
+        })
     }
 
-    return posInfo;
+    return posInfo
 }
 
 
-function visibleNodesChanged(
-    newNodes: Array<types.NodesArray>, oldNodes: Array<types.NodesArray>
-): boolean {
+export function visibleNodesChanged(newNodes: types.Node[][], oldNodes: types.Node[][]): boolean {
     for (let i = 0; i < newNodes.length; i++) {
         if (newNodes[i].length !== oldNodes[i].length) {
-            return true;
+            return true
         }
     }
 
-    return false;
+    return false
 }
 
 
-function anyNodeVisible(nodesByLayers: Array<types.NodesArray>): number {
-    return nodesByLayers.map((layer) => layer.length).reduce((sum, el) => sum + el, 0);
+export function anyNodeVisible(nodesByLayers: types.Node[][]): number {
+    return nodesByLayers.map((layer) => layer.length).reduce((sum, el) => sum + el, 0)
 }
 
 
-function getVisibleNodes(
-    nodes: Array<types.NodesArray>,
+export function getVisibleNodes(
+    nodes: types.Node[][],
     containerWidth: number,
     containerHeight: number,
     visibilityRanges: { minX: number, maxX: number, minY: number, maxY: number }
-): Array<types.NodesArray> {
-    const { minX, maxX, minY, maxY } = visibilityRanges;
-    const visibleNodes: Array<types.NodesArray> = [];
+): types.Node[][] {
+    const { minX, maxX, minY, maxY } = visibilityRanges
+    const visibleNodes: types.Node[][] = []
 
     for (const nodeLayer of nodes) {
-        visibleNodes.push([]);
+        visibleNodes.push([])
 
         if (nodeLayer[0].x / containerWidth < minX || nodeLayer[0].x / containerWidth > maxX) {
-            continue;
+            continue
         }
 
         for (const node of nodeLayer) {
             if (node.y / containerHeight >= minY && node.y / containerHeight <= maxY) {
-                visibleNodes[visibleNodes.length - 1].push(node);
+                visibleNodes[visibleNodes.length - 1].push(node)
             }
         }
     }
 
-    return visibleNodes;
+    return visibleNodes
 }
-
-export default {
-    getAllNodesByLayers, getNodesPosInfo, visibleNodesChanged, anyNodeVisible, getVisibleNodes
-};
