@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { JSX, useState } from 'react'
 import BatchControls from './components/BatchControls'
 import { NeuralGraph } from './components/NeuralGraph'
 
-export default function App() {
+export default function App(): JSX.Element {
   const [batch, setBatch] = useState(0)
 
   return (
@@ -10,7 +10,6 @@ export default function App() {
       <div style={{ width: '250px', color: 'white' }}>
         <BatchControls onSelectBatch={setBatch} maxBatch={10} />
       </div>
-
       <div style={{ flex: 1 }}>
         <NeuralGraph batch={batch} />
       </div>

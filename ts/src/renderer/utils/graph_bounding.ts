@@ -6,9 +6,9 @@ export function calculateDynamicBounds(
   ratio: number,
   posInfo: types.PosInfo[]
 ): { newX: number; newY: number } {
-  let { minY, maxY } = findYExtremes(x, posInfo)
+  const { minY, maxY } = findYExtremes(x, posInfo)
   let newX: number
-  let newY = Math.max(Math.min(y, maxY), minY)
+  const newY = Math.max(Math.min(y, maxY), minY)
 
   if (ratio >= 0.6) {
     if (x - 0.4 * ratio > posInfo[posInfo.length - 2].x) {

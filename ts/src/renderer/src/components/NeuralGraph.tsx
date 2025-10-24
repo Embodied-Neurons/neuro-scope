@@ -1,7 +1,8 @@
-import { useEffect, useRef} from 'react'
 import Graph from 'graphology'
 import Sigma from 'sigma'
+import { JSX, useEffect, useRef } from 'react'
 import { groupNeurons, buildGraph } from '../../utils/graph_building'
+import { calculateDynamicBounds, getVisibilityRanges } from '../../utils/graph_bounding'
 import {
   getAllNodesByLayers,
   getNodesPosInfo,
@@ -9,24 +10,18 @@ import {
   anyNodeVisible,
   getVisibleNodes
 } from '../../utils/node_manipulation'
-import { calculateDynamicBounds, getVisibilityRanges } from '../../utils/graph_bounding'
 
-interface NeuralGraphProps {
-  batch: number
-}
-
-export function NeuralGraph({ batch }: NeuralGraphProps) {
+export function NeuralGraph({ batch }: { batch: number }): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
-
   const selectedNodeRef = useRef<string | null>(null)
   const selectedEdgesColorsRef = useRef<string[]>([])
 
   useEffect(() => {
     let destroyed = false
 
-    async function init() {
+    async function init(): Promise<void> {
       if (!containerRef.current) return
       const container = containerRef.current
       container.innerHTML = ''
@@ -34,7 +29,6 @@ export function NeuralGraph({ batch }: NeuralGraphProps) {
       const data = await window.api.getNeuralNetworkVisualization(batch)
       const containerWidth = container.offsetWidth
       const containerHeight = container.offsetHeight
-
       const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
       const posInfo = getNodesPosInfo(nodes, containerWidth, containerHeight)
 
@@ -57,9 +51,9 @@ export function NeuralGraph({ batch }: NeuralGraphProps) {
         maxCameraRatio: 1,
         zIndex: true
       })
-      rendererRef.current = renderer
 
       const camera = renderer.getCamera()
+      rendererRef.current = renderer
       camera.setState({ ratio: 1.0 })
 
       camera.on('updated', () => {
@@ -69,9 +63,10 @@ export function NeuralGraph({ batch }: NeuralGraphProps) {
       })
 
       let currentVisibleNodes = nodes
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let debounceTimer: any = null
 
-      const rebuild = async () => {
+      const rebuild = async (): Promise<void> => {
         if (!renderer || !graph) return
         const visibility = getVisibilityRanges(camera, renderer, container)
         const visibleNodes = getVisibleNodes(nodes, containerWidth, containerHeight, visibility)
@@ -98,7 +93,7 @@ export function NeuralGraph({ batch }: NeuralGraphProps) {
         }
       }
 
-      const debounce = () => {
+      const debounce = (): void => {
         clearTimeout(debounceTimer)
         debounceTimer = setTimeout(rebuild, 500)
       }
@@ -142,8 +137,8 @@ export function NeuralGraph({ batch }: NeuralGraphProps) {
           connectedEdges.forEach((edge) => {
             const attrs = graph.getEdgeAttributes(edge)
             const w = attrs.weight ?? 0
-
             const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
+
             graph.setEdgeAttribute(edge, 'color', color)
             graph.setEdgeAttribute(edge, 'size', 1.5)
             graph.setEdgeAttribute(edge, 'zIndex', 2)

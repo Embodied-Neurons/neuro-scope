@@ -1,14 +1,4 @@
-export type ChunkStats = {
-  value: number
-  min: number
-  max: number
-  mean: number
-  normalized: number
-}
-
-export type ChunkGroup = ChunkStats[][]
-
-type LayerSize = [number, number, number]
+import * as types from './types'
 
 function min(arr: number[]): number {
   return Math.min(...arr)
@@ -22,6 +12,7 @@ function mean(arr: number[]): number {
   if (arr.length == 0) {
     return 0
   }
+
   return arr.reduce((a, b) => a + b, 0) / arr.length
 }
 
@@ -31,9 +22,9 @@ function sum(arr: number[]): number {
 
 export function normalizeGroupsGrad(
   neurocons: number[][],
-  startSize: LayerSize,
-  endSize: LayerSize
-): ChunkGroup {
+  startSize: types.LayerSize,
+  endSize: types.LayerSize
+): types.Stats[][] {
   const rowChunks = getChunks(endSize)
   const colChunks = getChunks(startSize)
 
@@ -44,14 +35,14 @@ export function sumChunksStats(
   matrix: number[][],
   rowChunks: number[],
   colChunks: number[]
-): ChunkGroup {
-  const result: ChunkGroup = []
+): types.Stats[][] {
+  const result: types.Stats[][] = []
   let rowStart = 0
 
   for (const rowCount of rowChunks) {
     const rowEnd = rowStart + rowCount
     let colStart = 0
-    const rowData: ChunkStats[] = []
+    const rowData: types.Stats[] = []
 
     for (const colCount of colChunks) {
       const colEnd = colStart + colCount
@@ -93,14 +84,14 @@ export function sumChunksStats(
   return result
 }
 
-export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize): ChunkStats[] {
+export function normalizeGroupsAct(matrix: number[][], startSize: types.LayerSize): types.Stats[] {
   const chunks = getChunks(startSize)
   const cols = matrix[0].length
   const colMeans = Array(cols)
     .fill(0)
     .map((_, j) => mean(matrix.map((row) => row[j])))
 
-  const grouped: ChunkStats[] = []
+  const grouped: types.Stats[] = []
   let index = 0
 
   for (const size of chunks) {
@@ -127,11 +118,14 @@ export function normalizeGroupsAct(matrix: number[][], startSize: LayerSize): Ch
   return grouped
 }
 
-export function compressNeuronLayers(noNeuronLayers: number[], groupSize: number): LayerSize[] {
+export function compressNeuronLayers(
+  noNeuronLayers: number[],
+  groupSize: number
+): types.LayerSize[] {
   return noNeuronLayers.map((layerSize) => compressNeurons(layerSize, groupSize))
 }
 
-export function compressNeurons(layerSize: number, groupSize: number): LayerSize {
+export function compressNeurons(layerSize: number, groupSize: number): types.LayerSize {
   if (layerSize % groupSize === 0) {
     return [layerSize / groupSize, groupSize, 0]
   }
@@ -143,7 +137,7 @@ export function compressNeurons(layerSize: number, groupSize: number): LayerSize
   return [Math.floor(layerSize / groupSize) + 1, groupSize, layerSize % groupSize]
 }
 
-export function getChunks(size: LayerSize): number[] {
+export function getChunks(size: types.LayerSize): number[] {
   const [a, b, c] = size
 
   if (a === 1) return [b]

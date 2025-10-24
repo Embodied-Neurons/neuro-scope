@@ -1,58 +1,15 @@
 import * as path from 'path'
 import fs from 'fs/promises'
-
-import {
-  ChunkGroup,
-  ChunkStats,
-  compressNeuronLayers,
-  normalizeGroupsAct,
-  normalizeGroupsGrad
-} from './neuron_utils'
-import { Node } from './types'
+import * as types from './types'
 import { OUTPUT_DIR } from '../../main'
+import { compressNeuronLayers, normalizeGroupsAct, normalizeGroupsGrad } from './neuron_utils'
 
-interface NodeInfo {
-  label: string
-}
-
-interface GraphStructure {
-  layerSizes: number[]
-  nodes: NodeInfo[]
-  edges: [number, number][]
-}
-
-interface Position {
-  x: number
-  y: number
-}
-
-interface EdgeLayout {
-  id: string
-  source: string
-  target: string
-}
-
-interface NeuralNetworkData {
-  nodes: Node[]
-  edges: EdgeLayout[]
-  activations: Record<string, number[][]>
-  gradients: Record<string, number[][]>
-  layerSizes: number[]
-  nodeLabels: string[]
-}
-
-interface CompressedData {
-  gradients: Record<string, ChunkGroup>
-  activations: Record<string, ChunkStats[]>
-}
-
-function generateMlpLayout(layerSizes: number[]): Position[] {
-  const layout: Position[] = []
+function generateMlpLayout(layerSizes: number[]): types.Position[] {
+  const layout: types.Position[] = []
   const maxNeurons = Math.max(...layerSizes)
   const numLayers = layerSizes.length
   const width = 960
   const height = 720
-  console.log(layerSizes)
   const xStep = numLayers > 1 ? width / (numLayers - 1) : 0
   const yStep = maxNeurons > 1 ? height / (maxNeurons - 1) : 0
 
@@ -72,7 +29,7 @@ function generateMlpLayout(layerSizes: number[]): Position[] {
 
 export async function getNeuralNetworkVisualization(
   batchId: number = 0
-): Promise<NeuralNetworkData> {
+): Promise<types.NeuralNetworkData> {
   const graphPath = path.join(OUTPUT_DIR, 'graph_structure.json')
   console.log(graphPath)
 
@@ -83,7 +40,7 @@ export async function getNeuralNetworkVisualization(
   }
 
   const structureRaw = await fs.readFile(graphPath, 'utf-8')
-  const structure: GraphStructure = JSON.parse(structureRaw)
+  const structure: types.GraphStructure = JSON.parse(structureRaw)
 
   const actPath = path.join(OUTPUT_DIR, `batch_${batchId}_activations.json`)
   const gradPath = path.join(OUTPUT_DIR, `batch_${batchId}_gradients.json`)
@@ -96,7 +53,7 @@ export async function getNeuralNetworkVisualization(
   const activations: Record<string, number[][]> = JSON.parse(actRaw)
   const gradients: Record<string, number[][]> = JSON.parse(gradRaw)
   const positions = generateMlpLayout(structure.layerSizes)
-  const nodes: Node[] = structure.nodes.map((node, i) => ({
+  const nodes: types.Node[] = structure.nodes.map((node, i) => ({
     id: String(i),
     label: node.label,
     x: positions[i].x,
@@ -104,7 +61,7 @@ export async function getNeuralNetworkVisualization(
     size: 1
   }))
 
-  const edges: EdgeLayout[] = structure.edges.map(([src, dst], idx) => ({
+  const edges: types.EdgeLayout[] = structure.edges.map(([src, dst], idx) => ({
     id: `e${idx}`,
     source: String(src),
     target: String(dst)
@@ -124,7 +81,7 @@ export async function getCompressedNeuralNetworkData(
   layerSizes: number[],
   layerCount?: number,
   batchId = 0
-): Promise<CompressedData> {
+): Promise<types.CompressedData> {
   if (!layerSizes.length) {
     throw new Error("Missing or invalid 'layerSizes' argument")
   }
@@ -146,11 +103,9 @@ export async function getCompressedNeuralNetworkData(
 
   const activations: Record<string, number[][]> = JSON.parse(activationsRaw)
   const gradients: Record<string, number[][]> = JSON.parse(gradientsRaw)
-
   const compressed = compressNeuronLayers(layerSizes, layerCount ?? layerSizes.length)
-
-  const groupedGradients: Record<string, ChunkGroup> = {}
-  const groupedActivations: Record<string, ChunkStats[]> = {}
+  const groupedGradients: Record<string, types.Stats[][]> = {}
+  const groupedActivations: Record<string, types.Stats[]> = {}
 
   for (let i = 1; i < layerSizes.length; i++) {
     const weightKey = `fc${i}.weight`

@@ -8,7 +8,7 @@ export async function groupNeurons(
   originalSizes: number[],
   batch: number,
   zoomRatio: number = 1.0
-) /* Tutaj miałem problemy z określeniem typu zwracanego */ {
+): Promise<{ neuronLayers: types.Node[][]; edges: types.Edge[] }> {
   const layerVisibility: boolean[] = []
   let maxVisibleNeurons = 0
   let yExtent = 1
@@ -27,7 +27,7 @@ export async function groupNeurons(
 
   const neuronsPerGroup = Math.ceil(Math.max(...originalSizes) / MAX_GROUPS)
   const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS / yExtent)
-  let layerGroups: number[] = []
+  const layerGroups: number[] = []
   let flag = false
 
   for (let i = 0; i < visibleNodes.length; i++) {
@@ -44,7 +44,7 @@ export async function groupNeurons(
     }
   }
 
-  let neuronLayers: types.Node[][] = []
+  const neuronLayers: types.Node[][] = []
 
   for (let i = 0; i < layerGroups.length; i++) {
     neuronLayers.push([])
@@ -54,7 +54,7 @@ export async function groupNeurons(
 
     if (layerVisibility[i]) {
       nodes = visibleNodes[i]
-      let groupShift = Math.floor(0.5 * visibleNeuronsPerGroup)
+      const groupShift = Math.floor(0.5 * visibleNeuronsPerGroup)
 
       for (let j = 0; j < layerGroups[i] - 1; j++, neuronIndex += visibleNeuronsPerGroup) {
         neuronLayers[neuronLayers.length - 1].push({
@@ -72,7 +72,7 @@ export async function groupNeurons(
       }
     } else if (layerGroups[i] > 0) {
       nodes = allNodes[i]
-      let groupShift = Math.floor(0.5 * neuronsPerGroup)
+      const groupShift = Math.floor(0.5 * neuronsPerGroup)
 
       for (let j = 0; j < layerGroups[i] - 1; j++, neuronIndex += neuronsPerGroup) {
         neuronLayers[neuronLayers.length - 1].push({
@@ -190,6 +190,7 @@ export function buildGraph(
   edges: types.Edge[]
 ): void {
   // drop all current nodes (edges are dropped as well)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   graph.forEachNode((node, _) => {
     graph.dropNode(node)
   })
