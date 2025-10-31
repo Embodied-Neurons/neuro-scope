@@ -1,17 +1,22 @@
 import { JSX, useState } from 'react'
 import BatchControls from './components/BatchControls'
 import { NeuralGraph } from './components/NeuralGraph'
+import { StatsPanel } from './components/StatsPanel'
 
 export default function App(): JSX.Element {
   const [batch, setBatch] = useState(0)
+  const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null)
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      <div style={{ width: '250px', color: 'white' }}>
+    <div className="flex h-screen">
+      <div className="w-36 p-4">
         <BatchControls onSelectBatch={setBatch} maxBatch={10} />
       </div>
-      <div style={{ flex: 1 }}>
-        <NeuralGraph batch={batch} />
+      <div className="flex-1">
+        <NeuralGraph batch={batch} onNodeSelect={setSelectedNode} />
+      </div>
+      <div className="flex-1 p-4 overflow-auto">
+        <StatsPanel nodeData={selectedNode} />
       </div>
     </div>
   )

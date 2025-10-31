@@ -7,7 +7,7 @@ const api = {
 
   getCompressedNeuralNetworkData: (sizes: number[], count?: number, batch?: number) =>
     ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, count, batch),
-  detectBatch: (batch: Number) => ipcRenderer.invoke('detectBatch', batch)
+  detectBatch: (batch: number) => ipcRenderer.invoke('detectBatch', batch)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -10,8 +10,9 @@ import {
   anyNodeVisible,
   getVisibleNodes
 } from '../../utils/node_manipulation'
+import { NeuralGraphProps } from '../../utils/types'
 
-export function NeuralGraph({ batch }: { batch: number }): JSX.Element {
+export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
@@ -145,9 +146,11 @@ export function NeuralGraph({ batch }: { batch: number }): JSX.Element {
           })
 
           selectedEdgesColorsRef.current = newEdgesColors
+          onNodeSelect(nodeData)
         } else {
           selectedNodeRef.current = null
           selectedEdgesColorsRef.current = []
+          onNodeSelect(null)
         }
       })
     }
@@ -165,15 +168,7 @@ export function NeuralGraph({ batch }: { batch: number }): JSX.Element {
         graphRef.current = null
       }
     }
-  }, [batch])
+  }, [batch, onNodeSelect])
 
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100%'
-      }}
-    />
-  )
+  return <div ref={containerRef} className="w-full h-full" />
 }

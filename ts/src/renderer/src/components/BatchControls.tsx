@@ -27,14 +27,14 @@ export default function BatchControls({
     }
 
     detectBatches()
-  }, [])
+  }, [maxBatch])
 
   return (
-    <div id="batch-panel" style={{ padding: '8px' }}>
+    <div id="batch-panel" className="p-2">
       <select
         value={selectedBatch}
         onChange={(e) => setSelectedBatch(Number(e.target.value))}
-        style={{ marginRight: '6px' }}
+        className="mr-1.5 border-black border"
       >
         {batches.map((b) => (
           <option key={b} value={b}>
@@ -42,7 +42,9 @@ export default function BatchControls({
           </option>
         ))}
       </select>
-      <button onClick={() => onSelectBatch(selectedBatch)}>Load Batch</button>
+      <button onClick={() => onSelectBatch(selectedBatch)} className="rounded-xl shadow p-0.5">
+        Load Batch
+      </button>
     </div>
   )
 }

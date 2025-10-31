@@ -144,9 +144,10 @@ export async function getCompressedNeuralNetworkData(
     activations: groupedActivations
   }
 }
-export async function detectBatch(batch: Number) {
+export async function detectBatch(batch: number): Promise<null> {
   const actPath = path.join(OUTPUT_DIR, `batch_${batch}_activations.json`)
   const gradPath = path.join(OUTPUT_DIR, `batch_${batch}_gradients.json`)
   await fs.access(actPath)
   await fs.access(gradPath)
+  return null
 }

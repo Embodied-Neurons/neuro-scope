@@ -103,3 +103,12 @@ export type BatchControlsProps = {
   maxBatch: number
   onSelectBatch: (batch: number) => void
 }
+
+export type StatsPanelProps = {
+  nodeData: Record<string, unknown> | null
+}
+
+export type NeuralGraphProps = {
+  batch: number
+  onNodeSelect: (nodeData: Record<string, unknown> | null) => void
+}
