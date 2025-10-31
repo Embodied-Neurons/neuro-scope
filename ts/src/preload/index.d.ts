@@ -6,6 +6,7 @@ declare global {
     api: {
       getNeuralNetworkVisualization(batch: number): Promise<any>
       getCompressedNeuralNetworkData(sizes: number[], count?: number, batch?: number): Promise<any>
+      detectBatch(batch: Number): Promise<any>
     }
   }
 }

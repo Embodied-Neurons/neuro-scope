@@ -1,6 +1,5 @@
 import { JSX, useEffect, useState } from 'react'
 import { BatchControlsProps } from '../../utils/types'
-// import { OUTPUT_DIR } from '../../../main'
 
 export default function BatchControls({
   maxBatch,
@@ -11,7 +10,19 @@ export default function BatchControls({
 
   useEffect(() => {
     async function detectBatches(): Promise<void> {
-      //todo
+      const detectedBatches: number[] = []
+      let batch = 0
+
+      while (batch <= maxBatch) {
+        try {
+          await window.api.detectBatch(batch)
+          detectedBatches.push(batch)
+          batch++
+        } catch {
+          batch++
+        }
+      }
+      setBatches(detectedBatches)
       return
     }
 
@@ -31,7 +42,7 @@ export default function BatchControls({
           </option>
         ))}
       </select>
-      <button onClick={() => onSelectBatch(0)}>Load Batch</button>
+      <button onClick={() => onSelectBatch(selectedBatch)}>Load Batch</button>
     </div>
   )
 }

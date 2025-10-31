@@ -6,7 +6,8 @@ const api = {
     ipcRenderer.invoke('getNeuralNetworkVisualization', batch),
 
   getCompressedNeuralNetworkData: (sizes: number[], count?: number, batch?: number) =>
-    ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, count, batch)
+    ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, count, batch),
+  detectBatch: (batch: Number) => ipcRenderer.invoke('detectBatch', batch)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

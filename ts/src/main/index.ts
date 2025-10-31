@@ -3,7 +3,8 @@ import path, { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import {
   getNeuralNetworkVisualization,
-  getCompressedNeuralNetworkData
+  getCompressedNeuralNetworkData,
+  detectBatch
 } from '../renderer/utils/network_utils'
 
 export const OUTPUT_DIR = path.join(app.getAppPath(), '..', 'outputs')
@@ -64,6 +65,9 @@ app.whenReady().then(() => {
       return getCompressedNeuralNetworkData(sizes, count, batch)
     }
   )
+  ipcMain.handle('detectBatch', (_event, batch: number) => {
+    return detectBatch(batch)
+  })
   createWindow()
 
   app.on('activate', function () {
