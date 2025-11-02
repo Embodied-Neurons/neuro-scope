@@ -112,3 +112,10 @@ export type NeuralGraphProps = {
   batch: number
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void
 }
+export type EdgeStats = {
+  id: string
+  weight: string
+  gradMean: string
+  gradMin: string
+  gradMax: string
+}
