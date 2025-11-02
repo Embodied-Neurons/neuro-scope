@@ -1,5 +1,5 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import path, { join } from 'path'
+import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
+import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import {
   getNeuralNetworkVisualization,
@@ -7,21 +7,40 @@ import {
   detectBatch
 } from '../renderer/utils/network_utils'
 
-export const OUTPUT_DIR = path.join(app.getAppPath(), '..', 'outputs')
+// Due to problems with rollup
+const join = path.join
+
+export const OUTPUT_DIR_BASE = join(app.getAppPath(), '..')
 
 function createWindow(): void {
+  const display = screen.getPrimaryDisplay()
+  const workArea = display.workArea
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    x: workArea.x,
+    y: workArea.y,
+    width: workArea.width,
+    height: workArea.height,
+    frame: true,
+    resizable: false,
+    minimizable: true,
+    maximizable: false,
+    fullscreenable: false,
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      devTools: false, // set to true to inspect alements
+      nodeIntegration: true,
+      contextIsolation: false
     }
   })
 
   mainWindow.on('ready-to-show', () => {
+    // Hiding menu bar
+    mainWindow.setMenuBarVisibility(false)
+
     mainWindow.show()
   })
 
@@ -55,18 +74,18 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
-  ipcMain.handle('getNeuralNetworkVisualization', (_event, batch: number) => {
-    return getNeuralNetworkVisualization(batch)
+  ipcMain.handle('getNeuralNetworkVisualization', (_event, outputDir: string, batch: number) => {
+    return getNeuralNetworkVisualization(outputDir, batch)
   })
 
   ipcMain.handle(
     'getCompressedNeuralNetworkData',
-    (_event, sizes: number[], count?: number, batch?: number) => {
-      return getCompressedNeuralNetworkData(sizes, count, batch)
+    (_event, sizes: number[], count?: number, outputDir?: string, batch?: number) => {
+      return getCompressedNeuralNetworkData(sizes, count, outputDir, batch)
     }
   )
-  ipcMain.handle('detectBatch', (_event, batch: number) => {
-    return detectBatch(batch)
+  ipcMain.handle('detectBatch', (_event, outputDir: string, batch: number) => {
+    return detectBatch(outputDir, batch)
   })
   createWindow()
 

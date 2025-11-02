@@ -3,7 +3,8 @@ import { BatchControlsProps } from '../../utils/types'
 
 export default function BatchControls({
   maxBatch,
-  onSelectBatch
+  onSelectBatch,
+  outputDir
 }: BatchControlsProps): JSX.Element {
   const [batches, setBatches] = useState<number[]>([])
   const [selectedBatch, setSelectedBatch] = useState<number>(0)
@@ -15,7 +16,7 @@ export default function BatchControls({
 
       while (batch <= maxBatch) {
         try {
-          await window.api.detectBatch(batch)
+          await window.api.detectBatch(outputDir, batch)
           detectedBatches.push(batch)
           batch++
         } catch {
@@ -27,7 +28,7 @@ export default function BatchControls({
     }
 
     detectBatches()
-  }, [maxBatch])
+  }, [outputDir, maxBatch])
 
   return (
     <div id="batch-panel" className="p-2">
@@ -42,7 +43,10 @@ export default function BatchControls({
           </option>
         ))}
       </select>
-      <button onClick={() => onSelectBatch(selectedBatch)} className="rounded-xl shadow p-0.5">
+      <button
+        onClick={() => onSelectBatch(selectedBatch)}
+        className="rounded-xl shadow pl-1.5 pr-1.5 pt-0.75 pb-0.75 mt-2 text-base"
+      >
         Load Batch
       </button>
     </div>

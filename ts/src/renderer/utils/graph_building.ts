@@ -6,6 +6,7 @@ export async function groupNeurons(
   allNodes: types.Node[][],
   containerHeight: number,
   originalSizes: number[],
+  outputDir: string,
   batch: number,
   zoomRatio: number = 1.0
 ): Promise<{ neuronLayers: types.Node[][]; edges: types.Edge[] }> {
@@ -102,6 +103,7 @@ export async function groupNeurons(
   }
 
   const edges: types.Edge[] = await fetchCompressedEdges(
+    outputDir,
     batch,
     originalSizes,
     visibleNeuronsPerGroup,
@@ -114,6 +116,7 @@ export async function groupNeurons(
 }
 
 async function fetchCompressedEdges(
+  outputDir: string,
   batch: number,
   originalSizes: number[],
   visibleNeuronsPerGroup: number,
@@ -127,6 +130,7 @@ async function fetchCompressedEdges(
     const data = await window.api.getCompressedNeuralNetworkData(
       originalSizes,
       visibleNeuronsPerGroup,
+      outputDir,
       batch
     )
     const gradients: Record<string, types.Stats[][]> = data.gradients || {}

@@ -5,13 +5,17 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      getNeuralNetworkVisualization(batch: number): Promise<types.NeuralNetworkData>
+      getNeuralNetworkVisualization(
+        outputDir: string,
+        batch: number
+      ): Promise<types.NeuralNetworkData>
       getCompressedNeuralNetworkData(
         sizes: number[],
         count?: number,
+        outputDir?: string,
         batch?: number
       ): Promise<types.CompressedData>
-      detectBatch(batch: number): Promise<null>
+      detectBatch(outputDir: string, batch: number): Promise<null>
     }
   }
 }

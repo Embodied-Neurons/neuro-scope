@@ -1,7 +1,7 @@
 import * as path from 'path'
 import fs from 'fs/promises'
 import * as types from './types'
-import { OUTPUT_DIR } from '../../main'
+import { OUTPUT_DIR_BASE } from '../../main'
 import { compressNeuronLayers, normalizeGroupsAct, normalizeGroupsGrad } from './neuron_utils'
 
 function generateMlpLayout(layerSizes: number[]): types.Position[] {
@@ -28,10 +28,11 @@ function generateMlpLayout(layerSizes: number[]): types.Position[] {
 }
 
 export async function getNeuralNetworkVisualization(
+  outputDir: string,
   batchId: number = 0
 ): Promise<types.NeuralNetworkData> {
-  const graphPath = path.join(OUTPUT_DIR, 'graph_structure.json')
-  console.log(graphPath)
+  const graphPath = path.join(OUTPUT_DIR_BASE, outputDir, 'graph_structure.json')
+  console.log(`Graph path: ${graphPath}`)
 
   try {
     await fs.access(graphPath)
@@ -42,8 +43,8 @@ export async function getNeuralNetworkVisualization(
   const structureRaw = await fs.readFile(graphPath, 'utf-8')
   const structure: types.GraphStructure = JSON.parse(structureRaw)
 
-  const actPath = path.join(OUTPUT_DIR, `batch_${batchId}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR, `batch_${batchId}_gradients.json`)
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_activations.json`)
+  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_gradients.json`)
 
   const [actRaw, gradRaw] = await Promise.all([
     fs.readFile(actPath, 'utf-8'),
@@ -80,14 +81,15 @@ export async function getNeuralNetworkVisualization(
 export async function getCompressedNeuralNetworkData(
   layerSizes: number[],
   layerCount?: number,
+  outputDir: string = '',
   batchId = 0
 ): Promise<types.CompressedData> {
   if (!layerSizes.length) {
     throw new Error("Missing or invalid 'layerSizes' argument")
   }
 
-  const actPath = path.join(OUTPUT_DIR, `batch_${batchId}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR, `batch_${batchId}_gradients.json`)
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_activations.json`)
+  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_gradients.json`)
 
   let activationsRaw: string
   let gradientsRaw: string
@@ -144,10 +146,16 @@ export async function getCompressedNeuralNetworkData(
     activations: groupedActivations
   }
 }
-export async function detectBatch(batch: number): Promise<null> {
-  const actPath = path.join(OUTPUT_DIR, `batch_${batch}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR, `batch_${batch}_gradients.json`)
-  await fs.access(actPath)
-  await fs.access(gradPath)
+export async function detectBatch(outputDir: string, batch: number): Promise<null> {
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_activations.json`)
+  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_gradients.json`)
+
+  try {
+    await fs.access(actPath)
+    await fs.access(gradPath)
+  } catch {
+    console.log('INFO: all batches detected!')
+  }
+
   return null
 }
