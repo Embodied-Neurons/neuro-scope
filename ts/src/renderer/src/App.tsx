@@ -15,10 +15,10 @@ export default function App(): JSX.Element {
         <BatchControls onSelectBatch={setBatch} maxBatch={10} outputDir={outputDir} />
         <FileSelector onFileSelect={saveOutputDir} />
       </div>
-      <div className="w-[64vw] overflow-hidden">
+      <div className="w-[60vw] overflow-hidden">
         <NeuralGraph batch={batch} onNodeSelect={setSelectedNode} outputDir={outputDir} />
       </div>
-      <div className="w-[24vw] p-2 overflow-auto shrink-0">
+      <div className="w-[30vw] p-2 overflow-auto shrink-0">
         <StatsPanel nodeData={selectedNode} />
       </div>
     </div>

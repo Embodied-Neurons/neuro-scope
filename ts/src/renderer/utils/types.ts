@@ -72,6 +72,15 @@ export type Stats = {
   normalized: number
 }
 
+// Edge statistics type
+export type EdgeStats = {
+  id: string
+  weight: string
+  gradMean: string
+  gradMin: string
+  gradMax: string
+}
+
 // Layer size is described with three numbers
 export type LayerSize = [number, number, number]
 
@@ -98,10 +107,11 @@ export type CompressedData = {
   activations: Record<string, Stats[]>
 }
 
-// Properties for batch controls type
+// Properties types for various components
 export type BatchControlsProps = {
   maxBatch: number
   onSelectBatch: (batch: number) => void
+  outputDir: string
 }
 
 export type StatsPanelProps = {
@@ -111,11 +121,9 @@ export type StatsPanelProps = {
 export type NeuralGraphProps = {
   batch: number
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void
+  outputDir: string
 }
-export type EdgeStats = {
-  id: string
-  weight: string
-  gradMean: string
-  gradMin: string
-  gradMax: string
+
+export type FileDialogProps = {
+  onFileSelect: (outputDir: string) => void
 }

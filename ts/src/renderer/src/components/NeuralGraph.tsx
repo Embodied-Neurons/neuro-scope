@@ -12,7 +12,7 @@ import {
 } from '../../utils/node_manipulation'
 import { NeuralGraphProps, EdgeStats } from '../../utils/types'
 
-export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Element {
+export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
@@ -27,7 +27,7 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
       const container = containerRef.current
       container.innerHTML = ''
 
-      const data = await window.api.getNeuralNetworkVisualization(batch)
+      const data = await window.api.getNeuralNetworkVisualization(outputDir, batch)
       const containerWidth = container.offsetWidth
       const containerHeight = container.offsetHeight
       const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
@@ -38,6 +38,7 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
         nodes,
         containerHeight,
         data.layerSizes,
+        outputDir,
         batch
       )
 
@@ -82,6 +83,7 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
             nodes,
             containerHeight,
             data.layerSizes,
+            outputDir,
             batch,
             ratio
           )
@@ -142,7 +144,6 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
             const gradMean = attrs.gradMean ?? '—'
             const gradMin = attrs.gradMin ?? '—'
             const gradMax = attrs.gradMax ?? '—'
-
             const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
 
             graph.setEdgeAttribute(edge, 'color', color)
@@ -159,7 +160,6 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
           })
 
           selectedEdgesColorsRef.current = newEdgesColors
-
           onNodeSelect({ ...nodeData, edgeStats })
         } else {
           selectedNodeRef.current = null
@@ -182,7 +182,7 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
         graphRef.current = null
       }
     }
-  }, [batch, onNodeSelect])
+  }, [batch, onNodeSelect, outputDir])
 
   return <div ref={containerRef} className="w-full h-full" />
 }
