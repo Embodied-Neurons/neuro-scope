@@ -10,7 +10,7 @@ import {
   anyNodeVisible,
   getVisibleNodes
 } from '../../utils/node_manipulation'
-import { NeuralGraphProps } from '../../utils/types'
+import { NeuralGraphProps, EdgeStats } from '../../utils/types'
 
 export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -130,6 +130,7 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
 
           const connectedEdges = graph.edges(node)
           const newEdgesColors: string[] = []
+          const edgeStats: EdgeStats[] = []
 
           connectedEdges.forEach((edge) => {
             newEdgesColors.push(graph.getEdgeAttribute(edge, 'color'))
@@ -138,15 +139,28 @@ export function NeuralGraph({ batch, onNodeSelect }: NeuralGraphProps): JSX.Elem
           connectedEdges.forEach((edge) => {
             const attrs = graph.getEdgeAttributes(edge)
             const w = attrs.weight ?? 0
+            const gradMean = attrs.gradMean ?? '—'
+            const gradMin = attrs.gradMin ?? '—'
+            const gradMax = attrs.gradMax ?? '—'
+
             const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
 
             graph.setEdgeAttribute(edge, 'color', color)
             graph.setEdgeAttribute(edge, 'size', 1.5)
             graph.setEdgeAttribute(edge, 'zIndex', 2)
+
+            edgeStats.push({
+              id: attrs.id,
+              weight: w,
+              gradMean: gradMean,
+              gradMin: gradMin,
+              gradMax: gradMax
+            })
           })
 
           selectedEdgesColorsRef.current = newEdgesColors
-          onNodeSelect(nodeData)
+
+          onNodeSelect({ ...nodeData, edgeStats })
         } else {
           selectedNodeRef.current = null
           selectedEdgesColorsRef.current = []
