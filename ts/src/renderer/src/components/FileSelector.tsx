@@ -14,6 +14,9 @@ export default function FileSelector({ onFileSelect }: FileDialogProps): JSX.Ele
     if (selectedFile) {
       const modelName: string = selectedFile.name.substring(0, selectedFile.name.length - 3)
       const outputDir: string = `\\outputs_${modelName}`
+
+      window.api.performTrainingIfNeeded(outputDir, modelName)
+
       onFileSelect(outputDir)
       console.log(`Selected file: ${selectedFile.name}`)
     } else {

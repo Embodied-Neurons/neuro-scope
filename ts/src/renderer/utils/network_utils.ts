@@ -1,4 +1,4 @@
-import * as path from 'path'
+import path from 'path'
 import fs from 'fs/promises'
 import * as types from './types'
 import { OUTPUT_DIR_BASE } from '../../main'
@@ -146,6 +146,7 @@ export async function getCompressedNeuralNetworkData(
     activations: groupedActivations
   }
 }
+
 export async function detectBatch(outputDir: string, batch: number): Promise<null> {
   const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_activations.json`)
   const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_gradients.json`)

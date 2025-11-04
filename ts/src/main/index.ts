@@ -1,16 +1,14 @@
 import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
 import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { performTrainingIfNeeded } from '../renderer/utils/training_util'
 import {
   getNeuralNetworkVisualization,
   getCompressedNeuralNetworkData,
   detectBatch
 } from '../renderer/utils/network_utils'
 
-// Due to problems with rollup
-const join = path.join
-
-export const OUTPUT_DIR_BASE = join(app.getAppPath(), '..')
+export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..')
 
 function createWindow(): void {
   const display = screen.getPrimaryDisplay()
@@ -29,9 +27,9 @@ function createWindow(): void {
     fullscreenable: false,
     show: false,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false,
-      devTools: false, // set to true to inspect alements
+      devTools: true, // set to true to inspect alements
       nodeIntegration: true,
       contextIsolation: false
     }
@@ -54,7 +52,7 @@ function createWindow(): void {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -72,8 +70,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
   ipcMain.handle('getNeuralNetworkVisualization', (_event, outputDir: string, batch: number) => {
     return getNeuralNetworkVisualization(outputDir, batch)
   })
@@ -84,9 +80,15 @@ app.whenReady().then(() => {
       return getCompressedNeuralNetworkData(sizes, count, outputDir, batch)
     }
   )
+
   ipcMain.handle('detectBatch', (_event, outputDir: string, batch: number) => {
     return detectBatch(outputDir, batch)
   })
+
+  ipcMain.handle('performTrainingIfNeeded', (_event, outputDir: string, modelName: string) => {
+    return performTrainingIfNeeded(outputDir, modelName)
+  })
+
   createWindow()
 
   app.on('activate', function () {

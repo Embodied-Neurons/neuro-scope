@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+
 // Custom APIs for renderer
 const api = {
   getNeuralNetworkVisualization: (outputDir: string, batch: number) =>
@@ -11,8 +12,12 @@ const api = {
     outputDir?: string,
     batch?: number
   ) => ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, count, outputDir, batch),
+
   detectBatch: (outputDir: string, batch: number) =>
-    ipcRenderer.invoke('detectBatch', outputDir, batch)
+    ipcRenderer.invoke('detectBatch', outputDir, batch),
+
+  performTrainingIfNeeded: (outputDir: string, modelName: string) =>
+    ipcRenderer.invoke('performTrainingIfNeeded', outputDir, modelName)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
