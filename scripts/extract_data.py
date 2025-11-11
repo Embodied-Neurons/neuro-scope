@@ -65,7 +65,7 @@ def extract_graph_structure(model, save_path="outputs/graph_structure.json"):
     structure = {
         "nodes": [{"label": label} for label in data.node_labels],
         "edges": data.edge_index.t().tolist(),
-        "layer_sizes": data.layer_sizes
+        "layerSizes": data.layer_sizes
     }
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
