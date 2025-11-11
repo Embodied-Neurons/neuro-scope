@@ -32,23 +32,29 @@ export default function BatchControls({
 
   return (
     <div id="batch-panel" className="p-2">
-      <select
-        value={selectedBatch}
-        onChange={(e) => setSelectedBatch(Number(e.target.value))}
-        className="mr-1.5 border-black border"
-      >
-        {batches.map((b) => (
-          <option key={b} value={b}>
-            Batch {b}
-          </option>
-        ))}
-      </select>
-      <button
-        onClick={() => onSelectBatch(selectedBatch)}
-        className="rounded-xl shadow pl-1.5 pr-1.5 pt-0.75 pb-0.75 mt-2 text-base"
-      >
-        Load Batch
-      </button>
+      {batches.length == 0 ? (
+        'No batches found'
+      ) : (
+        <>
+          <select
+            value={selectedBatch}
+            onChange={(e) => setSelectedBatch(Number(e.target.value))}
+            className="mr-1.5 border-black border"
+          >
+            {batches.map((b) => (
+              <option key={b} value={b}>
+                Batch {b}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => onSelectBatch(selectedBatch)}
+            className="rounded-xl shadow pl-1.5 pr-1.5 pt-0.75 pb-0.75 mt-2 text-base"
+          >
+            Load Batch
+          </button>
+        </>
+      )}
     </div>
   )
 }

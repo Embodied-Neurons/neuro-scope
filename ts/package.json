@@ -25,6 +25,7 @@
     "@electron-toolkit/utils": "^4.0.0",
     "@tailwindcss/vite": "^4.1.16",
     "graphology": "^0.26.0",
+    "react-router-dom": "^7.9.5",
     "sigma": "^3.0.2",
     "tailwindcss": "^4.1.16"
   },

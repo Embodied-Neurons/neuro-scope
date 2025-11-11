@@ -31,20 +31,21 @@ export default function FileSelector({ onFileSelect }: FileDialogProps): JSX.Ele
   }
 
   return (
-    <div id="file-selector" className="p-2">
+    <div id="file-selector" className="flex flex-col items-center space-y-3">
       <button
         onClick={handleButtonClick}
         type="button"
-        className="rounded p-0.75 text-xs bg-blue-500"
+        className="bg-white text-black rounded-xl px-4 py-2 font-medium hover:bg-gray-200 transition"
       >
         Select model file
       </button>
+      <p className="text-gray-500 text-xs italic">Supported format: .py</p>
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".py"
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
       />
     </div>
   )
