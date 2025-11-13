@@ -4,7 +4,6 @@ import * as types from './types'
 export async function groupNeurons(
   visibleNodes: types.Node[][],
   allNodes: types.Node[][],
-  containerHeight: number,
   originalSizes: number[],
   outputDir: string,
   batch: number,
@@ -24,7 +23,7 @@ export async function groupNeurons(
     }
   }
 
-  yExtent = Math.min(1, yExtent / containerHeight / zoomRatio)
+  yExtent = Math.min(1, yExtent / zoomRatio)
 
   const neuronsPerGroup = Math.ceil(Math.max(...originalSizes) / MAX_GROUPS)
   const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS / yExtent)
@@ -62,7 +61,7 @@ export async function groupNeurons(
           id: nodes[neuronIndex].id,
           x: nodes[neuronIndex].x,
           y: nodes[neuronIndex + groupShift].y,
-          size: Math.max(1.4, 0.7 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+          size: Math.max(1.4, 400 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
         })
       }
 
@@ -80,7 +79,7 @@ export async function groupNeurons(
           id: nodes[neuronIndex].id,
           x: nodes[neuronIndex].x,
           y: nodes[neuronIndex + groupShift].y,
-          size: Math.max(1.4, 0.7 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+          size: Math.max(1.4, 400 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
         })
       }
 
@@ -97,7 +96,7 @@ export async function groupNeurons(
       id: nodes[neuronIndex].id,
       x: nodes[neuronIndex].x,
       y: nodes[neuronIndex + lastGroupShift].y,
-      size: Math.max(1.4, 0.7 * (nodes[neuronIndex + lastGroupShift].y - nodes[neuronIndex].y)),
+      size: Math.max(1.4, 400 * (nodes[neuronIndex + lastGroupShift].y - nodes[neuronIndex].y)),
       weight: 0
     })
   }
@@ -136,8 +135,8 @@ async function fetchCompressedEdges(
     const gradients: Record<string, types.Stats[][]> = data.gradients || {}
     const activations: Record<string, types.Stats[]> = data.activations || {}
     const colorMap = new Map<boolean, string>([
-      [false, '#c2c2c2'],
-      [true, '#2c2c2c']
+      [false, '#c8c8c8'],
+      [true, '#949494']
     ])
 
     for (let i = 0; i < layerGroups.length - 1; i++) {
@@ -188,8 +187,6 @@ async function fetchCompressedEdges(
 
 export function buildGraph(
   graph: types.Graph,
-  containerWidth: number,
-  containerHeight: number,
   neuronLayers: types.Node[][],
   edges: types.Edge[]
 ): void {
@@ -199,17 +196,17 @@ export function buildGraph(
     graph.dropNode(node)
   })
 
-  // dummy nodes, otherwise sigma tries to be smart and scale coordinates
-  graph.addNode('dummy1', { x: 0, y: 0, color: '#ffffff' })
-  graph.addNode('dummy2', { x: containerWidth, y: containerHeight, color: '#ffffff' })
+  // Track maximum node size to determine edge width
+  let maxNodeSize: number = 0
 
   neuronLayers.forEach((layer) => {
     layer.forEach((node) => {
+      maxNodeSize = Math.max(maxNodeSize, node.size)
       graph.addNode(node.id, {
         x: node.x,
         y: node.y,
         size: node.size,
-        color: '#c0c0c0',
+        color: '#b1b1b1',
         weight: node.weight,
         activation: node.activation,
         mean: node.mean,
@@ -222,7 +219,7 @@ export function buildGraph(
   edges.forEach((edge) => {
     graph.addEdge(edge.src, edge.tgt, {
       id: edge.id,
-      size: 0.5,
+      size: 0.25 * maxNodeSize,
       zIndex: 0,
       color: edge.color,
       weight: edge.weight,

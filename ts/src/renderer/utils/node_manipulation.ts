@@ -17,11 +17,7 @@ export function getAllNodesByLayers(nodes: types.Node[], layerSizes: number[]): 
   return nodesByLayers
 }
 
-export function getNodesPosInfo(
-  nodesByLayers: types.Node[][],
-  containerWidth: number,
-  containerHeight: number
-): types.PosInfo[] {
+export function getNodesPosInfo(nodesByLayers: types.Node[][]): types.PosInfo[] {
   const posInfo: types.PosInfo[] = []
   let x: number, minY: number, maxY: number
 
@@ -31,9 +27,9 @@ export function getNodesPosInfo(
     maxY = nodesLayer[nodesLayer.length - 1].y
 
     posInfo.push({
-      x: x / containerWidth,
-      minY: minY / containerHeight,
-      maxY: maxY / containerHeight
+      x: x,
+      minY: minY,
+      maxY: maxY
     })
   }
 
@@ -56,8 +52,6 @@ export function anyNodeVisible(nodesByLayers: types.Node[][]): number {
 
 export function getVisibleNodes(
   nodes: types.Node[][],
-  containerWidth: number,
-  containerHeight: number,
   visibilityRanges: { minX: number; maxX: number; minY: number; maxY: number }
 ): types.Node[][] {
   const { minX, maxX, minY, maxY } = visibilityRanges
@@ -66,12 +60,12 @@ export function getVisibleNodes(
   for (const nodeLayer of nodes) {
     visibleNodes.push([])
 
-    if (nodeLayer[0].x / containerWidth < minX || nodeLayer[0].x / containerWidth > maxX) {
+    if (nodeLayer[0].x < minX || nodeLayer[0].x > maxX) {
       continue
     }
 
     for (const node of nodeLayer) {
-      if (node.y / containerHeight >= minY && node.y / containerHeight <= maxY) {
+      if (node.y >= minY && node.y <= maxY) {
         visibleNodes[visibleNodes.length - 1].push(node)
       }
     }

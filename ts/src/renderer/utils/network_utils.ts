@@ -8,15 +8,13 @@ function generateMlpLayout(layerSizes: number[]): types.Position[] {
   const layout: types.Position[] = []
   const maxNeurons = Math.max(...layerSizes)
   const numLayers = layerSizes.length
-  const width = 960
-  const height = 720
-  const xStep = numLayers > 1 ? width / (numLayers - 1) : 0
-  const yStep = maxNeurons > 1 ? height / (maxNeurons - 1) : 0
+  const xStep = numLayers > 1 ? 1.0 / (numLayers - 1) : 0
+  const yStep = maxNeurons > 1 ? 1.0 / (maxNeurons - 1) : 0
 
   for (let layerIdx = 0; layerIdx < numLayers; layerIdx++) {
     const size = layerSizes[layerIdx]
     const x = layerIdx * xStep
-    const yOffset = (height - yStep * (size - 1)) / 2
+    const yOffset = (1.0 - yStep * (size - 1)) / 2
 
     for (let i = 0; i < size; i++) {
       const y = yOffset + i * yStep

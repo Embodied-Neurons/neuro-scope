@@ -18,25 +18,24 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
   const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
   const selectedEdgesColorsRef = useRef<string[]>([])
+  const selectedEdgesSizesRef = useRef<number[]>([])
 
   useEffect(() => {
     let destroyed = false
 
     async function init(): Promise<void> {
-      if (!containerRef.current) return
-      const container = containerRef.current
-      container.innerHTML = ''
+      if (!containerRef.current) {
+        return
+      }
 
+      const container = containerRef.current
       const data = await window.api.getNeuralNetworkVisualization(outputDir, batch)
-      const containerWidth = container.offsetWidth
-      const containerHeight = container.offsetHeight
       const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
-      const posInfo = getNodesPosInfo(nodes, containerWidth, containerHeight)
+      const posInfo = getNodesPosInfo(nodes)
 
       const { neuronLayers, edges } = await groupNeurons(
         nodes,
         nodes,
-        containerHeight,
         data.layerSizes,
         outputDir,
         batch
@@ -44,7 +43,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
       const graph = new Graph()
       graphRef.current = graph
-      buildGraph(graph, containerWidth, containerHeight, neuronLayers, edges)
+      buildGraph(graph, neuronLayers, edges)
 
       if (destroyed) return
 
@@ -65,13 +64,12 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
       })
 
       let currentVisibleNodes = nodes
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let debounceTimer: any = null
+      let debounceTimer: NodeJS.Timeout
 
       const rebuild = async (): Promise<void> => {
         if (!renderer || !graph) return
         const visibility = getVisibilityRanges(camera, renderer, container)
-        const visibleNodes = getVisibleNodes(nodes, containerWidth, containerHeight, visibility)
+        const visibleNodes = getVisibleNodes(nodes, visibility)
 
         if (
           visibleNodesChanged(visibleNodes, currentVisibleNodes) &&
@@ -81,16 +79,17 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
           const { neuronLayers, edges } = await groupNeurons(
             visibleNodes,
             nodes,
-            containerHeight,
             data.layerSizes,
             outputDir,
             batch,
             ratio
           )
-          buildGraph(graph, containerWidth, containerHeight, neuronLayers, edges)
+
+          buildGraph(graph, neuronLayers, edges)
 
           selectedNodeRef.current = null
           selectedEdgesColorsRef.current = []
+          selectedEdgesSizesRef.current = []
 
           currentVisibleNodes = visibleNodes
         }
@@ -109,11 +108,11 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
         if (selectedNodeRef.current) {
           const prevNode = selectedNodeRef.current
-          graph.setNodeAttribute(prevNode, 'color', '#c0c0c0')
+          graph.setNodeAttribute(prevNode, 'color', '#b1b1b1')
           const pastEdges = graph.edges(prevNode)
           pastEdges.forEach((edge, i) => {
             graph.setEdgeAttribute(edge, 'color', selectedEdgesColorsRef.current[i])
-            graph.setEdgeAttribute(edge, 'size', 0.5)
+            graph.setEdgeAttribute(edge, 'size', selectedEdgesSizesRef.current[i])
             graph.setEdgeAttribute(edge, 'zIndex', 0)
           })
         }
@@ -121,6 +120,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
         if (selectedNodeRef.current !== node) {
           selectedNodeRef.current = node
           selectedEdgesColorsRef.current = []
+          selectedEdgesSizesRef.current = []
 
           const nodeData = graph.getNodeAttributes(node)
           const { weight } = nodeData
@@ -132,10 +132,12 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
           const connectedEdges = graph.edges(node)
           const newEdgesColors: string[] = []
+          const newEdgesSizes: number[] = []
           const edgeStats: EdgeStats[] = []
 
           connectedEdges.forEach((edge) => {
             newEdgesColors.push(graph.getEdgeAttribute(edge, 'color'))
+            newEdgesSizes.push(graph.getEdgeAttribute(edge, 'size'))
           })
 
           connectedEdges.forEach((edge) => {
@@ -145,9 +147,10 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
             const gradMin = attrs.gradMin ?? '—'
             const gradMax = attrs.gradMax ?? '—'
             const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
+            const size = attrs.size
 
             graph.setEdgeAttribute(edge, 'color', color)
-            graph.setEdgeAttribute(edge, 'size', 1.5)
+            graph.setEdgeAttribute(edge, 'size', 2 * size)
             graph.setEdgeAttribute(edge, 'zIndex', 2)
 
             edgeStats.push({
@@ -160,10 +163,12 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
           })
 
           selectedEdgesColorsRef.current = newEdgesColors
+          selectedEdgesSizesRef.current = newEdgesSizes
           onNodeSelect({ ...nodeData, edgeStats })
         } else {
           selectedNodeRef.current = null
           selectedEdgesColorsRef.current = []
+          selectedEdgesSizesRef.current = []
           onNodeSelect(null)
         }
       })

@@ -70,14 +70,9 @@ export function getVisibilityRanges(
   renderer: types.SigmaRenderer,
   container: types.Div | types.DivRef
 ): { minX: number; maxX: number; minY: number; maxY: number } {
-  // Checking if ref type
-  const div = 'current' in container ? container.current : container
-
   const { ratio } = camera.getState()
-  let { x, y } = getCenterCoords(renderer, container)
-
-  x /= div.offsetWidth
-  y /= div.offsetHeight
+  const { x, y } = getCenterCoords(renderer, container)
+  console.log(x, y)
 
   return {
     minX: x - 0.56 * ratio,
