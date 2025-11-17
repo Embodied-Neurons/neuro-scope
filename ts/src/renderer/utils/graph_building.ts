@@ -6,12 +6,10 @@ export async function groupNeurons(
   allNodes: types.Node[][],
   originalSizes: number[],
   outputDir: string,
-  batch: number,
-  zoomRatio: number = 1.0
+  batch: number
 ): Promise<{ neuronLayers: types.Node[][]; edges: types.Edge[] }> {
   const layerVisibility: boolean[] = []
   let maxVisibleNeurons = 0
-  let yExtent = 1
 
   for (let i = 0; i < visibleNodes.length; i++) {
     const nodeLayer: Array<{ x: number; y: number }> = visibleNodes[i]
@@ -19,28 +17,20 @@ export async function groupNeurons(
 
     if (nodeLayer.length > maxVisibleNeurons) {
       maxVisibleNeurons = nodeLayer.length
-      yExtent = nodeLayer[nodeLayer.length - 1].y - nodeLayer[0].y
     }
   }
 
-  yExtent = Math.min(1, yExtent / zoomRatio)
-
   const neuronsPerGroup = Math.ceil(Math.max(...originalSizes) / MAX_GROUPS)
-  const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS / yExtent)
+  const visibleNeuronsPerGroup = Math.ceil(maxVisibleNeurons / MAX_GROUPS)
   const layerGroups: number[] = []
-  let flag = false
 
   for (let i = 0; i < visibleNodes.length; i++) {
     if (layerVisibility[i]) {
       const size = visibleNodes[i].length
       layerGroups.push(Math.ceil(size / visibleNeuronsPerGroup))
-      flag = true
-    } else if (flag || (i < visibleNodes.length - 1 && layerVisibility[i + 1])) {
+    } else {
       const size = originalSizes[i]
       layerGroups.push(Math.ceil(size / neuronsPerGroup))
-      flag = false
-    } else {
-      layerGroups.push(0)
     }
   }
 
@@ -61,7 +51,10 @@ export async function groupNeurons(
           id: nodes[neuronIndex].id,
           x: nodes[neuronIndex].x,
           y: nodes[neuronIndex + groupShift].y,
-          size: Math.max(1.4, 400 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+          size: Math.max(
+            1.5,
+            Math.sqrt(2500 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+          )
         })
       }
 
@@ -70,7 +63,7 @@ export async function groupNeurons(
       } else {
         lastGroupShift = Math.floor(0.5 * visibleNeuronsPerGroup)
       }
-    } else if (layerGroups[i] > 0) {
+    } else {
       nodes = allNodes[i]
       const groupShift = Math.floor(0.5 * neuronsPerGroup)
 
@@ -79,7 +72,10 @@ export async function groupNeurons(
           id: nodes[neuronIndex].id,
           x: nodes[neuronIndex].x,
           y: nodes[neuronIndex + groupShift].y,
-          size: Math.max(1.4, 400 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+          size: Math.max(
+            1.5,
+            Math.sqrt(2500 * (nodes[neuronIndex + groupShift].y - nodes[neuronIndex].y))
+          )
         })
       }
 
@@ -88,16 +84,16 @@ export async function groupNeurons(
       } else {
         lastGroupShift = Math.floor(0.5 * neuronsPerGroup)
       }
-    } else {
-      continue
     }
 
     neuronLayers[neuronLayers.length - 1].push({
       id: nodes[neuronIndex].id,
       x: nodes[neuronIndex].x,
       y: nodes[neuronIndex + lastGroupShift].y,
-      size: Math.max(1.4, 400 * (nodes[neuronIndex + lastGroupShift].y - nodes[neuronIndex].y)),
-      weight: 0
+      size: Math.max(
+        1.5,
+        Math.sqrt(2500 * (nodes[neuronIndex + lastGroupShift].y - nodes[neuronIndex].y))
+      )
     })
   }
 
@@ -107,8 +103,7 @@ export async function groupNeurons(
     originalSizes,
     visibleNeuronsPerGroup,
     layerGroups,
-    neuronLayers,
-    layerVisibility
+    neuronLayers
   )
 
   return { neuronLayers, edges }
@@ -120,8 +115,7 @@ async function fetchCompressedEdges(
   originalSizes: number[],
   visibleNeuronsPerGroup: number,
   layerGroups: number[],
-  neuronLayers: types.Node[][],
-  layerVisibility: boolean[]
+  neuronLayers: types.Node[][]
 ): Promise<types.Edge[]> {
   const edges: types.Edge[] = []
 
@@ -134,10 +128,6 @@ async function fetchCompressedEdges(
     )
     const gradients: Record<string, types.Stats[][]> = data.gradients || {}
     const activations: Record<string, types.Stats[]> = data.activations || {}
-    const colorMap = new Map<boolean, string>([
-      [false, '#c8c8c8'],
-      [true, '#949494']
-    ])
 
     for (let i = 0; i < layerGroups.length - 1; i++) {
       const first = neuronLayers[i]
@@ -146,7 +136,7 @@ async function fetchCompressedEdges(
       const activKey = `fc${i + 1}.activ`
       const gradMatrix = gradients[gradKey]
       const activList = activations[activKey]
-      const color = colorMap.get(layerVisibility[i] && layerVisibility[i + 1])!
+      const color = '#949494'
 
       if (!gradMatrix || !activList) continue
 

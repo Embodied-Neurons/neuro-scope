@@ -1,6 +1,6 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
-import { JSX, useEffect, useRef } from 'react'
+import { JSX, useEffect, useState, useRef } from 'react'
 import { groupNeurons, buildGraph } from '../../utils/graph_building'
 import { calculateDynamicBounds, getVisibilityRanges } from '../../utils/graph_bounding'
 import {
@@ -11,8 +11,16 @@ import {
   getVisibleNodes
 } from '../../utils/node_manipulation'
 import { NeuralGraphProps, EdgeStats } from '../../utils/types'
+import { MAX_GROUPS } from '../../utils/consts'
 
 export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const currentZoomIndexRef = useRef(0)
+  const zoomRatiosRef = useRef<number[]>([])
+  const rebuildRef = useRef<(() => Promise<void>) | null>(null)
+  const isProcessingRef = useRef(false)
+
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
@@ -47,42 +55,78 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
       if (destroyed) return
 
+      // Calculating max zoom for camera ratio boundaries
+      const maxZoom = 1.5 * Math.ceil(Math.max(...data.layerSizes) / MAX_GROUPS)
+
       const renderer = new Sigma(graph, container, {
-        minCameraRatio: 0.02,
+        minCameraRatio: 1 / maxZoom,
         maxCameraRatio: 1,
         zIndex: true
       })
+
+      const containerRect = container.getBoundingClientRect()
+
+      // Disabling mouse wheel events
+      window.addEventListener(
+        'wheel',
+        (e) => {
+          if (
+            e.clientX >= containerRect.left &&
+            e.clientX <= containerRect.right &&
+            e.clientY >= containerRect.top &&
+            e.clientY <= containerRect.bottom
+          ) {
+            e.preventDefault()
+            e.stopPropagation()
+          }
+        },
+        { passive: false, capture: true }
+      )
+
+      // Determining set of available zoom ratios
+      const zoomRatios = [1]
+      let ratioToAdd = 0.5
+
+      while (ratioToAdd > 1 / maxZoom) {
+        zoomRatios.push(ratioToAdd)
+        ratioToAdd /= 2
+      }
+
+      zoomRatios.push(1 / maxZoom)
+      const currentZoomIndex = 0
+
+      zoomRatiosRef.current = zoomRatios
+      currentZoomIndexRef.current = currentZoomIndex
 
       const camera = renderer.getCamera()
       rendererRef.current = renderer
       camera.setState({ ratio: 1.0 })
 
-      camera.on('updated', () => {
-        const { x, y, ratio } = camera.getState()
-        const { newX, newY } = calculateDynamicBounds(x, y, ratio, posInfo)
-        if (newX !== x || newY !== y) camera.setState({ x: newX, y: newY })
+      camera.on('updated', async () => {
+        const { x, y, newX, newY } = calculateDynamicBounds(renderer, container, posInfo)
+        const cameraState = camera.getState()
+
+        if (newX !== x || newY !== y) {
+          const newCameraX = cameraState.x - x + newX
+          const newCameraY = cameraState.y - y + newY
+          camera.setState({ x: newCameraX, y: newCameraY })
+        }
       })
 
       let currentVisibleNodes = nodes
-      let debounceTimer: NodeJS.Timeout
 
       const rebuild = async (): Promise<void> => {
         if (!renderer || !graph) return
         const visibility = getVisibilityRanges(camera, renderer, container)
         const visibleNodes = getVisibleNodes(nodes, visibility)
 
-        if (
-          visibleNodesChanged(visibleNodes, currentVisibleNodes) &&
-          anyNodeVisible(visibleNodes)
-        ) {
-          const { ratio } = camera.getState()
+        if (anyNodeVisible(visibleNodes)) {
           const { neuronLayers, edges } = await groupNeurons(
             visibleNodes,
             nodes,
             data.layerSizes,
             outputDir,
-            batch,
-            ratio
+            batch
           )
 
           buildGraph(graph, neuronLayers, edges)
@@ -95,13 +139,78 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
         }
       }
 
-      const debounce = (): void => {
-        clearTimeout(debounceTimer)
-        debounceTimer = setTimeout(rebuild, 500)
+      rebuildRef.current = rebuild
+
+      // Helper functions in zooming in/out
+      const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+      const restoreRatio = (): void => {
+        camera.setState({ ratio: zoomRatios[currentZoomIndexRef.current] })
       }
 
-      renderer.on('upStage', debounce)
-      renderer.on('wheelStage', debounce)
+      const zoomIn = async (): Promise<void> => {
+        if (isProcessingRef.current) return
+
+        const currentZoomIndex = currentZoomIndexRef.current
+        const zoomRatios = zoomRatiosRef.current
+
+        if (currentZoomIndex < zoomRatios.length - 1) {
+          isProcessingRef.current = true
+          setIsLoading(true)
+          const newIndex = currentZoomIndex + 1
+          currentZoomIndexRef.current = newIndex
+          camera.setState({ ratio: zoomRatios[newIndex] })
+          await rebuild()
+          await sleep(200)
+
+          // Restore ratio, cause double click Sigma event modifies it too
+          restoreRatio()
+
+          isProcessingRef.current = false
+          setIsLoading(false)
+        }
+      }
+
+      const zoomOut = async (): Promise<void> => {
+        if (isProcessingRef.current) return
+
+        const currentZoomIndex = currentZoomIndexRef.current
+        const zoomRatios = zoomRatiosRef.current
+
+        if (currentZoomIndex > 0) {
+          isProcessingRef.current = true
+          setIsLoading(true)
+          const newIndex = currentZoomIndex - 1
+          currentZoomIndexRef.current = newIndex
+          camera.setState({ ratio: zoomRatios[newIndex] })
+          await rebuild()
+          await sleep(200)
+          isProcessingRef.current = false
+          setIsLoading(false)
+        }
+      }
+
+      const drag = async (): Promise<void> => {
+        if (isProcessingRef.current) return
+
+        isProcessingRef.current = true
+        setIsLoading(true)
+        const visibility = getVisibilityRanges(camera, renderer, container)
+        const visibleNodes = getVisibleNodes(nodes, visibility)
+
+        if (visibleNodesChanged(visibleNodes, currentVisibleNodes)) {
+          await rebuild()
+          await sleep(200)
+        }
+
+        isProcessingRef.current = false
+        setIsLoading(false)
+      }
+
+      renderer.on('doubleClickStage', zoomIn)
+      renderer.on('doubleClickNode', zoomIn)
+      renderer.on('rightClickStage', zoomOut)
+      renderer.on('upStage', drag)
+
       renderer.on('clickNode', ({ node }: { node: string }) => {
         if (!graphRef.current) return
         const graph = graphRef.current
@@ -189,5 +298,15 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
     }
   }, [batch, onNodeSelect, outputDir])
 
-  return <div ref={containerRef} className="w-full h-full" />
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      {isLoading && (
+        <div className="loading-overlay-react">
+          <div className="spinner"></div>
+          <p className="loading-text">Przetwarzanie grafu...</p>
+        </div>
+      )}
+    </div>
+  )
 }
