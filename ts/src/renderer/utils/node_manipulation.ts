@@ -36,9 +36,16 @@ export function getNodesPosInfo(nodesByLayers: types.Node[][]): types.PosInfo[] 
   return posInfo
 }
 
+// Helper function to check if array is contained within another array
+function isSubArrayOf(subArray: types.Node[], superArray: types.Node[]): boolean {
+  const superset = new Set(superArray)
+
+  return subArray.every((item) => superset.has(item))
+}
+
 export function visibleNodesChanged(newNodes: types.Node[][], oldNodes: types.Node[][]): boolean {
   for (let i = 0; i < newNodes.length; i++) {
-    if (newNodes[i].length !== oldNodes[i].length) {
+    if (!isSubArrayOf(newNodes[i], oldNodes[i])) {
       return true
     }
   }
@@ -52,20 +59,20 @@ export function anyNodeVisible(nodesByLayers: types.Node[][]): number {
 
 export function getVisibleNodes(
   nodes: types.Node[][],
-  visibilityRanges: { minX: number; maxX: number; minY: number; maxY: number }
+  visibilityRanges: { leftX: number; rightX: number; downY: number; upY: number }
 ): types.Node[][] {
-  const { minX, maxX, minY, maxY } = visibilityRanges
+  const { leftX, rightX, downY, upY } = visibilityRanges
   const visibleNodes: types.Node[][] = []
 
   for (const nodeLayer of nodes) {
     visibleNodes.push([])
 
-    if (nodeLayer[0].x < minX || nodeLayer[0].x > maxX) {
+    if (nodeLayer[0].x < leftX || nodeLayer[0].x > rightX) {
       continue
     }
 
     for (const node of nodeLayer) {
-      if (node.y >= minY && node.y <= maxY) {
+      if (node.y >= downY && node.y <= upY) {
         visibleNodes[visibleNodes.length - 1].push(node)
       }
     }
