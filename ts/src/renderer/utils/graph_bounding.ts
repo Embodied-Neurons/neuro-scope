@@ -36,10 +36,7 @@ function findYExtremes(x: number, posInfo: types.PosInfo[]): { minY: number; max
     }
   }
 
-  // Applying some buffer
-  const buff = 0.1 * (maxY - minY)
-
-  return { minY: minY + buff, maxY: maxY - buff }
+  return { minY, maxY }
 }
 
 function getCenterCoords(
@@ -55,15 +52,22 @@ function getCenterCoords(
 export function getVisibilityRanges(
   camera: types.Camera,
   renderer: types.SigmaRenderer,
-  container: types.Div | types.DivRef
+  container: types.Div | types.DivRef,
+  deltaY: number
 ): { leftX: number; rightX: number; downY: number; upY: number } {
   const { ratio } = camera.getState()
   const { x, y } = getCenterCoords(renderer, container)
 
+  // Checking if ref type
+  const div = 'current' in container ? container.current : container
+
+  const mul = Math.abs(y - 0.5) > 0.1 ? (Math.abs(y - 0.5) < 0.45 ? 0.9 : 0.6) : 0.1
+  const yMove = (mul * ratio * deltaY) / div.offsetHeight
+
   return {
     leftX: x - 0.6 * ratio,
     rightX: x + 0.6 * ratio,
-    downY: y - 0.55 * ratio,
-    upY: y + 0.55 * ratio
+    downY: y + yMove - 0.6 * ratio,
+    upY: y + yMove + 0.6 * ratio
   }
 }

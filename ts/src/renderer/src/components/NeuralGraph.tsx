@@ -18,8 +18,9 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
   const currentZoomIndexRef = useRef(0)
   const zoomRatiosRef = useRef<number[]>([])
-  const rebuildRef = useRef<(() => Promise<void>) | null>(null)
+  const rebuildRef = useRef<((deltaY: number) => Promise<void>) | null>(null)
   const isProcessingRef = useRef(false)
+  const startPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
@@ -115,9 +116,9 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
       let currentVisibleNodes = nodes
 
-      const rebuild = async (): Promise<void> => {
+      const rebuild = async (deltaY: number): Promise<void> => {
         if (!renderer || !graph) return
-        const visibility = getVisibilityRanges(camera, renderer, container)
+        const visibility = getVisibilityRanges(camera, renderer, container, deltaY)
         const visibleNodes = getVisibleNodes(nodes, visibility)
 
         if (anyNodeVisible(visibleNodes)) {
@@ -159,7 +160,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
           const newIndex = currentZoomIndex + 1
           currentZoomIndexRef.current = newIndex
           camera.setState({ ratio: zoomRatios[newIndex] })
-          await rebuild()
+          await rebuild(0)
           await sleep(200)
 
           // Restore ratio, cause double click Sigma event modifies it too
@@ -182,34 +183,45 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
           const newIndex = currentZoomIndex - 1
           currentZoomIndexRef.current = newIndex
           camera.setState({ ratio: zoomRatios[newIndex] })
-          await rebuild()
+          await rebuild(0)
           await sleep(200)
           isProcessingRef.current = false
           setIsLoading(false)
         }
       }
 
-      const drag = async (): Promise<void> => {
+      renderer.on('doubleClickStage', zoomIn)
+      renderer.on('doubleClickNode', zoomIn)
+      renderer.on('rightClickStage', zoomOut)
+
+      renderer.on('downStage', (e) => {
+        startPosRef.current = { x: e.event.x, y: e.event.y }
+      })
+
+      renderer.on('upStage', async (e) => {
         if (isProcessingRef.current) return
 
         isProcessingRef.current = true
         setIsLoading(true)
-        const visibility = getVisibilityRanges(camera, renderer, container)
+
+        const xStart = startPosRef.current.x
+        const yStart = startPosRef.current.y
+
+        const deltaX = e.event.x - xStart
+        const deltaY = e.event.y - yStart
+        console.log(deltaX, deltaY)
+
+        const visibility = getVisibilityRanges(camera, renderer, container, deltaY)
         const visibleNodes = getVisibleNodes(nodes, visibility)
 
         if (visibleNodesChanged(visibleNodes, currentVisibleNodes)) {
-          await rebuild()
+          await rebuild(deltaY)
           await sleep(200)
         }
 
         isProcessingRef.current = false
         setIsLoading(false)
-      }
-
-      renderer.on('doubleClickStage', zoomIn)
-      renderer.on('doubleClickNode', zoomIn)
-      renderer.on('rightClickStage', zoomOut)
-      renderer.on('upStage', drag)
+      })
 
       renderer.on('clickNode', ({ node }: { node: string }) => {
         if (!graphRef.current) return
