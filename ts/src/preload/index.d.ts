@@ -11,7 +11,6 @@ declare global {
       ): Promise<types.NeuralNetworkData>
       getCompressedNeuralNetworkData(
         sizes: number[],
-        count?: number,
         outputDir?: string,
         batch?: number
       ): Promise<types.CompressedData>

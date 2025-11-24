@@ -127,3 +127,15 @@ export type NeuralGraphProps = {
 export type FileDialogProps = {
   onFileSelect: (outputDir: string) => void
 }
+export type ActivStats = {
+  raw: number[]
+  norm: number[]
+}
+export type GradStats = {
+  raw: number[][]
+  norm: number[][]
+}
+export type NeuralStats = {
+  gradients: Record<string, GradStats>
+  activations: Record<string, ActivStats>
+}

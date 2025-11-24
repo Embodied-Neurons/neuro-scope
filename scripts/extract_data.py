@@ -16,7 +16,7 @@ class ActivationTracker:
 
     def _save_activation(self, name):
         def hook(module, input, output):
-            self.activations[name] = output.detach().cpu().numpy().tolist()
+            self.activations[name] = output.detach().mean(dim=0).cpu().numpy().tolist()
         return hook
 
 

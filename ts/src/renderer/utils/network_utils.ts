@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs/promises'
 import * as types from './types'
 import { OUTPUT_DIR_BASE } from '../../main'
-import { compressNeuronLayers, normalizeGroupsAct, normalizeGroupsGrad } from './neuron_utils'
+import { processActivations, processGradients } from './neuron_utils'
 
 function generateMlpLayout(layerSizes: number[]): types.Position[] {
   const layout: types.Position[] = []
@@ -80,10 +80,9 @@ export async function getNeuralNetworkVisualization(
 
 export async function getCompressedNeuralNetworkData(
   layerSizes: number[],
-  layerCount?: number,
   outputDir: string = '',
   batchId = 0
-): Promise<types.CompressedData> {
+): Promise<types.NeuralStats> {
   if (!layerSizes.length) {
     throw new Error("Missing or invalid 'layerSizes' argument")
   }
@@ -103,47 +102,12 @@ export async function getCompressedNeuralNetworkData(
     throw new Error('Activation or gradient data not found')
   }
 
-  const activations: Record<string, number[][]> = JSON.parse(activationsRaw)
+  const activations: Record<string, number[]> = JSON.parse(activationsRaw)
   const gradients: Record<string, number[][]> = JSON.parse(gradientsRaw)
-  const compressed = compressNeuronLayers(layerSizes, layerCount ?? layerSizes.length)
-  const groupedGradients: Record<string, types.Stats[][]> = {}
-  const groupedActivations: Record<string, types.Stats[]> = {}
-
-  for (let i = 1; i < layerSizes.length; i++) {
-    const weightKey = `fc${i}.weight`
-    const gradKey = `fc${i}.grad`
-
-    if (!(weightKey in gradients)) continue
-
-    groupedGradients[gradKey] = normalizeGroupsGrad(
-      gradients[weightKey],
-      compressed[i - 1],
-      compressed[i]
-    )
-  }
-
-  const lastVal: Record<number, string> = {}
-
-  for (const [key, value] of Object.entries(activations)) {
-    const len = value[0]?.length ?? 0
-    lastVal[len] = key
-  }
-
-  let layerIdx = 1
-
-  for (const [key, value] of Object.entries(activations)) {
-    const len = value[0]?.length ?? 0
-
-    if (lastVal[len] !== key) continue
-
-    const actKey = `fc${layerIdx}.activ`
-    groupedActivations[actKey] = normalizeGroupsAct(value, compressed[layerIdx])
-    layerIdx++
-  }
 
   return {
-    gradients: groupedGradients,
-    activations: groupedActivations
+    gradients: processGradients(gradients),
+    activations: processActivations(activations)
   }
 }
 

@@ -1,149 +1,69 @@
-import * as types from './types'
+import { ActivStats, GradStats } from './types'
 
-function min(arr: number[]): number {
-  return Math.min(...arr)
+function normalizeList(list: number[], min: number, max: number): number[] {
+  const range = max - min || 1
+  return list.map((v) => (v - min) / range)
 }
 
-function max(arr: number[]): number {
-  return Math.max(...arr)
+function normalizeMatrix(matrix: number[][], min: number, max: number): number[][] {
+  const range = max - min || 1
+  return matrix.map((row) => row.map((v) => (v - min) / range))
 }
+export function processGradients(
+  parsedGradients: Record<string, number[][]>
+): Record<string, GradStats> {
+  let globalMin = Infinity
+  let globalMax = -Infinity
 
-function mean(arr: number[]): number {
-  if (arr.length == 0) {
-    return 0
-  }
-
-  return arr.reduce((a, b) => a + b, 0) / arr.length
-}
-
-function sum(arr: number[]): number {
-  return arr.reduce((a, b) => a + b, 0)
-}
-
-export function normalizeGroupsGrad(
-  neurocons: number[][],
-  startSize: types.LayerSize,
-  endSize: types.LayerSize
-): types.Stats[][] {
-  const rowChunks = getChunks(endSize)
-  const colChunks = getChunks(startSize)
-
-  return sumChunksStats(neurocons, rowChunks, colChunks)
-}
-
-export function sumChunksStats(
-  matrix: number[][],
-  rowChunks: number[],
-  colChunks: number[]
-): types.Stats[][] {
-  const result: types.Stats[][] = []
-  let rowStart = 0
-
-  for (const rowCount of rowChunks) {
-    const rowEnd = rowStart + rowCount
-    let colStart = 0
-    const rowData: types.Stats[] = []
-
-    for (const colCount of colChunks) {
-      const colEnd = colStart + colCount
-      const chunk: number[] = []
-
-      for (let i = rowStart; i < rowEnd; i++) {
-        chunk.push(...matrix[i].slice(colStart, colEnd))
+  for (const [key, matrix] of Object.entries(parsedGradients)) {
+    if (!key.endsWith('.weight')) continue
+    for (const row of matrix) {
+      for (const v of row) {
+        if (v < globalMin) globalMin = v
+        if (v > globalMax) globalMax = v
       }
-
-      const minVal = min(chunk)
-      const maxVal = max(chunk)
-      const meanVal = mean(chunk)
-
-      rowData.push({
-        value: sum(chunk),
-        min: minVal,
-        max: maxVal,
-        mean: meanVal,
-        normalized: 0
-      })
-
-      colStart = colEnd
-    }
-
-    result.push(rowData)
-    rowStart = rowEnd
-  }
-
-  const allValues = result.flat().map((cell) => cell.value)
-  const globalMin = min(allValues)
-  const globalMax = max(allValues)
-
-  for (const row of result) {
-    for (const cell of row) {
-      cell.normalized = (cell.value - globalMin) / (globalMax - globalMin + 1e-8)
     }
   }
 
-  return result
-}
+  const out: Record<string, { raw: number[][]; norm: number[][] }> = {}
 
-export function normalizeGroupsAct(matrix: number[][], startSize: types.LayerSize): types.Stats[] {
-  const chunks = getChunks(startSize)
-  const cols = matrix[0].length
-  const colMeans = Array(cols)
-    .fill(0)
-    .map((_, j) => mean(matrix.map((row) => row[j])))
+  for (const [key, matrix] of Object.entries(parsedGradients)) {
+    if (!key.endsWith('.weight')) continue
 
-  const grouped: types.Stats[] = []
-  let index = 0
+    const layer = key.replace('.weight', '')
+    const gradKey = `${layer}.grad`
 
-  for (const size of chunks) {
-    const group = colMeans.slice(index, index + size)
-    grouped.push({
-      value: sum(group),
-      min: min(group),
-      max: max(group),
-      mean: mean(group),
-      normalized: 0
-    })
-
-    index += size
+    out[gradKey] = {
+      raw: matrix,
+      norm: normalizeMatrix(matrix, globalMin, globalMax)
+    }
   }
 
-  const values = grouped.map((g) => g.value)
-  const minVal = min(values)
-  const maxVal = max(values)
-
-  grouped.forEach((g) => {
-    g.normalized = (g.value - minVal) / (maxVal - minVal + 1e-8)
-  })
-
-  return grouped
+  return out
 }
+export function processActivations(
+  parsedActivations: Record<string, number[]>
+): Record<string, ActivStats> {
+  let globalMin = Infinity
+  let globalMax = -Infinity
 
-export function compressNeuronLayers(
-  noNeuronLayers: number[],
-  groupSize: number
-): types.LayerSize[] {
-  return noNeuronLayers.map((layerSize) => compressNeurons(layerSize, groupSize))
-}
-
-export function compressNeurons(layerSize: number, groupSize: number): types.LayerSize {
-  if (layerSize % groupSize === 0) {
-    return [layerSize / groupSize, groupSize, 0]
+  for (const [, list] of Object.entries(parsedActivations)) {
+    for (const v of list) {
+      if (v < globalMin) globalMin = v
+      if (v > globalMax) globalMax = v
+    }
   }
 
-  if (layerSize < groupSize) {
-    return [1, layerSize, 0]
+  const out: Record<string, { raw: number[]; norm: number[] }> = {}
+
+  for (const [key, list] of Object.entries(parsedActivations)) {
+    const actKey = `${key}.activ`
+
+    out[actKey] = {
+      raw: list,
+      norm: normalizeList(list, globalMin, globalMax)
+    }
   }
 
-  return [Math.floor(layerSize / groupSize) + 1, groupSize, layerSize % groupSize]
-}
-
-export function getChunks(size: types.LayerSize): number[] {
-  const [a, b, c] = size
-
-  if (a === 1) return [b]
-  if (c === 0) return Array(a).fill(b)
-
-  return Array(a - 1)
-    .fill(b)
-    .concat([c])
+  return out
 }

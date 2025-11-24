@@ -8,10 +8,9 @@ const api = {
 
   getCompressedNeuralNetworkData: (
     sizes: number[],
-    count?: number,
     outputDir?: string,
     batch?: number
-  ) => ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, count, outputDir, batch),
+  ) => ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, outputDir, batch),
 
   detectBatch: (outputDir: string, batch: number) =>
     ipcRenderer.invoke('detectBatch', outputDir, batch),
