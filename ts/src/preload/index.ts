@@ -6,12 +6,6 @@ const api = {
   getNeuralNetworkVisualization: (outputDir: string, batch: number) =>
     ipcRenderer.invoke('getNeuralNetworkVisualization', outputDir, batch),
 
-  getCompressedNeuralNetworkData: (
-    sizes: number[],
-    outputDir?: string,
-    batch?: number
-  ) => ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, outputDir, batch),
-
   detectBatch: (outputDir: string, batch: number) =>
     ipcRenderer.invoke('detectBatch', outputDir, batch),
 

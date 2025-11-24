@@ -9,14 +9,14 @@ function normalizeMatrix(matrix: number[][], min: number, max: number): number[]
   const range = max - min || 1
   return matrix.map((row) => row.map((v) => (v - min) / range))
 }
-export function processGradients(
-  parsedGradients: Record<string, number[][]>
-): Record<string, GradStats> {
+
+export function processGradients(gradients: Record<string, number[][]>): Record<string, GradStats> {
   let globalMin = Infinity
   let globalMax = -Infinity
 
-  for (const [key, matrix] of Object.entries(parsedGradients)) {
+  for (const [key, matrix] of Object.entries(gradients)) {
     if (!key.endsWith('.weight')) continue
+
     for (const row of matrix) {
       for (const v of row) {
         if (v < globalMin) globalMin = v
@@ -27,7 +27,7 @@ export function processGradients(
 
   const out: Record<string, { raw: number[][]; norm: number[][] }> = {}
 
-  for (const [key, matrix] of Object.entries(parsedGradients)) {
+  for (const [key, matrix] of Object.entries(gradients)) {
     if (!key.endsWith('.weight')) continue
 
     const layer = key.replace('.weight', '')
@@ -41,13 +41,14 @@ export function processGradients(
 
   return out
 }
+
 export function processActivations(
-  parsedActivations: Record<string, number[]>
+  activations: Record<string, number[]>
 ): Record<string, ActivStats> {
   let globalMin = Infinity
   let globalMax = -Infinity
 
-  for (const [, list] of Object.entries(parsedActivations)) {
+  for (const [, list] of Object.entries(activations)) {
     for (const v of list) {
       if (v < globalMin) globalMin = v
       if (v > globalMax) globalMax = v
@@ -56,9 +57,8 @@ export function processActivations(
 
   const out: Record<string, { raw: number[]; norm: number[] }> = {}
 
-  for (const [key, list] of Object.entries(parsedActivations)) {
+  for (const [key, list] of Object.entries(activations)) {
     const actKey = `${key}.activ`
-
     out[actKey] = {
       raw: list,
       norm: normalizeList(list, globalMin, globalMax)

@@ -24,7 +24,7 @@ export type Div = HTMLDivElement
 export type DivRef = RefObject<HTMLDivElement>
 
 // Position info type
-export type PosInfo = { x: number; minY: number; maxY: number }
+export type PosInfo = { minX: number; maxX: number; minY: number; maxY: number }
 
 // 2D position type
 export type Position = { x: number; y: number }
@@ -37,14 +37,10 @@ export type Node = {
   id: string
   x: number
   y: number
-  size: number
   label?: string
   color?: string
   weight?: number
   activation?: number
-  mean?: number
-  min?: number
-  max?: number
 }
 
 // Edge type
@@ -55,9 +51,6 @@ export type Edge = {
   color: string
   weight: number
   gradValue: number
-  gradMean: number
-  gradMin: number
-  gradMax: number
 }
 
 // Edge layout, limited to first three fields
@@ -94,9 +87,8 @@ export type GraphStructure = {
 // Neural network data used for visualization
 export type NeuralNetworkData = {
   nodes: Node[]
-  edges: EdgeLayout[]
-  activations: Record<string, number[][]>
-  gradients: Record<string, number[][]>
+  activations: Record<string, ActivStats>
+  gradients: Record<string, GradStats>
   layerSizes: number[]
   nodeLabels: string[]
 }

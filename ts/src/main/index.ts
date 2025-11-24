@@ -2,11 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
 import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { performTrainingIfNeeded } from '../renderer/utils/training_util'
-import {
-  getNeuralNetworkVisualization,
-  getCompressedNeuralNetworkData,
-  detectBatch
-} from '../renderer/utils/network_utils'
+import { getNeuralNetworkVisualization, detectBatch } from '../renderer/utils/network_utils'
 
 export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..')
 
@@ -73,13 +69,6 @@ app.whenReady().then(() => {
   ipcMain.handle('getNeuralNetworkVisualization', (_event, outputDir: string, batch: number) => {
     return getNeuralNetworkVisualization(outputDir, batch)
   })
-
-  ipcMain.handle(
-    'getCompressedNeuralNetworkData',
-    (_event, sizes: number[], count?: number, outputDir?: string, batch?: number) => {
-      return getCompressedNeuralNetworkData(sizes, count, outputDir, batch)
-    }
-  )
 
   ipcMain.handle('detectBatch', (_event, outputDir: string, batch: number) => {
     return detectBatch(outputDir, batch)

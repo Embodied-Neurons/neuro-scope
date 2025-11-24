@@ -9,11 +9,6 @@ declare global {
         outputDir: string,
         batch: number
       ): Promise<types.NeuralNetworkData>
-      getCompressedNeuralNetworkData(
-        sizes: number[],
-        outputDir?: string,
-        batch?: number
-      ): Promise<types.CompressedData>
       detectBatch(outputDir: string, batch: number): Promise<null>
       performTrainingIfNeeded(outputDir: string, modelName: string): void
     }
