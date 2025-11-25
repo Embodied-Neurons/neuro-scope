@@ -17,6 +17,7 @@ class ActivationTracker:
     def _save_activation(self, name):
         def hook(module, input, output):
             self.activations[name] = output.detach().mean(dim=0).cpu().numpy().tolist()
+        
         return hook
 
 
@@ -32,7 +33,7 @@ class ActivationTracker:
 
     def _register_hooks(self):
         for name, module in self.model.named_modules():
-            if isinstance(module, (nn.ReLU, nn.Linear)):
+            if isinstance(module, nn.Linear):
                 self.handles.append(module.register_forward_hook(self._save_activation(name)))
 
         for name, param in self.model.named_parameters():
@@ -46,8 +47,10 @@ class ActivationTracker:
 
     def save_to_json(self, batch_idx, save_dir="outputs"):
         os.makedirs(save_dir, exist_ok=True)
+
         with open(os.path.join(save_dir, f"batch_{batch_idx}_activations.json"), "w") as fa:
             json.dump(self.activations, fa)
+        
         with open(os.path.join(save_dir, f"batch_{batch_idx}_gradients.json"), "w") as fg:
             json.dump(self.gradients, fg)
 
@@ -69,6 +72,7 @@ def extract_graph_structure(model, save_path="outputs/graph_structure.json"):
     }
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
     with open(save_path, "w") as f:
         json.dump(structure, f)
 

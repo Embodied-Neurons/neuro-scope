@@ -29,12 +29,10 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
       if (destroyed) return
 
-      // Calculating max zoom for camera ratio boundaries
-      const maxZoom = 0.04 * Math.max(...data.layerSizes)
-
       const renderer = new Sigma(graph, container, {
-        minCameraRatio: 1 / maxZoom,
-        maxCameraRatio: 1.2
+        minCameraRatio: 0.05,
+        maxCameraRatio: 1.2,
+        zIndex: true
       })
 
       rendererRef.current = renderer
@@ -61,6 +59,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
           const prevNode = selectedNodeRef.current
           const prevEdges = graph.edges(prevNode)
           graph.setNodeAttribute(prevNode, 'color', '#b1b1b1')
+          graph.setNodeAttribute(prevNode, 'zIndex', 1)
           prevEdges.forEach((edge) => {
             graph.dropEdge(edge)
           })
@@ -76,6 +75,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
           )}, 0)`
 
           graph.setNodeAttribute(node, 'color', highlightColor)
+          graph.setNodeAttribute(node, 'zIndex', 2)
           buildEdges(graph, nodes, node, data.layerSizes)
           const edges = graph.edges(node)
           edges.forEach((edge) => {

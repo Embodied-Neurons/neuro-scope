@@ -48,34 +48,10 @@ export type Edge = {
   id: string
   src: string
   tgt: string
-  color: string
-  weight: number
-  gradValue: number
+  color?: string
+  weight?: number
+  gradValue?: number
 }
-
-// Edge layout, limited to first three fields
-export type EdgeLayout = { id: string; source: string; target: string }
-
-// Gradient/activation/chunk statistics type
-export type Stats = {
-  value: number
-  mean: number
-  min: number
-  max: number
-  normalized: number
-}
-
-// Edge statistics type
-export type EdgeStats = {
-  id: string
-  weight: string
-  gradMean: string
-  gradMin: string
-  gradMax: string
-}
-
-// Layer size is described with three numbers
-export type LayerSize = [number, number, number]
 
 // Graph structure type
 export type GraphStructure = {
@@ -87,16 +63,11 @@ export type GraphStructure = {
 // Neural network data used for visualization
 export type NeuralNetworkData = {
   nodes: Node[]
+  edges: Edge[]
   activations: Record<string, ActivStats>
   gradients: Record<string, GradStats>
   layerSizes: number[]
   nodeLabels: string[]
-}
-
-// Compressed data type
-export type CompressedData = {
-  gradients: Record<string, Stats[][]>
-  activations: Record<string, Stats[]>
 }
 
 // Properties types for various components
@@ -119,14 +90,18 @@ export type NeuralGraphProps = {
 export type FileDialogProps = {
   onFileSelect: (outputDir: string) => void
 }
+
+// Stats types for activations and gradients
 export type ActivStats = {
   raw: number[]
   norm: number[]
 }
+
 export type GradStats = {
   raw: number[][]
   norm: number[][]
 }
+
 export type NeuralStats = {
   gradients: Record<string, GradStats>
   activations: Record<string, ActivStats>

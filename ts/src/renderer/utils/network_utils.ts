@@ -11,8 +11,8 @@ function generateMlpLayout(layerSizes: number[]): types.Position[] {
 
   for (let layerIdx = 0; layerIdx < numLayers; layerIdx++) {
     const xMid = layerIdx * xStep
-    const xBurst = 0.01 * Math.sqrt(layerSizes[layerIdx])
-    const yBurst = 0.1 / Math.sqrt(layerSizes[layerIdx])
+    const xBurst = 0.008 * Math.sqrt(layerSizes[layerIdx])
+    const yBurst = 0.08 / Math.sqrt(layerSizes[layerIdx])
 
     for (let i = 0; i < layerSizes[layerIdx]; i++) {
       const x = xMid + xBurst * (Math.random() - 0.5)
@@ -69,8 +69,15 @@ export async function getNeuralNetworkVisualization(
     y: positions[i].y
   }))
 
+  const edges: types.Edge[] = structure.edges.map(([src, tgt]) => ({
+    id: `edge_${src}-${tgt}`,
+    src: String(src),
+    tgt: String(tgt)
+  }))
+
   return {
     nodes,
+    edges,
     gradients: processedGradients,
     activations: processedActivations,
     layerSizes: structure.layerSizes,

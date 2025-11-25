@@ -7,6 +7,7 @@ export function buildGraph(graph: Graph, nodes: Node[][]): void {
         x: node.x,
         y: node.y,
         size: 5,
+        zIndex: 1,
         color: '#b1b1b1',
         weight: node.weight,
         activation: node.activation
@@ -37,8 +38,8 @@ export function buildEdges(
 
   if (layerIdx > 0) {
     nodes[layerIdx - 1].forEach((prevNode) => {
-      graph.addEdge(node, prevNode.id, {
-        id: `edge_${node}-${prevNode.id}`,
+      graph.addEdge(prevNode.id, node, {
+        id: `edge_${prevNode.id}-${node}`,
         color: '#ffffff'
       })
     })
@@ -46,8 +47,8 @@ export function buildEdges(
 
   if (layerIdx < numLayers - 1) {
     nodes[layerIdx + 1].forEach((nextNode) => {
-      graph.addEdge(nextNode.id, node, {
-        id: `edge_${nextNode.id}-${node}`,
+      graph.addEdge(node, nextNode.id, {
+        id: `edge_${node}-${nextNode.id}`,
         color: '#ffffff'
       })
     })

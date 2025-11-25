@@ -25,7 +25,7 @@ export function processGradients(gradients: Record<string, number[][]>): Record<
     }
   }
 
-  const out: Record<string, { raw: number[][]; norm: number[][] }> = {}
+  const out: Record<string, GradStats> = {}
 
   for (const [key, matrix] of Object.entries(gradients)) {
     if (!key.endsWith('.weight')) continue
@@ -55,7 +55,7 @@ export function processActivations(
     }
   }
 
-  const out: Record<string, { raw: number[]; norm: number[] }> = {}
+  const out: Record<string, ActivStats> = {}
 
   for (const [key, list] of Object.entries(activations)) {
     const actKey = `${key}.activ`
