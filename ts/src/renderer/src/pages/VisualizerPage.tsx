@@ -2,12 +2,14 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { JSX, useState } from 'react'
 import { NeuralGraph } from '../components/NeuralGraph'
 import { StatsPanel } from '../components/StatsPanel'
+import ImageFileSelector from '../components/ImageFileSelector'
 import BatchControls from '../components/BatchControls'
 
 export default function VisualizerPage(): JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
   const outputDir = location.state?.outputDir || ''
+  const modelName = location.state?.modelName || ''
 
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null)
   const [batch, setBatch] = useState(0)
@@ -30,6 +32,7 @@ export default function VisualizerPage(): JSX.Element {
         </div>
         <div className="w-[30vw] p-2 shrink-0 overflow-y-auto">
           <BatchControls maxBatch={10} onSelectBatch={setBatch} outputDir={outputDir} />
+          <ImageFileSelector outputDir={outputDir} modelName={modelName} onSelect={setBatch} />
           <StatsPanel nodeData={selectedNode} />
         </div>
       </div>

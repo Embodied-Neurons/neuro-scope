@@ -9,8 +9,15 @@ declare global {
         outputDir: string,
         batch: number
       ): Promise<types.NeuralNetworkData>
+      getActivationsFromImageInput(outputDir: string): Promise<{
+        nodes: types.Node[]
+        activations: Record<string, types.ActivStats>
+        layerSizes: number[]
+      }>
       detectBatch(outputDir: string, batch: number): Promise<null>
       performTrainingIfNeeded(outputDir: string, modelName: string): void
+      showImageFileDialog(): string | undefined
+      runImageInput(outputDir: string, modelName: string, imagePath: string): void
     }
   }
 }

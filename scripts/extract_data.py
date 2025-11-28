@@ -55,6 +55,13 @@ class ActivationTracker:
             json.dump(self.gradients, fg)
 
 
+    def save_test_to_json(self, save_dir="outputs"):
+        os.makedirs(save_dir, exist_ok=True)
+
+        with open(os.path.join(save_dir, f"test_activations.json"), "w") as fa:
+            json.dump(self.activations, fa)
+
+
     def remove_hooks(self):
         for handle in self.handles:
             handle.remove()
@@ -66,6 +73,7 @@ def extract_graph_structure(model, save_path="outputs/graph_structure.json"):
 
     data = graph.get_data()
     structure = {
+        "inputSize": data.input_size,
         "nodes": [{"label": label} for label in data.node_labels],
         "edges": data.edge_index.t().tolist(),
         "layerSizes": data.layer_sizes

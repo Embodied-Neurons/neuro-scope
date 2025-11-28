@@ -88,7 +88,13 @@ export type NeuralGraphProps = {
 }
 
 export type FileDialogProps = {
-  onFileSelect: (outputDir: string) => void
+  onFileSelect: (outputDir: string, modelName: string) => void
+}
+
+export type ImageDialogProps = {
+  outputDir: string
+  modelName: string
+  onSelect: (batch: number) => void
 }
 
 // Stats types for activations and gradients

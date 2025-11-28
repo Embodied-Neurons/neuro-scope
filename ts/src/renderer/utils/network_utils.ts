@@ -85,6 +85,49 @@ export async function getNeuralNetworkVisualization(
   }
 }
 
+export async function getActivationsFromImageInput(outputDir: string): Promise<{
+  nodes: types.Node[]
+  activations: Record<string, types.ActivStats>
+  layerSizes: number[]
+}> {
+  const graphPath = path.join(OUTPUT_DIR_BASE, outputDir, 'graph_structure.json')
+  console.log(`Graph path: ${graphPath}`)
+
+  try {
+    await fs.access(graphPath)
+  } catch {
+    throw new Error('Graph structure not found')
+  }
+
+  const structureRaw = await fs.readFile(graphPath, 'utf-8')
+  const structure: types.GraphStructure = JSON.parse(structureRaw)
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, 'test_activations.json')
+
+  let actRaw: string
+
+  try {
+    ;[actRaw] = await Promise.all([fs.readFile(actPath, 'utf-8')])
+  } catch {
+    throw new Error('Activation data not found')
+  }
+
+  const activations: Record<string, number[]> = JSON.parse(actRaw)
+  const processedActivations = processActivations(activations)
+  const positions = generateMlpLayout(structure.layerSizes)
+  const nodes: types.Node[] = structure.nodes.map((node, i) => ({
+    id: String(i),
+    label: node.label,
+    x: positions[i].x,
+    y: positions[i].y
+  }))
+
+  return {
+    nodes,
+    activations: processedActivations,
+    layerSizes: structure.layerSizes
+  }
+}
+
 export async function detectBatch(outputDir: string, batch: number): Promise<null> {
   const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_activations.json`)
   const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_gradients.json`)

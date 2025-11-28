@@ -1,4 +1,5 @@
 import os
+import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
@@ -68,8 +69,22 @@ class Trainer(TrainerInterface):
             loss.backward()
             optimizer.step()
 
-            tracker.save_to_json(batch_count, save_dir=f"{output_dir}")
+            tracker.save_to_json(batch_count, save_dir=output_dir)
             batch_count += 1
 
         print(f"✅ Finished training. {batch_count} batches processed.")
+        tracker.remove_hooks()
+
+    
+    @staticmethod    
+    def run(model: NeuralNetInterface, tracker: ActivationTracker, input_tensor: torch.Tensor, saved_model_path: str, output_dir: str):
+        model.load_state_dict(torch.load(saved_model_path))
+        model.eval()
+
+        with torch.no_grad():
+            tracker.clear()
+            model(input_tensor)
+            tracker.save_test_to_json(save_dir=f"{output_dir}")
+
+        print("✅ Finished running the model on the input image.")
         tracker.remove_hooks()
