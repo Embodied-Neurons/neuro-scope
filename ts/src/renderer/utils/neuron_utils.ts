@@ -10,13 +10,14 @@ function normalizeMatrix(matrix: number[][], min: number, max: number): number[]
   return matrix.map((row) => row.map((v) => (v - min) / range))
 }
 
-export function processGradients(gradients: Record<string, number[][]>): Record<string, GradStats> {
+export function processGradients(
+  parsedGradients: Record<string, number[][]>
+): Record<string, GradStats> {
   let globalMin = Infinity
   let globalMax = -Infinity
 
-  for (const [key, matrix] of Object.entries(gradients)) {
-    if (!key.endsWith('.weight')) continue
-
+  for (const [key, matrix] of Object.entries(parsedGradients)) {
+    if (!key.endsWith('.grad')) continue
     for (const row of matrix) {
       for (const v of row) {
         if (v < globalMin) globalMin = v
@@ -27,13 +28,11 @@ export function processGradients(gradients: Record<string, number[][]>): Record<
 
   const out: Record<string, GradStats> = {}
 
-  for (const [key, matrix] of Object.entries(gradients)) {
-    if (!key.endsWith('.weight')) continue
+  for (const [key, matrix] of Object.entries(parsedGradients)) {
+    if (!key.endsWith('.grad')) continue
 
-    const layer = key.replace('.weight', '')
-    const gradKey = `${layer}.grad`
 
-    out[gradKey] = {
+    out[key] = {
       raw: matrix,
       norm: normalizeMatrix(matrix, globalMin, globalMax)
     }
@@ -57,9 +56,9 @@ export function processActivations(
 
   const out: Record<string, ActivStats> = {}
 
-  for (const [key, list] of Object.entries(activations)) {
-    const actKey = `${key}.activ`
-    out[actKey] = {
+  for (const [key, list] of Object.entries(parsedActivations)) {
+    if (!key.endsWith('.activ')) continue
+    out[key] = {
       raw: list,
       norm: normalizeList(list, globalMin, globalMax)
     }
