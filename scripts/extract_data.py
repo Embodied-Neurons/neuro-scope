@@ -12,20 +12,25 @@ class ActivationTracker:
         self.gradients = {}
         self.handles = []
         self._register_hooks()
+        self.activations_idx = 1
+        self.gradients_idx = 1
 
 
     def _save_activation(self, name):
         def hook(module, input, output):
-            self.activations[name] = output.detach().mean(dim=0).cpu().numpy().tolist()
+            self.activations[f"fc{self.activations_idx}.activ"] = output.detach().mean(dim=0).cpu().numpy().tolist()
+            self.activations_idx += 1
         return hook
 
 
     def _save_gradient(self, name):
         def hook(grad_output):
-            if isinstance(grad_output, tuple):
-                self.gradients[name] = grad_output[0].detach().cpu().numpy().tolist()
-            else:
-                self.gradients[name] = grad_output.detach().cpu().numpy().tolist()
+            if "weight" in name:
+                if isinstance(grad_output, tuple):
+                    self.gradients[f"fc{self.gradients_idx}.grad"] = grad_output[0].detach().cpu().numpy().tolist()
+                else:
+                    self.gradients[f"fc{self.gradients_idx}.grad"] = grad_output.detach().cpu().numpy().tolist()
+                self.gradients_idx += 1
 
         return hook
 
