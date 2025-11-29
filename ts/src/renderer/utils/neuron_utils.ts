@@ -26,10 +26,11 @@ export function processGradients(
     }
   }
 
-  const out: Record<string, { raw: number[][]; norm: number[][] }> = {}
+  const out: Record<string, GradStats> = {}
 
   for (const [key, matrix] of Object.entries(parsedGradients)) {
     if (!key.endsWith('.grad')) continue
+
 
     out[key] = {
       raw: matrix,
@@ -41,19 +42,19 @@ export function processGradients(
 }
 
 export function processActivations(
-  parsedActivations: Record<string, number[]>
+  activations: Record<string, number[]>
 ): Record<string, ActivStats> {
   let globalMin = Infinity
   let globalMax = -Infinity
 
-  for (const [, list] of Object.entries(parsedActivations)) {
+  for (const [, list] of Object.entries(activations)) {
     for (const v of list) {
       if (v < globalMin) globalMin = v
       if (v > globalMax) globalMax = v
     }
   }
 
-  const out: Record<string, { raw: number[]; norm: number[] }> = {}
+  const out: Record<string, ActivStats> = {}
 
   for (const [key, list] of Object.entries(parsedActivations)) {
     if (!key.endsWith('.activ')) continue

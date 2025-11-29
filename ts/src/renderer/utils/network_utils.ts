@@ -6,20 +6,18 @@ import { processActivations, processGradients } from './neuron_utils'
 
 function generateMlpLayout(layerSizes: number[]): types.Position[] {
   const layout: types.Position[] = []
-  const maxNeurons = Math.max(...layerSizes)
   const numLayers = layerSizes.length
-  const width = 960
-  const height = 720
-  const xStep = numLayers > 1 ? width / (numLayers - 1) : 0
-  const yStep = maxNeurons > 1 ? height / (maxNeurons - 1) : 0
+  const xStep = numLayers > 1 ? 1 / (numLayers - 1) : 0
 
   for (let layerIdx = 0; layerIdx < numLayers; layerIdx++) {
-    const size = layerSizes[layerIdx]
-    const x = layerIdx * xStep
-    const yOffset = (height - yStep * (size - 1)) / 2
+    const xMid = layerIdx * xStep
+    const xBurst = 0.008 * Math.sqrt(layerSizes[layerIdx])
+    const yBurst = 0.08 / Math.sqrt(layerSizes[layerIdx])
 
-    for (let i = 0; i < size; i++) {
-      const y = yOffset + i * yStep
+    for (let i = 0; i < layerSizes[layerIdx]; i++) {
+      const x = xMid + xBurst * (Math.random() - 0.5)
+      const yMid = layerSizes[layerIdx] > 1 ? i / (layerSizes[layerIdx] - 1) : 0.5
+      const y = yMid + yBurst * (Math.random() - 0.5)
       layout.push({ x, y })
     }
   }
@@ -46,55 +44,11 @@ export async function getNeuralNetworkVisualization(
   const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_activations.json`)
   const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_gradients.json`)
 
-  const [actRaw, gradRaw] = await Promise.all([
-    fs.readFile(actPath, 'utf-8'),
-    fs.readFile(gradPath, 'utf-8')
-  ])
-
-  const activations: Record<string, number[][]> = JSON.parse(actRaw)
-  const gradients: Record<string, number[][]> = JSON.parse(gradRaw)
-  const positions = generateMlpLayout(structure.layerSizes)
-  const nodes: types.Node[] = structure.nodes.map((node, i) => ({
-    id: String(i),
-    label: node.label,
-    x: positions[i].x,
-    y: positions[i].y,
-    size: 1
-  }))
-
-  const edges: types.EdgeLayout[] = structure.edges.map(([src, dst], idx) => ({
-    id: `e${idx}`,
-    source: String(src),
-    target: String(dst)
-  }))
-
-  return {
-    nodes,
-    edges,
-    activations,
-    gradients,
-    layerSizes: structure.layerSizes,
-    nodeLabels: structure.nodes.map((n) => n.label)
-  }
-}
-
-export async function getCompressedNeuralNetworkData(
-  layerSizes: number[],
-  outputDir: string = '',
-  batchId = 0
-): Promise<types.NeuralStats> {
-  if (!layerSizes.length) {
-    throw new Error("Missing or invalid 'layerSizes' argument")
-  }
-
-  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_gradients.json`)
-
-  let activationsRaw: string
-  let gradientsRaw: string
+  let actRaw: string
+  let gradRaw: string
 
   try {
-    ;[activationsRaw, gradientsRaw] = await Promise.all([
+    ;[actRaw, gradRaw] = await Promise.all([
       fs.readFile(actPath, 'utf-8'),
       fs.readFile(gradPath, 'utf-8')
     ])
@@ -102,12 +56,32 @@ export async function getCompressedNeuralNetworkData(
     throw new Error('Activation or gradient data not found')
   }
 
-  const activations: Record<string, number[]> = JSON.parse(activationsRaw)
-  const gradients: Record<string, number[][]> = JSON.parse(gradientsRaw)
+  const activations: Record<string, number[]> = JSON.parse(actRaw)
+  const processedActivations = processActivations(activations)
+  const gradients: Record<string, number[][]> = JSON.parse(gradRaw)
+  const processedGradients = processGradients(gradients)
+
+  const positions = generateMlpLayout(structure.layerSizes)
+  const nodes: types.Node[] = structure.nodes.map((node, i) => ({
+    id: String(i),
+    label: node.label,
+    x: positions[i].x,
+    y: positions[i].y
+  }))
+
+  const edges: types.Edge[] = structure.edges.map(([src, tgt]) => ({
+    id: `edge_${src}-${tgt}`,
+    src: String(src),
+    tgt: String(tgt)
+  }))
 
   return {
-    gradients: processGradients(gradients),
-    activations: processActivations(activations)
+    nodes,
+    edges,
+    gradients: processedGradients,
+    activations: processedActivations,
+    layerSizes: structure.layerSizes,
+    nodeLabels: structure.nodes.map((n) => n.label)
   }
 }
 

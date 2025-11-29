@@ -1,169 +1,92 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { JSX, useEffect, useRef } from 'react'
-import { groupNeurons, buildGraph } from '../../utils/graph_building'
-import { calculateDynamicBounds, getVisibilityRanges } from '../../utils/graph_bounding'
-import {
-  getAllNodesByLayers,
-  getNodesPosInfo,
-  visibleNodesChanged,
-  anyNodeVisible,
-  getVisibleNodes
-} from '../../utils/node_manipulation'
-import { NeuralGraphProps, EdgeStats } from '../../utils/types'
+import { buildGraph, buildEdges } from '../../utils/graph_building'
+import { calculateBounds } from '../../utils/camera_bounding'
+import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
+import { NeuralGraphProps } from '../../utils/types'
 
 export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
-  const selectedEdgesColorsRef = useRef<string[]>([])
 
   useEffect(() => {
     let destroyed = false
 
     async function init(): Promise<void> {
       if (!containerRef.current) return
+
       const container = containerRef.current
-      container.innerHTML = ''
-
       const data = await window.api.getNeuralNetworkVisualization(outputDir, batch)
-      const containerWidth = container.offsetWidth
-      const containerHeight = container.offsetHeight
       const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
-      const posInfo = getNodesPosInfo(nodes, containerWidth, containerHeight)
-
-      const { neuronLayers, edges } = await groupNeurons(
-        nodes,
-        nodes,
-        containerHeight,
-        data.layerSizes,
-        outputDir,
-        batch
-      )
+      const posInfo = getNodesPosInfo(nodes)
 
       const graph = new Graph()
       graphRef.current = graph
-      buildGraph(graph, containerWidth, containerHeight, neuronLayers, edges)
+      buildGraph(graph, nodes)
 
       if (destroyed) return
 
       const renderer = new Sigma(graph, container, {
-        minCameraRatio: 0.02,
-        maxCameraRatio: 1,
+        minCameraRatio: 0.05,
+        maxCameraRatio: 1.2,
         zIndex: true
       })
 
-      const camera = renderer.getCamera()
       rendererRef.current = renderer
-      camera.setState({ ratio: 1.0 })
+      const camera = renderer.getCamera()
+      camera.setState({ x: 0.5, y: 0.5, ratio: 1.0 })
 
-      camera.on('updated', () => {
-        const { x, y, ratio } = camera.getState()
-        const { newX, newY } = calculateDynamicBounds(x, y, ratio, posInfo)
-        if (newX !== x || newY !== y) camera.setState({ x: newX, y: newY })
+      camera.on('updated', async () => {
+        const { x, y, newX, newY } = calculateBounds(renderer, container, posInfo)
+        const cameraState = camera.getState()
+
+        if (newX !== x || newY !== y) {
+          const newCameraX = cameraState.x - x + newX
+          const newCameraY = cameraState.y - y + newY
+          camera.setState({ x: newCameraX, y: newCameraY })
+        }
       })
 
-      let currentVisibleNodes = nodes
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let debounceTimer: any = null
-
-      const rebuild = async (): Promise<void> => {
-        if (!renderer || !graph) return
-        const visibility = getVisibilityRanges(camera, renderer, container)
-        const visibleNodes = getVisibleNodes(nodes, containerWidth, containerHeight, visibility)
-
-        if (
-          visibleNodesChanged(visibleNodes, currentVisibleNodes) &&
-          anyNodeVisible(visibleNodes)
-        ) {
-          const { ratio } = camera.getState()
-          const { neuronLayers, edges } = await groupNeurons(
-            visibleNodes,
-            nodes,
-            containerHeight,
-            data.layerSizes,
-            outputDir,
-            batch,
-            ratio
-          )
-          buildGraph(graph, containerWidth, containerHeight, neuronLayers, edges)
-
-          selectedNodeRef.current = null
-          selectedEdgesColorsRef.current = []
-
-          currentVisibleNodes = visibleNodes
-        }
-      }
-
-      const debounce = (): void => {
-        clearTimeout(debounceTimer)
-        debounceTimer = setTimeout(rebuild, 500)
-      }
-
-      renderer.on('upStage', debounce)
-      renderer.on('wheelStage', debounce)
       renderer.on('clickNode', ({ node }: { node: string }) => {
         if (!graphRef.current) return
+
         const graph = graphRef.current
 
         if (selectedNodeRef.current) {
           const prevNode = selectedNodeRef.current
-          graph.setNodeAttribute(prevNode, 'color', '#c0c0c0')
-          const pastEdges = graph.edges(prevNode)
-          pastEdges.forEach((edge, i) => {
-            graph.setEdgeAttribute(edge, 'color', selectedEdgesColorsRef.current[i])
-            graph.setEdgeAttribute(edge, 'size', 0.5)
-            graph.setEdgeAttribute(edge, 'zIndex', 0)
+          const prevEdges = graph.edges(prevNode)
+          graph.setNodeAttribute(prevNode, 'color', '#b1b1b1')
+          graph.setNodeAttribute(prevNode, 'zIndex', 1)
+          prevEdges.forEach((edge) => {
+            graph.dropEdge(edge)
           })
         }
 
         if (selectedNodeRef.current !== node) {
           selectedNodeRef.current = node
-          selectedEdgesColorsRef.current = []
 
           const nodeData = graph.getNodeAttributes(node)
           const { weight } = nodeData
-
           const highlightColor = `rgb(${Math.round(255 * (1 - (weight ?? 0)))}, ${Math.round(
             255 * (weight ?? 0)
           )}, 0)`
+
           graph.setNodeAttribute(node, 'color', highlightColor)
-
-          const connectedEdges = graph.edges(node)
-          const newEdgesColors: string[] = []
-          const edgeStats: EdgeStats[] = []
-
-          connectedEdges.forEach((edge) => {
-            newEdgesColors.push(graph.getEdgeAttribute(edge, 'color'))
-          })
-
-          connectedEdges.forEach((edge) => {
-            const attrs = graph.getEdgeAttributes(edge)
-            const w = attrs.weight ?? 0
-            const gradMean = attrs.gradMean ?? '—'
-            const gradMin = attrs.gradMin ?? '—'
-            const gradMax = attrs.gradMax ?? '—'
+          graph.setNodeAttribute(node, 'zIndex', 2)
+          buildEdges(graph, nodes, node, data.layerSizes)
+          const edges = graph.edges(node)
+          edges.forEach((edge) => {
+            const w = 0.5
             const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
-
             graph.setEdgeAttribute(edge, 'color', color)
-            graph.setEdgeAttribute(edge, 'size', 1.5)
-            graph.setEdgeAttribute(edge, 'zIndex', 2)
-
-            edgeStats.push({
-              id: attrs.id,
-              weight: w,
-              gradMean: gradMean,
-              gradMin: gradMin,
-              gradMax: gradMax
-            })
           })
 
-          selectedEdgesColorsRef.current = newEdgesColors
-          onNodeSelect({ ...nodeData, edgeStats })
+          onNodeSelect({ ...nodeData })
         } else {
           selectedNodeRef.current = null
-          selectedEdgesColorsRef.current = []
           onNodeSelect(null)
         }
       })
@@ -173,10 +96,12 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
     return () => {
       destroyed = true
+
       if (rendererRef.current) {
         rendererRef.current.kill()
         rendererRef.current = null
       }
+
       if (graphRef.current) {
         graphRef.current.clear()
         graphRef.current = null

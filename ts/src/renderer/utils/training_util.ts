@@ -16,6 +16,7 @@ export function performTrainingIfNeeded(outputDir: string, modelName: string): v
           encoding: 'utf8',
           env: { ...process.env, PYTHONIOENCODING: 'utf8' }
         })
+        // optional, stdout from child process (emojis are bugged for example)
         console.log(stdout)
       } catch (error) {
         const errMessage = error instanceof Error ? error.message : String(error)
