@@ -64,8 +64,8 @@ export type GraphStructure = {
 export type NeuralNetworkData = {
   nodes: Node[]
   edges: Edge[]
-  activations: Record<string, ActivStats>
-  gradients: Record<string, GradStats>
+  activations: linearActivStats
+  gradients: linearGradStats
   layerSizes: number[]
   nodeLabels: string[]
 }
@@ -103,12 +103,11 @@ export type ActivStats = {
   norm: number[]
 }
 
+export type linearActivStats = Array<{ raw: number; norm: number }>
+
 export type GradStats = {
   raw: number[][]
   norm: number[][]
 }
 
-export type NeuralStats = {
-  gradients: Record<string, GradStats>
-  activations: Record<string, ActivStats>
-}
+export type linearGradStats = Array<{ raw: number[]; norm: number[] }>

@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs/promises'
 import * as types from './types'
 import { OUTPUT_DIR_BASE } from '../../main'
-import { processActivations, processGradients } from './neuron_utils'
+import { linearizeActivations, linearizeGradients } from './neuron_utils'
 
 function generateMlpLayout(layerSizes: number[]): types.Position[] {
   const layout: types.Position[] = []
@@ -57,9 +57,16 @@ export async function getNeuralNetworkVisualization(
   }
 
   const activations: Record<string, number[]> = JSON.parse(actRaw)
-  const processedActivations = processActivations(activations)
+  const linearizedActivations: types.linearActivStats = linearizeActivations(
+    activations,
+    structure.layerSizes.length
+  )
+
   const gradients: Record<string, number[][]> = JSON.parse(gradRaw)
-  const processedGradients = processGradients(gradients)
+  const linearizedGradients: types.linearGradStats = linearizeGradients(
+    gradients,
+    structure.layerSizes.length
+  )
 
   const positions = generateMlpLayout(structure.layerSizes)
   const nodes: types.Node[] = structure.nodes.map((node, i) => ({
@@ -78,8 +85,8 @@ export async function getNeuralNetworkVisualization(
   return {
     nodes,
     edges,
-    gradients: processedGradients,
-    activations: processedActivations,
+    gradients: linearizedGradients,
+    activations: linearizedActivations,
     layerSizes: structure.layerSizes,
     nodeLabels: structure.nodes.map((n) => n.label)
   }
@@ -87,7 +94,7 @@ export async function getNeuralNetworkVisualization(
 
 export async function getActivationsFromImageInput(outputDir: string): Promise<{
   nodes: types.Node[]
-  activations: Record<string, types.ActivStats>
+  activations: types.linearActivStats
   layerSizes: number[]
 }> {
   const graphPath = path.join(OUTPUT_DIR_BASE, outputDir, 'graph_structure.json')
@@ -112,7 +119,7 @@ export async function getActivationsFromImageInput(outputDir: string): Promise<{
   }
 
   const activations: Record<string, number[]> = JSON.parse(actRaw)
-  const processedActivations = processActivations(activations)
+  const linearizedActivations = linearizeActivations(activations, structure.layerSizes.length)
   const positions = generateMlpLayout(structure.layerSizes)
   const nodes: types.Node[] = structure.nodes.map((node, i) => ({
     id: String(i),
@@ -123,7 +130,7 @@ export async function getActivationsFromImageInput(outputDir: string): Promise<{
 
   return {
     nodes,
-    activations: processedActivations,
+    activations: linearizedActivations,
     layerSizes: structure.layerSizes
   }
 }

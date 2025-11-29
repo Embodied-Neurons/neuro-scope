@@ -18,7 +18,6 @@ class ActivationTracker:
 
     def _save_activation(self, name):
         def hook(module, input, output):
-
             self.activations[f"fc{self.activations_idx}.activ"] = output.detach().mean(dim=0).cpu().numpy().tolist()
             self.activations_idx += 1
 
@@ -32,6 +31,7 @@ class ActivationTracker:
                     self.gradients[f"fc{self.gradients_idx}.grad"] = grad_output[0].detach().cpu().numpy().tolist()
                 else:
                     self.gradients[f"fc{self.gradients_idx}.grad"] = grad_output.detach().cpu().numpy().tolist()
+                
                 self.gradients_idx += 1
 
         return hook
@@ -49,6 +49,8 @@ class ActivationTracker:
     def clear(self):
         self.activations.clear()
         self.gradients.clear()
+        self.activations_idx = 1
+        self.gradients_idx = 1
 
 
     def save_to_json(self, batch_idx, save_dir="outputs"):

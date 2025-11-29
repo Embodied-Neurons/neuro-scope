@@ -26,7 +26,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
         const graph = new Graph()
         graphRef.current = graph
-        buildGraph(graph, nodes)
+        buildGraph(graph, nodes, data.activations)
 
         if (destroyed) return
 
@@ -77,14 +77,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
             graph.setNodeAttribute(node, 'color', highlightColor)
             graph.setNodeAttribute(node, 'zIndex', 2)
-            buildEdges(graph, nodes, node, data.layerSizes)
-            const edges = graph.edges(node)
-            edges.forEach((edge) => {
-              const w = 0.5
-              const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
-              graph.setEdgeAttribute(edge, 'color', color)
-            })
-
+            buildEdges(graph, nodes, data.gradients, node, data.layerSizes)
             onNodeSelect({ ...nodeData })
           } else {
             selectedNodeRef.current = null
@@ -101,12 +94,12 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
 
         const graph = new Graph()
         graphRef.current = graph
-        buildGraph(graph, nodes)
+        buildGraph(graph, nodes, data.activations)
 
         const graphNodes = graph.nodes()
         graphNodes.forEach((node) => {
-          const w = 0.5
-          const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
+          const weight = graph.getNodeAttribute(node, 'weight') as number
+          const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
           graph.setNodeAttribute(node, 'color', color)
         })
 
@@ -130,6 +123,28 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
             const newCameraX = cameraState.x - x + newX
             const newCameraY = cameraState.y - y + newY
             camera.setState({ x: newCameraX, y: newCameraY })
+          }
+        })
+
+        renderer.on('clickNode', ({ node }: { node: string }) => {
+          if (!graphRef.current) return
+
+          const graph = graphRef.current
+
+          if (selectedNodeRef.current) {
+            const prevNode = selectedNodeRef.current
+            graph.setNodeAttribute(prevNode, 'zIndex', 1)
+          }
+
+          if (selectedNodeRef.current !== node) {
+            selectedNodeRef.current = node
+
+            const nodeData = graph.getNodeAttributes(node)
+            graph.setNodeAttribute(node, 'zIndex', 2)
+            onNodeSelect({ ...nodeData })
+          } else {
+            selectedNodeRef.current = null
+            onNodeSelect(null)
           }
         })
       }

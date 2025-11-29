@@ -11,7 +11,7 @@ declare global {
       ): Promise<types.NeuralNetworkData>
       getActivationsFromImageInput(outputDir: string): Promise<{
         nodes: types.Node[]
-        activations: Record<string, types.ActivStats>
+        activations: types.linearActivStats
         layerSizes: number[]
       }>
       detectBatch(outputDir: string, batch: number): Promise<null>
