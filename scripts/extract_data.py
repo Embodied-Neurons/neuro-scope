@@ -49,6 +49,8 @@ class ActivationTracker:
     def clear(self):
         self.activations.clear()
         self.gradients.clear()
+        self.activations_idx=1
+        self.gradients_idx=1
 
 
     def save_to_json(self, batch_idx, save_dir="outputs"):
