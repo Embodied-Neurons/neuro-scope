@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs/promises'
 import * as types from './types'
 import { OUTPUT_DIR_BASE } from '../../main'
-import { processActivations, processGradients } from './neuron_utils'
+import { linearizeActivations, linearizeGradients } from './neuron_utils'
 
 function generateMlpLayout(layerSizes: number[]): types.Position[] {
   const layout: types.Position[] = []
@@ -57,9 +57,16 @@ export async function getNeuralNetworkVisualization(
   }
 
   const activations: Record<string, number[]> = JSON.parse(actRaw)
-  const processedActivations = processActivations(activations)
+  const linearizedActivations: types.linearActivStats = linearizeActivations(
+    activations,
+    structure.layerSizes.length
+  )
+
   const gradients: Record<string, number[][]> = JSON.parse(gradRaw)
-  const processedGradients = processGradients(gradients)
+  const linearizedGradients: types.linearGradStats = linearizeGradients(
+    gradients,
+    structure.layerSizes.length
+  )
 
   const positions = generateMlpLayout(structure.layerSizes)
   const nodes: types.Node[] = structure.nodes.map((node, i) => ({
@@ -78,10 +85,53 @@ export async function getNeuralNetworkVisualization(
   return {
     nodes,
     edges,
-    gradients: processedGradients,
-    activations: processedActivations,
+    gradients: linearizedGradients,
+    activations: linearizedActivations,
     layerSizes: structure.layerSizes,
     nodeLabels: structure.nodes.map((n) => n.label)
+  }
+}
+
+export async function getActivationsFromImageInput(outputDir: string): Promise<{
+  nodes: types.Node[]
+  activations: types.linearActivStats
+  layerSizes: number[]
+}> {
+  const graphPath = path.join(OUTPUT_DIR_BASE, outputDir, 'graph_structure.json')
+  console.log(`Graph path: ${graphPath}`)
+
+  try {
+    await fs.access(graphPath)
+  } catch {
+    throw new Error('Graph structure not found')
+  }
+
+  const structureRaw = await fs.readFile(graphPath, 'utf-8')
+  const structure: types.GraphStructure = JSON.parse(structureRaw)
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, 'test_activations.json')
+
+  let actRaw: string
+
+  try {
+    ;[actRaw] = await Promise.all([fs.readFile(actPath, 'utf-8')])
+  } catch {
+    throw new Error('Activation data not found')
+  }
+
+  const activations: Record<string, number[]> = JSON.parse(actRaw)
+  const linearizedActivations = linearizeActivations(activations, structure.layerSizes.length)
+  const positions = generateMlpLayout(structure.layerSizes)
+  const nodes: types.Node[] = structure.nodes.map((node, i) => ({
+    id: String(i),
+    label: node.label,
+    x: positions[i].x,
+    y: positions[i].y
+  }))
+
+  return {
+    nodes,
+    activations: linearizedActivations,
+    layerSizes: structure.layerSizes
   }
 }
 

@@ -1,8 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { performTrainingIfNeeded } from '../renderer/utils/training_util'
-import { getNeuralNetworkVisualization, detectBatch } from '../renderer/utils/network_utils'
+import { runImageInput } from '../renderer/utils/image_input_util'
+import {
+  getNeuralNetworkVisualization,
+  getActivationsFromImageInput,
+  detectBatch
+} from '../renderer/utils/network_utils'
 
 export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..')
 
@@ -70,6 +75,10 @@ app.whenReady().then(() => {
     return getNeuralNetworkVisualization(outputDir, batch)
   })
 
+  ipcMain.handle('getActivationsFromImageInput', (_event, outputDir: string) => {
+    return getActivationsFromImageInput(outputDir)
+  })
+
   ipcMain.handle('detectBatch', (_event, outputDir: string, batch: number) => {
     return detectBatch(outputDir, batch)
   })
@@ -77,6 +86,31 @@ app.whenReady().then(() => {
   ipcMain.handle('performTrainingIfNeeded', (_event, outputDir: string, modelName: string) => {
     return performTrainingIfNeeded(outputDir, modelName)
   })
+
+  ipcMain.handle('showImageFileDialog', async (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)!
+    const result = await dialog.showOpenDialog(window, {
+      title: 'Select image file',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Supported image files', extensions: ['jpg', 'jpeg', 'png', 'bmp'] },
+        { name: 'All files', extensions: ['*'] }
+      ]
+    })
+
+    if (result.canceled) {
+      return
+    } else {
+      return result.filePaths[0]
+    }
+  })
+
+  ipcMain.handle(
+    'runImageInput',
+    (_event, outputDir: string, modelName: string, imagePath: string) => {
+      return runImageInput(outputDir, modelName, imagePath)
+    }
+  )
 
   createWindow()
 

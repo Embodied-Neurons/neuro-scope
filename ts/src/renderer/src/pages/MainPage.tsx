@@ -1,18 +1,20 @@
 import { JSX, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
-import FileSelector from '../components/FileSelector'
+import ModelFileSelector from '../components/ModelFileSelector'
 
 export default function MainPage(): JSX.Element {
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
   const [outputDir, setOutputDir] = useState('')
+  const [modelName, setModelName] = useState('')
   const [ready, setReady] = useState(false)
 
-  const handleFileSelect = async (dir: string): Promise<void> => {
+  const handleFileSelect = async (dir: string, model: string): Promise<void> => {
     if (!dir) return
     setReady(true)
     setOutputDir(dir)
+    setModelName(model)
   }
 
   return (
@@ -42,7 +44,7 @@ export default function MainPage(): JSX.Element {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         {!ready && (
           <div className="flex flex-col items-center">
-            <FileSelector onFileSelect={handleFileSelect} />
+            <ModelFileSelector onFileSelect={handleFileSelect} />
           </div>
         )}
         {ready && (
@@ -51,7 +53,7 @@ export default function MainPage(): JSX.Element {
             <button
               onClick={() => {
                 setModalOpen(false)
-                navigate('/visualizer', { state: { outputDir } })
+                navigate('/visualizer', { state: { outputDir, modelName } })
               }}
               className="bg-black text-white rounded-xl px-4 py-2 hover:bg-gray-900"
             >
