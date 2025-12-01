@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from model_interface import NeuralNetInterface, TrainerInterface
 from scripts.extract_data import extract_graph_structure, ActivationTracker
-from registry import register_model, register_trainer
+from registry import register_model, register_trainer, register_runner
 
 # changing to main directory if it is not current working directory
 if os.getcwd().endswith("models"):
@@ -75,16 +75,16 @@ class Trainer(TrainerInterface):
         print(f"✅ Finished training. {batch_count} batches processed.")
         tracker.remove_hooks()
 
-    
-    @staticmethod    
-    def run(model: NeuralNetInterface, tracker: ActivationTracker, input_tensor: torch.Tensor, saved_model_path: str, output_dir: str):
-        model.load_state_dict(torch.load(saved_model_path))
-        model.eval()
 
-        with torch.no_grad():
-            tracker.clear()
-            model(input_tensor)
-            tracker.save_test_to_json(save_dir=f"{output_dir}")
+@register_runner
+def run(model: NeuralNetInterface, tracker: ActivationTracker, input_tensor: torch.Tensor, saved_model_path: str, output_dir: str):
+    model.load_state_dict(torch.load(saved_model_path))
+    model.eval()
 
-        print("✅ Finished running the model on the input image.")
-        tracker.remove_hooks()
+    with torch.no_grad():
+        tracker.clear()
+        model(input_tensor)
+        tracker.save_test_to_json(save_dir=f"{output_dir}")
+
+    print("✅ Finished running the model on the input image.")
+    tracker.remove_hooks()

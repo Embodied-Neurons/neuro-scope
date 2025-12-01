@@ -27,6 +27,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
         const graph = new Graph()
         graphRef.current = graph
         buildGraph(graph, nodes, data.activations)
+        
 
         if (destroyed) return
 
