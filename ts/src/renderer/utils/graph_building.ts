@@ -1,6 +1,9 @@
-import { Graph, Node } from './types'
+import { Graph, Node, linearActivStats, linearGradStats } from './types'
 
-export function buildGraph(graph: Graph, nodes: Node[][]): void {
+export function buildGraph(graph: Graph, nodes: Node[][], activations: linearActivStats): void {
+  let counter = 0
+  const firstLayer = nodes[0].length
+
   nodes.forEach((layer) => {
     layer.forEach((node) => {
       graph.addNode(node.id, {
@@ -9,9 +12,11 @@ export function buildGraph(graph: Graph, nodes: Node[][]): void {
         size: 5,
         zIndex: 1,
         color: '#b1b1b1',
-        weight: node.weight,
-        activation: node.activation
+        weight: counter >= firstLayer ? activations[counter - firstLayer].norm : 0,
+        activation: counter >= firstLayer ? activations[counter - firstLayer].raw : 0
       })
+
+      counter += 1
     })
   })
 }
@@ -19,6 +24,7 @@ export function buildGraph(graph: Graph, nodes: Node[][]): void {
 export function buildEdges(
   graph: Graph,
   nodes: Node[][],
+  gradients: linearGradStats,
   node: string,
   layerSizes: number[]
 ): void {
@@ -37,20 +43,34 @@ export function buildEdges(
   }
 
   if (layerIdx > 0) {
+    const ws = gradients[idNumber - layerSizes[0]].norm
+    let counter = 0
+
     nodes[layerIdx - 1].forEach((prevNode) => {
+      const w = ws[counter]
+      const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
       graph.addEdge(prevNode.id, node, {
         id: `edge_${prevNode.id}-${node}`,
-        color: '#ffffff'
+        color: color
       })
+
+      counter += 1
     })
   }
 
   if (layerIdx < numLayers - 1) {
+    let counter = 0
+    const shift = neuronCount + layerSizes[layerIdx] - layerSizes[0]
+
     nodes[layerIdx + 1].forEach((nextNode) => {
+      const w = gradients[shift + counter].norm[idNumber - neuronCount]
+      const color = `rgb(${Math.round(255 * (1 - w))}, ${Math.round(255 * w)}, 0)`
       graph.addEdge(node, nextNode.id, {
         id: `edge_${node}-${nextNode.id}`,
-        color: '#ffffff'
+        color: color
       })
+
+      counter += 1
     })
   }
 }

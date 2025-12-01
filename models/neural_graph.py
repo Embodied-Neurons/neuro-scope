@@ -49,6 +49,7 @@ class NeuralGraph:
 
         x = torch.stack(node_features, dim=0)
         self.data = Data(x=x, edge_index=edge_index)
+        self.data.input_size = input_size
         self.data.node_labels = node_labels
         self.data.layer_sizes = layer_sizes
 

@@ -18,7 +18,6 @@ class ActivationTracker:
 
     def _save_activation(self, name):
         def hook(module, input, output):
-
             self.activations[f"fc{self.activations_idx}.activ"] = output.detach().mean(dim=0).cpu().numpy().tolist()
             self.activations_idx += 1
 
@@ -32,6 +31,7 @@ class ActivationTracker:
                     self.gradients[f"fc{self.gradients_idx}.grad"] = grad_output[0].detach().cpu().numpy().tolist()
                 else:
                     self.gradients[f"fc{self.gradients_idx}.grad"] = grad_output.detach().cpu().numpy().tolist()
+                
                 self.gradients_idx += 1
 
         return hook
@@ -49,8 +49,8 @@ class ActivationTracker:
     def clear(self):
         self.activations.clear()
         self.gradients.clear()
-        self.activations_idx=1
-        self.gradients_idx=1
+        self.activations_idx = 1
+        self.gradients_idx = 1
 
 
     def save_to_json(self, batch_idx, save_dir="outputs"):
@@ -61,6 +61,13 @@ class ActivationTracker:
         
         with open(os.path.join(save_dir, f"batch_{batch_idx}_gradients.json"), "w") as fg:
             json.dump(self.gradients, fg)
+
+
+    def save_test_to_json(self, save_dir="outputs"):
+        os.makedirs(save_dir, exist_ok=True)
+
+        with open(os.path.join(save_dir, f"test_activations.json"), "w") as fa:
+            json.dump(self.activations, fa)
 
 
     def remove_hooks(self):
@@ -74,6 +81,7 @@ def extract_graph_structure(model, save_path="outputs/graph_structure.json"):
 
     data = graph.get_data()
     structure = {
+        "inputSize": data.input_size,
         "nodes": [{"label": label} for label in data.node_labels],
         "edges": data.edge_index.t().tolist(),
         "layerSizes": data.layer_sizes
