@@ -4,7 +4,7 @@ import sys
 import argparse
 
 from scripts.extract_data import ActivationTracker
-from registry import model_registry, trainer_registry
+from registry import model_registry, runner_registry
 from PIL import Image
 from torchvision import transforms
 from json import load
@@ -48,19 +48,19 @@ def transform_image_and_run_test():
     spec.loader.exec_module(module)
 
     model_cls = model_registry.get("model")
-    trainer_cls = trainer_registry.get("trainer")
+    runner_cls = runner_registry.get("runner")
 
     if not model_cls:
         raise AttributeError("No model registered. Use @register_model on your NeuralNet class.")
     
-    if not trainer_cls:
-        raise AttributeError("No trainer registered. Use @register_trainer on your Trainer class.")
+    if not runner_cls:
+        raise AttributeError("No runner registered. Use @register_runner on the function running the model.")
 
     print("Running model on the provided input image...")
 
     dummy_model = model_cls(*[], **{})
     tracker = ActivationTracker(dummy_model)
-    trainer_cls.run(dummy_model, tracker, input_tensor, SAVED_MODEL_PATH, OUTPUT_DIR)
+    runner_cls(dummy_model, tracker, input_tensor, SAVED_MODEL_PATH, OUTPUT_DIR)
     tracker.remove_hooks()
 
 
