@@ -29,45 +29,28 @@ export type PosInfo = { minX: number; maxX: number; minY: number; maxY: number }
 // 2D position type
 export type Position = { x: number; y: number }
 
-// Node info type, used in graph structure
-type NodeInfo = { label: string }
-
 // Node type
 export type Node = {
   id: string
   x: number
   y: number
-  label?: string
   color?: string
   weight?: number
   activation?: number
 }
 
-// Edge type
-export type Edge = {
-  id: string
-  src: string
-  tgt: string
-  color?: string
-  weight?: number
-  gradValue?: number
-}
-
 // Graph structure type
 export type GraphStructure = {
+  inputSize: number
   layerSizes: number[]
-  nodes: NodeInfo[]
-  edges: [number, number][]
 }
 
 // Neural network data used for visualization
 export type NeuralNetworkData = {
   nodes: Node[]
-  edges: Edge[]
   activations: linearActivStats
-  gradients: linearGradStats
+  gradients?: linearGradStats
   layerSizes: number[]
-  nodeLabels: string[]
 }
 
 // Properties types for various components

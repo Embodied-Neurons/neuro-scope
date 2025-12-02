@@ -97,8 +97,6 @@ def extract_graph_structure(model, save_path="outputs/graph_structure.json"):
     data = graph.get_data()
     structure = {
         "inputSize": data.input_size,
-        "nodes": [{"label": label} for label in data.node_labels],
-        "edges": data.edge_index.t().tolist(),
         "layerSizes": data.layer_sizes
     }
 

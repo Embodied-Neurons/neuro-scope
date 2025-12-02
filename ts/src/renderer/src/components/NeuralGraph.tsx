@@ -27,7 +27,6 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
         const graph = new Graph()
         graphRef.current = graph
         buildGraph(graph, nodes, data.activations)
-        
 
         if (destroyed) return
 
@@ -78,7 +77,7 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
 
             graph.setNodeAttribute(node, 'color', highlightColor)
             graph.setNodeAttribute(node, 'zIndex', 2)
-            buildEdges(graph, nodes, data.gradients, node, data.layerSizes)
+            buildEdges(graph, nodes, data.gradients!, node, data.layerSizes)
             onNodeSelect({ ...nodeData })
           } else {
             selectedNodeRef.current = null

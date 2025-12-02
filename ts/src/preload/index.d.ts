@@ -9,11 +9,7 @@ declare global {
         outputDir: string,
         epoch: number
       ): Promise<types.NeuralNetworkData>
-      getActivationsFromImageInput(outputDir: string): Promise<{
-        nodes: types.Node[]
-        activations: types.linearActivStats
-        layerSizes: number[]
-      }>
+      getActivationsFromImageInput(outputDir: string): Promise<types.NeuralNetworkData>
       detectEpoch(outputDir: string, epoch: number): Promise<null>
       performTrainingIfNeeded(outputDir: string, modelName: string): void
       showImageFileDialog(): string | undefined
