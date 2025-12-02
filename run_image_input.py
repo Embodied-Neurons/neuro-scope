@@ -72,7 +72,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--output-dir", required=True, help="Path to save batches and graph structure in json"
+        "--output-dir", required=True, help="Path to save epochs and graph structure in json"
     )
 
     parser.add_argument(

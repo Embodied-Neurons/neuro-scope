@@ -27,7 +27,7 @@ function generateMlpLayout(layerSizes: number[]): types.Position[] {
 
 export async function getNeuralNetworkVisualization(
   outputDir: string,
-  batchId: number = 0
+  epoch: number = 0
 ): Promise<types.NeuralNetworkData> {
   const graphPath = path.join(OUTPUT_DIR_BASE, outputDir, 'graph_structure.json')
   console.log(`Graph path: ${graphPath}`)
@@ -41,8 +41,8 @@ export async function getNeuralNetworkVisualization(
   const structureRaw = await fs.readFile(graphPath, 'utf-8')
   const structure: types.GraphStructure = JSON.parse(structureRaw)
 
-  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_gradients.json`)
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_activations.json`)
+  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_gradients.json`)
 
   let actRaw: string
   let gradRaw: string
@@ -135,15 +135,15 @@ export async function getActivationsFromImageInput(outputDir: string): Promise<{
   }
 }
 
-export async function detectBatch(outputDir: string, batch: number): Promise<null> {
-  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_gradients.json`)
+export async function detectEpoch(outputDir: string, epoch: number): Promise<null> {
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_activations.json`)
+  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_gradients.json`)
 
   try {
     await fs.access(actPath)
     await fs.access(gradPath)
   } catch {
-    console.log('INFO: all batches detected!')
+    console.log('INFO: all epochs detected!')
   }
 
   return null

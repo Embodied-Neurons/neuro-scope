@@ -59,7 +59,7 @@ class ActivationTracker:
         self.gradients_idx = 1
 
 
-    def save_to_json(self, batch_idx, save_dir="outputs"):
+    def save_to_json(self, epoch, save_dir="outputs"):
         for activ_key in self.activations:
             self.activations[activ_key] = np.mean(self.activations[activ_key], axis=0).tolist()
 
@@ -68,10 +68,10 @@ class ActivationTracker:
         
         os.makedirs(save_dir, exist_ok=True)
 
-        with open(os.path.join(save_dir, f"batch_{batch_idx}_activations.json"), "w") as fa:
+        with open(os.path.join(save_dir, f"epoch_{epoch}_activations.json"), "w") as fa:
             json.dump(self.activations, fa)
         
-        with open(os.path.join(save_dir, f"batch_{batch_idx}_gradients.json"), "w") as fg:
+        with open(os.path.join(save_dir, f"epoch_{epoch}_gradients.json"), "w") as fg:
             json.dump(self.gradients, fg)
 
 

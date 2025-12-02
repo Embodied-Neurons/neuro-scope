@@ -3,14 +3,14 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  getNeuralNetworkVisualization: (outputDir: string, batch: number) =>
-    ipcRenderer.invoke('getNeuralNetworkVisualization', outputDir, batch),
+  getNeuralNetworkVisualization: (outputDir: string, epoch: number) =>
+    ipcRenderer.invoke('getNeuralNetworkVisualization', outputDir, epoch),
 
   getActivationsFromImageInput: (outputDir: string) =>
     ipcRenderer.invoke('getActivationsFromImageInput', outputDir),
 
-  detectBatch: (outputDir: string, batch: number) =>
-    ipcRenderer.invoke('detectBatch', outputDir, batch),
+  detectEpoch: (outputDir: string, epoch: number) =>
+    ipcRenderer.invoke('detectEpoch', outputDir, epoch),
 
   performTrainingIfNeeded: (outputDir: string, modelName: string) =>
     ipcRenderer.invoke('performTrainingIfNeeded', outputDir, modelName),

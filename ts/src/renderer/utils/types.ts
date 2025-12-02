@@ -71,9 +71,9 @@ export type NeuralNetworkData = {
 }
 
 // Properties types for various components
-export type BatchControlsProps = {
-  maxBatch: number
-  onSelectBatch: (batch: number) => void
+export type EpochControlsProps = {
+  maxEpoch: number
+  onSelectEpoch: (epoch: number) => void
   outputDir: string
 }
 
@@ -82,7 +82,7 @@ export type StatsPanelProps = {
 }
 
 export type NeuralGraphProps = {
-  batch: number
+  epoch: number
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void
   outputDir: string
 }
@@ -94,7 +94,7 @@ export type FileDialogProps = {
 export type ImageDialogProps = {
   outputDir: string
   modelName: string
-  onSelect: (batch: number) => void
+  onSelect: (epoch: number) => void
 }
 
 // Stats types for activations and gradients

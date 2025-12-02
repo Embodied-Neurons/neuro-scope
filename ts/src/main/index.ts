@@ -6,7 +6,7 @@ import { runImageInput } from '../renderer/utils/image_input_util'
 import {
   getNeuralNetworkVisualization,
   getActivationsFromImageInput,
-  detectBatch
+  detectEpoch
 } from '../renderer/utils/network_utils'
 
 export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..')
@@ -71,16 +71,16 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.handle('getNeuralNetworkVisualization', (_event, outputDir: string, batch: number) => {
-    return getNeuralNetworkVisualization(outputDir, batch)
+  ipcMain.handle('getNeuralNetworkVisualization', (_event, outputDir: string, epoch: number) => {
+    return getNeuralNetworkVisualization(outputDir, epoch)
   })
 
   ipcMain.handle('getActivationsFromImageInput', (_event, outputDir: string) => {
     return getActivationsFromImageInput(outputDir)
   })
 
-  ipcMain.handle('detectBatch', (_event, outputDir: string, batch: number) => {
-    return detectBatch(outputDir, batch)
+  ipcMain.handle('detectEpoch', (_event, outputDir: string, epoch: number) => {
+    return detectEpoch(outputDir, epoch)
   })
 
   ipcMain.handle('performTrainingIfNeeded', (_event, outputDir: string, modelName: string) => {

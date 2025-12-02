@@ -16,7 +16,7 @@ export default function ImageFileSelector({
 
         console.log(`Selected image (absolute path): ${imagePath}`)
 
-        // Convention: setting batch to negative value
+        // Convention: setting epoch to negative value
         onSelect(-1)
       } else {
         console.log('INFO: Image selection cancelled!')

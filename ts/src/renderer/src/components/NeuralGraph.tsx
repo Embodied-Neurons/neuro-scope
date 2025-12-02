@@ -6,7 +6,7 @@ import { calculateBounds } from '../../utils/camera_bounding'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
 import { NeuralGraphProps } from '../../utils/types'
 
-export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
+export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
@@ -16,11 +16,11 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
     let destroyed = false
 
     async function init(): Promise<void> {
-      if (batch >= 0) {
+      if (epoch >= 0) {
         if (!containerRef.current) return
 
         const container = containerRef.current
-        const data = await window.api.getNeuralNetworkVisualization(outputDir, batch)
+        const data = await window.api.getNeuralNetworkVisualization(outputDir, epoch)
         const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
         const posInfo = getNodesPosInfo(nodes)
 
@@ -166,7 +166,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
         graphRef.current = null
       }
     }
-  }, [batch, onNodeSelect, outputDir])
+  }, [epoch, onNodeSelect, outputDir])
 
   return <div ref={containerRef} className="w-full h-full" />
 }
