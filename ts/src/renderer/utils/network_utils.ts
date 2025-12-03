@@ -27,7 +27,7 @@ function generateMlpLayout(layerSizes: number[]): types.Position[] {
 
 export async function getNeuralNetworkVisualization(
   outputDir: string,
-  batchId: number = 0
+  epoch: number = 0
 ): Promise<types.NeuralNetworkData> {
   const graphPath = path.join(OUTPUT_DIR_BASE, outputDir, 'graph_structure.json')
   console.log(`Graph path: ${graphPath}`)
@@ -41,8 +41,8 @@ export async function getNeuralNetworkVisualization(
   const structureRaw = await fs.readFile(graphPath, 'utf-8')
   const structure: types.GraphStructure = JSON.parse(structureRaw)
 
-  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batchId}_gradients.json`)
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_activations.json`)
+  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_gradients.json`)
 
   let actRaw: string
   let gradRaw: string
@@ -57,46 +57,33 @@ export async function getNeuralNetworkVisualization(
   }
 
   const activations: Record<string, number[]> = JSON.parse(actRaw)
-  const linearizedActivations: types.linearActivStats = linearizeActivations(
-    activations,
-    structure.layerSizes.length
-  )
-
+  const linearizedActivations = linearizeActivations(activations, structure.layerSizes.length)
   const gradients: Record<string, number[][]> = JSON.parse(gradRaw)
-  const linearizedGradients: types.linearGradStats = linearizeGradients(
-    gradients,
-    structure.layerSizes.length
-  )
+  const linearizedGradients = linearizeGradients(gradients, structure.layerSizes.length)
 
   const positions = generateMlpLayout(structure.layerSizes)
-  const nodes: types.Node[] = structure.nodes.map((node, i) => ({
-    id: String(i),
-    label: node.label,
-    x: positions[i].x,
-    y: positions[i].y
-  }))
+  const nodesNum = structure.layerSizes.reduce((pSum, a) => pSum + a, 0)
+  const nodes: types.Node[] = []
 
-  const edges: types.Edge[] = structure.edges.map(([src, tgt]) => ({
-    id: `edge_${src}-${tgt}`,
-    src: String(src),
-    tgt: String(tgt)
-  }))
+  for (let i = 0; i < nodesNum; i++) {
+    nodes.push({
+      id: String(i),
+      x: positions[i].x,
+      y: positions[i].y
+    })
+  }
 
   return {
     nodes,
-    edges,
     gradients: linearizedGradients,
     activations: linearizedActivations,
-    layerSizes: structure.layerSizes,
-    nodeLabels: structure.nodes.map((n) => n.label)
+    layerSizes: structure.layerSizes
   }
 }
 
-export async function getActivationsFromImageInput(outputDir: string): Promise<{
-  nodes: types.Node[]
-  activations: types.linearActivStats
-  layerSizes: number[]
-}> {
+export async function getActivationsFromImageInput(
+  outputDir: string
+): Promise<types.NeuralNetworkData> {
   const graphPath = path.join(OUTPUT_DIR_BASE, outputDir, 'graph_structure.json')
   console.log(`Graph path: ${graphPath}`)
 
@@ -120,13 +107,18 @@ export async function getActivationsFromImageInput(outputDir: string): Promise<{
 
   const activations: Record<string, number[]> = JSON.parse(actRaw)
   const linearizedActivations = linearizeActivations(activations, structure.layerSizes.length)
+
   const positions = generateMlpLayout(structure.layerSizes)
-  const nodes: types.Node[] = structure.nodes.map((node, i) => ({
-    id: String(i),
-    label: node.label,
-    x: positions[i].x,
-    y: positions[i].y
-  }))
+  const nodesNum = structure.layerSizes.reduce((pSum, a) => pSum + a, 0)
+  const nodes: types.Node[] = []
+
+  for (let i = 0; i < nodesNum; i++) {
+    nodes.push({
+      id: String(i),
+      x: positions[i].x,
+      y: positions[i].y
+    })
+  }
 
   return {
     nodes,
@@ -135,15 +127,15 @@ export async function getActivationsFromImageInput(outputDir: string): Promise<{
   }
 }
 
-export async function detectBatch(outputDir: string, batch: number): Promise<null> {
-  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `batch_${batch}_gradients.json`)
+export async function detectEpoch(outputDir: string, epoch: number): Promise<null> {
+  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_activations.json`)
+  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_gradients.json`)
 
   try {
     await fs.access(actPath)
     await fs.access(gradPath)
   } catch {
-    console.log('INFO: all batches detected!')
+    console.log('INFO: all epochs detected!')
   }
 
   return null

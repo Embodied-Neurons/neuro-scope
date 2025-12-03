@@ -11,7 +11,7 @@ from registry import model_registry, trainer_registry
 MODEL_PATH_TO_SAVE = "./data/models/"
 MODEL_PATH_TO_TRAIN = "./models/"
 OUTPUT_DIR = "./"
-NUM_BATCHES = 0
+NUM_EPOCHS = 0
 
 
 def train_and_save():
@@ -37,7 +37,7 @@ def train_and_save():
 
     dummy_model = model_cls(*[], **{})
     tracker = ActivationTracker(dummy_model)
-    trainer_cls.train(dummy_model, tracker, NUM_BATCHES, OUTPUT_DIR)
+    trainer_cls.train(dummy_model, tracker, NUM_EPOCHS, OUTPUT_DIR)
     torch.save(dummy_model.state_dict(), MODEL_PATH_TO_SAVE)
     tracker.remove_hooks()
     extract_graph_structure(dummy_model, save_path=os.path.join(OUTPUT_DIR, "graph_structure.json"))
@@ -51,11 +51,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--output-dir", required=True, help="Path to save batches and graph structure in json"
+        "--output-dir", required=True, help="Path to save epochs and graph structure in json"
     )
 
     parser.add_argument(
-        "--batches", required=False, type=int, default=10, help="Number of batches to save"
+        "--epochs", required=False, type=int, default=10, help="Number of epochs to save"
     )
 
     args = vars(parser.parse_args())
@@ -63,10 +63,10 @@ if __name__ == "__main__":
     MODEL_PATH_TO_SAVE += args['model_name'] + ".pt"
     MODEL_PATH_TO_TRAIN += args["model_name"] + ".py"
     OUTPUT_DIR += args['output_dir']
-    NUM_BATCHES += args['batches']
+    NUM_EPOCHS += args['epochs']
 
-    if NUM_BATCHES <= 0:
-        print("Number of batches should be positive. Received:", NUM_BATCHES)
+    if NUM_EPOCHS <= 0 or NUM_EPOCHS > 100:
+        print("Number of epochs should be positive and at most 100. Received:", NUM_EPOCHS)
         exit(0)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)

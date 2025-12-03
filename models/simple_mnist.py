@@ -36,7 +36,7 @@ class SimpleNN(NeuralNetInterface):
 @register_trainer
 class Trainer(TrainerInterface):
     @staticmethod
-    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_batches: int, output_dir: str):
+    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_epochs: int, output_dir: str):
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
@@ -55,24 +55,20 @@ class Trainer(TrainerInterface):
         print("📦 Training started...")
         model.train()
 
-        batch_count = 0
-
-        for batch_idx, (images, labels) in enumerate(train_loader):
-            if batch_count >= num_batches:
-                break
-
-            optimizer.zero_grad()
+        for epoch in range(num_epochs):
             tracker.clear()
 
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            for _, (images, labels) in enumerate(train_loader):
+                optimizer.zero_grad()
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                tracker.reset_after_batch()
 
-            tracker.save_to_json(batch_count, save_dir=output_dir)
-            batch_count += 1
+            tracker.save_to_json(epoch, save_dir=output_dir)
 
-        print(f"✅ Finished training. {batch_count} batches processed.")
+        print(f"✅ Finished training. {num_epochs} epochs processed.")
         tracker.remove_hooks()
 
 

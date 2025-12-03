@@ -1,12 +1,17 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { JSX, useEffect, useRef } from 'react'
-import { buildGraph, buildEdges } from '../../utils/graph_building'
-import { calculateBounds } from '../../utils/camera_bounding'
+import { buildGraph } from '../../utils/graph_building'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
-import { NeuralGraphProps } from '../../utils/types'
+import {
+  colorGraphNodes,
+  initializeRendererAndCamera,
+  registerClickNodeListener,
+  restrictCameraMovement
+} from '../../utils/neural_graph_utils'
+import { NeuralGraphProps, NeuralNetworkData } from '../../utils/types'
 
-export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
+export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
@@ -16,138 +21,36 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
     let destroyed = false
 
     async function init(): Promise<void> {
-      if (batch >= 0) {
-        if (!containerRef.current) return
+      if (!containerRef.current) return
 
-        const container = containerRef.current
-        const data = await window.api.getNeuralNetworkVisualization(outputDir, batch)
-        const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
-        const posInfo = getNodesPosInfo(nodes)
+      const container = containerRef.current
+      let data: NeuralNetworkData
 
-        const graph = new Graph()
-        graphRef.current = graph
-        buildGraph(graph, nodes, data.activations)
-        
-
-        if (destroyed) return
-
-        const renderer = new Sigma(graph, container, {
-          minCameraRatio: 0.05,
-          maxCameraRatio: 1.2,
-          zIndex: true
-        })
-
-        rendererRef.current = renderer
-        const camera = renderer.getCamera()
-        camera.setState({ x: 0.5, y: 0.5, ratio: 1.0 })
-
-        camera.on('updated', async () => {
-          const { x, y, newX, newY } = calculateBounds(renderer, container, posInfo)
-          const cameraState = camera.getState()
-
-          if (newX !== x || newY !== y) {
-            const newCameraX = cameraState.x - x + newX
-            const newCameraY = cameraState.y - y + newY
-            camera.setState({ x: newCameraX, y: newCameraY })
-          }
-        })
-
-        renderer.on('clickNode', ({ node }: { node: string }) => {
-          if (!graphRef.current) return
-
-          const graph = graphRef.current
-
-          if (selectedNodeRef.current) {
-            const prevNode = selectedNodeRef.current
-            const prevEdges = graph.edges(prevNode)
-            graph.setNodeAttribute(prevNode, 'color', '#b1b1b1')
-            graph.setNodeAttribute(prevNode, 'zIndex', 1)
-            prevEdges.forEach((edge) => {
-              graph.dropEdge(edge)
-            })
-          }
-
-          if (selectedNodeRef.current !== node) {
-            selectedNodeRef.current = node
-
-            const nodeData = graph.getNodeAttributes(node)
-            const { weight } = nodeData
-            const highlightColor = `rgb(${Math.round(255 * (1 - (weight ?? 0)))}, ${Math.round(
-              255 * (weight ?? 0)
-            )}, 0)`
-
-            graph.setNodeAttribute(node, 'color', highlightColor)
-            graph.setNodeAttribute(node, 'zIndex', 2)
-            buildEdges(graph, nodes, data.gradients, node, data.layerSizes)
-            onNodeSelect({ ...nodeData })
-          } else {
-            selectedNodeRef.current = null
-            onNodeSelect(null)
-          }
-        })
+      // temporary workaround
+      if (epoch >= 0) {
+        data = await window.api.getNeuralNetworkVisualization(outputDir, epoch)
       } else {
-        if (!containerRef.current) return
+        data = await window.api.getActivationsFromImageInput(outputDir)
+      }
 
-        const container = containerRef.current
-        const data = await window.api.getActivationsFromImageInput(outputDir)
-        const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
-        const posInfo = getNodesPosInfo(nodes)
+      const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
+      const posInfo = getNodesPosInfo(nodes)
 
-        const graph = new Graph()
-        graphRef.current = graph
-        buildGraph(graph, nodes, data.activations)
+      const graph = new Graph()
+      graphRef.current = graph
+      buildGraph(graph, nodes, data.activations)
+      colorGraphNodes(graph)
 
-        const graphNodes = graph.nodes()
-        graphNodes.forEach((node) => {
-          const weight = graph.getNodeAttribute(node, 'weight') as number
-          const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
-          graph.setNodeAttribute(node, 'color', color)
-        })
+      if (destroyed) return
 
-        if (destroyed) return
+      const { renderer, camera } = initializeRendererAndCamera(graph, container, rendererRef)
+      restrictCameraMovement(camera, renderer, container, posInfo)
 
-        const renderer = new Sigma(graph, container, {
-          minCameraRatio: 0.05,
-          maxCameraRatio: 1.2,
-          zIndex: true
-        })
-
-        rendererRef.current = renderer
-        const camera = renderer.getCamera()
-        camera.setState({ x: 0.5, y: 0.5, ratio: 1.0 })
-
-        camera.on('updated', async () => {
-          const { x, y, newX, newY } = calculateBounds(renderer, container, posInfo)
-          const cameraState = camera.getState()
-
-          if (newX !== x || newY !== y) {
-            const newCameraX = cameraState.x - x + newX
-            const newCameraY = cameraState.y - y + newY
-            camera.setState({ x: newCameraX, y: newCameraY })
-          }
-        })
-
-        renderer.on('clickNode', ({ node }: { node: string }) => {
-          if (!graphRef.current) return
-
-          const graph = graphRef.current
-
-          if (selectedNodeRef.current) {
-            const prevNode = selectedNodeRef.current
-            graph.setNodeAttribute(prevNode, 'zIndex', 1)
-          }
-
-          if (selectedNodeRef.current !== node) {
-            selectedNodeRef.current = node
-
-            const nodeData = graph.getNodeAttributes(node)
-            graph.setNodeAttribute(node, 'zIndex', 2)
-            onNodeSelect({ ...nodeData })
-          } else {
-            selectedNodeRef.current = null
-            onNodeSelect(null)
-          }
-        })
+      // temporary workaround
+      if (epoch >= 0) {
+        registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
+      } else {
+        registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, null, null)
       }
     }
 
@@ -166,7 +69,7 @@ export function NeuralGraph({ batch, onNodeSelect, outputDir }: NeuralGraphProps
         graphRef.current = null
       }
     }
-  }, [batch, onNodeSelect, outputDir])
+  }, [epoch, onNodeSelect, outputDir])
 
   return <div ref={containerRef} className="w-full h-full" />
 }

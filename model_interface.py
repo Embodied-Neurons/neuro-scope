@@ -14,9 +14,9 @@ class TrainerInterface(ABC):
     """User's module must implement this function."""
     @staticmethod
     @abstractmethod
-    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_batches: int):
+    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_epochs: int):
         """
-        Trains the given model with the provided tracker and number of batches.
-        All outputs must go to the `outputs/` directory.
+        Trains the given model with the provided tracker and number of epochs.
+        All outputs must go to the designated outputs directory.
         """
         pass
