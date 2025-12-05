@@ -2,19 +2,37 @@ import { JSX, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
 import ModelFileSelector from '../components/ModelFileSelector'
+import { trainingStatus } from '../../utils/types'
 
 export default function MainPage(): JSX.Element {
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
   const [outputDir, setOutputDir] = useState('')
   const [modelName, setModelName] = useState('')
-  const [ready, setReady] = useState(false)
-
+  const [trainingStatus, setTrainingStatus] = useState<trainingStatus>('idle')
+  const onModalClose = (): void => {
+    setModalOpen(false)
+    setOutputDir('')
+    setModelName('')
+    setTrainingStatus('idle')
+  }
+  const onModalContinue = (): void => {
+    onModalClose()
+    navigate('/visualizer', { state: { outputDir, modelName } })
+  }
   const handleFileSelect = async (dir: string, model: string): Promise<void> => {
     if (!dir) return
-    setReady(true)
+
+    setTrainingStatus('running')
     setOutputDir(dir)
     setModelName(model)
+
+    try {
+      await window.api.performTrainingIfNeeded(dir, model)
+      setTrainingStatus('done')
+    } catch {
+      setTrainingStatus('error')
+    }
   }
 
   return (
@@ -42,19 +60,22 @@ export default function MainPage(): JSX.Element {
           </button>
         </div>
       </div>
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        {!ready && (
-          <div className="flex flex-col items-center">
-            <ModelFileSelector onFileSelect={handleFileSelect} />
+      <Modal open={modalOpen} onClose={onModalClose} disableClose={trainingStatus === 'running'}>
+        {trainingStatus === 'idle' && <ModelFileSelector onFileSelect={handleFileSelect} />}
+
+        {trainingStatus === 'running' && (
+          <div className="flex flex-col items-center space-y-3">
+            <p className="text-gray-800 font-medium">Training in progress...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
           </div>
         )}
-        {ready && (
+
+        {trainingStatus === 'done' && (
           <div className="flex flex-col items-center space-y-4">
-            <p className="text-gray-800 font-medium">Model training complete!</p>
+            <p className="text-gray-800 font-medium">Training complete!</p>
             <button
               onClick={() => {
-                setModalOpen(false)
-                navigate('/visualizer', { state: { outputDir, modelName } })
+                onModalContinue()
               }}
               className="bg-black text-white rounded-xl px-4 py-2 hover:bg-gray-900"
             >
@@ -62,6 +83,8 @@ export default function MainPage(): JSX.Element {
             </button>
           </div>
         )}
+
+        {trainingStatus === 'error' && <p className="text-red-600">Error during training.</p>}
       </Modal>
     </>
   )

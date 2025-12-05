@@ -31,7 +31,7 @@ export default function ImageFileSelector({
       <button
         onClick={handleButtonClick}
         type="button"
-        className="bg-white text-black rounded-xl px-4 py-2 font-medium hover:bg-gray-200 transition"
+        className="bg-black text-white rounded-xl px-4 py-2 font-medium hover:bg-gray-700 transition"
       >
         Select image to feed to the model
       </button>
