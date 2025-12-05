@@ -65,14 +65,14 @@ export default function MainPage(): JSX.Element {
 
         {trainingStatus === 'running' && (
           <div className="flex flex-col items-center space-y-3">
-            <p className="text-gray-800 font-medium">Training in progress...</p>
+            <p className="text-black font-medium">Training in progress...</p>
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
           </div>
         )}
 
         {trainingStatus === 'done' && (
           <div className="flex flex-col items-center space-y-4">
-            <p className="text-gray-800 font-medium">Training complete!</p>
+            <p className="text-black font-medium">Training complete!</p>
             <button
               onClick={() => {
                 onModalContinue()
