@@ -54,8 +54,8 @@ export function registerClickNodeListener(
   graphRef: RefObject<types.Graph | null>,
   selectedNodeRef: RefObject<string | null>,
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void,
-  nodes: types.Node[][] | null,
-  data: types.NeuralNetworkData | null
+  nodes: types.Node[][],
+  data: types.NeuralNetworkData
 ): void {
   renderer.on('clickNode', ({ node }: { node: string }) => {
     if (!graphRef.current) return
@@ -73,10 +73,7 @@ export function registerClickNodeListener(
 
     if (selectedNodeRef.current !== node) {
       selectedNodeRef.current = node
-
-      if (nodes !== null && data !== null) {
-        buildEdges(graph, nodes, data.gradients!, node, data.layerSizes)
-      }
+      buildEdges(graph, nodes, data.gradients ?? null, node, data.layerSizes)
 
       const nodeData = graph.getNodeAttributes(node)
       graph.setNodeAttribute(node, 'zIndex', 2)

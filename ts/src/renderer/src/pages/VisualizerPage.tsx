@@ -27,7 +27,7 @@ export default function VisualizerPage(): JSX.Element {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-[70vw] overflow-hidden">
+        <div className="w-[70vw] overflow-hidden bg-blue-950">
           <NeuralGraph epoch={epoch} onNodeSelect={setSelectedNode} outputDir={outputDir} />
         </div>
         <div className="w-[30vw] p-2 shrink-0 overflow-y-auto">
