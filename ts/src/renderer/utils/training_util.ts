@@ -1,5 +1,6 @@
 import { exec } from 'child_process'
 import fs from 'fs'
+import path from 'path'
 import { OUTPUT_DIR_BASE } from '../../main'
 
 export function performTrainingIfNeeded(
@@ -8,14 +9,48 @@ export function performTrainingIfNeeded(
   epochs: number
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Checking if outputs directory already exists
-    try {
-      fs.statSync(`${OUTPUT_DIR_BASE}\\${outputDir}`)
-      console.log('Output directory exists. Skipping training.')
-      resolve()
-      return
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+    const fullOutputPath = path.join(OUTPUT_DIR_BASE, outputDir)
+
+    if (fs.existsSync(fullOutputPath)) {
+      console.log('Output folder exists, checking its contents...')
+
+      const files = fs.readdirSync(fullOutputPath)
+
+      // Expected filenames
+      const expected = new Set<string>([
+        'graph_structure.json',
+        ...Array.from({ length: epochs }, (_, i) => `epoch_${i}_activations.json`),
+        ...Array.from({ length: epochs }, (_, i) => `epoch_${i}_gradients.json`)
+      ])
+      let valid = true
+      // If file not in expected
+      for (const file of files) {
+        if (!expected.has(file)) {
+          valid = false
+          console.log(`Unexpected file detected: ${file}`)
+          break
+        }
+      }
+
+      // Check for gradients,activations and structure
+      for (const file of expected) {
+        if (!files.includes(file)) {
+          valid = false
+          console.log(`Missing expected file: ${file}`)
+          break
+        }
+      }
+
+      if (valid) {
+        console.log('All expected files are present. Skipping training.')
+        resolve()
+        return
+      }
+
+      // Folder is invalid in some way so clean it
+      try {
+        fs.rmSync(fullOutputPath, { recursive: true, force: true })
+      } catch (err) {
         reject(err)
         return
       }
