@@ -20,6 +20,13 @@ export default function MainPage(): JSX.Element {
   const onModalClose = (): void => {
     setTrainingStatus('idle')
     setModalOpen(false)
+    setModelName('')
+    setOutputDir('')
+    setEpochs(1)
+  }
+  const onTrainingFinish = (): void => {
+    setTrainingStatus('idle')
+    setModalOpen(false)
     navigate('/visualizer')
   }
 
@@ -103,7 +110,7 @@ export default function MainPage(): JSX.Element {
           <div className="flex flex-col items-center space-y-4">
             <p className="text-black font-medium">Training complete!</p>
             <button
-              onClick={onModalClose}
+              onClick={onTrainingFinish}
               className="bg-black text-white rounded-xl px-4 py-2 hover:bg-gray-900"
             >
               Continue to Visualization
