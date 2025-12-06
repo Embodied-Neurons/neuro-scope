@@ -1,34 +1,34 @@
-import { JSX, useState } from 'react'
+import { JSX, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
 import ModelFileSelector from '../components/ModelFileSelector'
 import { trainingStatus } from '../../utils/types'
+import { useModel } from '@renderer/context/useModel'
 
 export default function MainPage(): JSX.Element {
+  const { setModelName, setOutputDir, setEpochs, epochs, modelName, outputDir } = useModel()
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
-  const [outputDir, setOutputDir] = useState('')
-  const [modelName, setModelName] = useState('')
   const [trainingStatus, setTrainingStatus] = useState<trainingStatus>('idle')
-  const onModalClose = (): void => {
-    setModalOpen(false)
-    setOutputDir('')
+
+  useEffect(() => {
     setModelName('')
+    setOutputDir('')
+    setEpochs(1)
+  }, [setModelName, setEpochs, setOutputDir])
+
+  const onModalClose = (): void => {
     setTrainingStatus('idle')
+    setModalOpen(false)
+    navigate('/visualizer')
   }
-  const onModalContinue = (): void => {
-    onModalClose()
-    navigate('/visualizer', { state: { outputDir, modelName } })
-  }
-  const handleFileSelect = async (dir: string, model: string): Promise<void> => {
-    if (!dir) return
 
+  const onContinue = async (): Promise<void> => {
+    console.log(epochs, outputDir, modelName)
+    if (!outputDir || !modelName || !epochs) return
     setTrainingStatus('running')
-    setOutputDir(dir)
-    setModelName(model)
-
     try {
-      await window.api.performTrainingIfNeeded(dir, model)
+      await window.api.performTrainingIfNeeded(outputDir, modelName, epochs)
       setTrainingStatus('done')
     } catch {
       setTrainingStatus('error')
@@ -61,7 +61,36 @@ export default function MainPage(): JSX.Element {
         </div>
       </div>
       <Modal open={modalOpen} onClose={onModalClose} disableClose={trainingStatus === 'running'}>
-        {trainingStatus === 'idle' && <ModelFileSelector onFileSelect={handleFileSelect} />}
+        {trainingStatus === 'idle' && (
+          <div className="space-y-4">
+            <ModelFileSelector />
+
+            <div className="flex flex-col space-y-1">
+              <label className="text-black font-medium">Number of Epochs</label>
+              <input
+                id="epochsInput"
+                type="number"
+                min={1}
+                max={20}
+                value={epochs}
+                onChange={(e) => setEpochs(e.target.valueAsNumber)}
+                className="w-full px-4 py-2 border border-black rounded-xl text-black"
+              />
+            </div>
+
+            <button
+              onClick={onContinue}
+              disabled={!epochs && !modelName && !outputDir}
+              className={`w-full py-3 rounded-xl font-medium transition ${
+                outputDir && modelName && epochs
+                  ? 'bg-black text-white hover:bg-gray-900'
+                  : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+              }`}
+            >
+              Continue
+            </button>
+          </div>
+        )}
 
         {trainingStatus === 'running' && (
           <div className="flex flex-col items-center space-y-3">
@@ -74,9 +103,7 @@ export default function MainPage(): JSX.Element {
           <div className="flex flex-col items-center space-y-4">
             <p className="text-black font-medium">Training complete!</p>
             <button
-              onClick={() => {
-                onModalContinue()
-              }}
+              onClick={onModalClose}
               className="bg-black text-white rounded-xl px-4 py-2 hover:bg-gray-900"
             >
               Continue to Visualization

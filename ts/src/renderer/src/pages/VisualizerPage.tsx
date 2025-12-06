@@ -1,15 +1,14 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { JSX, useState } from 'react'
 import { NeuralGraph } from '../components/NeuralGraph'
 import { StatsPanel } from '../components/StatsPanel'
 import ImageFileSelector from '../components/ImageFileSelector'
 import EpochControls from '../components/EpochControls'
+import { useModel } from '@renderer/context/useModel'
 
 export default function VisualizerPage(): JSX.Element {
   const navigate = useNavigate()
-  const location = useLocation()
-  const outputDir = location.state?.outputDir || ''
-  const modelName = location.state?.modelName || ''
+  const { modelName, outputDir, epochs } = useModel()
 
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null)
   const [epoch, setEpoch] = useState(0)
@@ -34,7 +33,7 @@ export default function VisualizerPage(): JSX.Element {
         <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
           <div className="bg-white p-4 rounded-xl shadow">
             <h3 className="font-semibold mb-2 text-black">Epoch Controls</h3>
-            <EpochControls maxEpoch={10} onSelectEpoch={setEpoch} outputDir={outputDir} />
+            <EpochControls maxEpoch={epochs} onSelectEpoch={setEpoch} outputDir={outputDir} />
           </div>
 
           <div className="bg-white p-4 rounded-xl shadow">

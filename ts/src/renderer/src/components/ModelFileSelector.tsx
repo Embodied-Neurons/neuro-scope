@@ -1,8 +1,9 @@
 import { useRef, ChangeEvent, JSX } from 'react'
-import { FileDialogProps } from '../../utils/types'
+import { useModel } from '@renderer/context/useModel'
 
-export default function ModelFileSelector({ onFileSelect }: FileDialogProps): JSX.Element {
+export default function ModelFileSelector(): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { setOutputDir, setModelName, modelName } = useModel()
 
   const handleButtonClick = (): void => {
     fileInputRef.current?.click()
@@ -12,15 +13,14 @@ export default function ModelFileSelector({ onFileSelect }: FileDialogProps): JS
     const selectedFile: File | null = event.target.files?.[0] || null
 
     if (selectedFile) {
-      const modelName: string = selectedFile.name.substring(0, selectedFile.name.length - 3)
-      const outputDir: string = `\\outputs_${modelName}`
-
-      window.api.performTrainingIfNeeded(outputDir, modelName)
-
-      onFileSelect(outputDir, modelName)
-      console.log(`Selected file: ${selectedFile.name}`)
+      const modelNamee: string = selectedFile.name.substring(0, selectedFile.name.length - 3)
+      const outputDir: string = `\\outputs_${modelNamee}`
+      setOutputDir(outputDir)
+      setModelName(modelNamee)
+      console.log(`Selected file: ${selectedFile.name} ${outputDir} ${modelName}`)
     } else {
-      onFileSelect('', '')
+      setOutputDir('')
+      setModelName('')
       console.log('INFO: File selection cancelled!')
     }
 
@@ -39,7 +39,12 @@ export default function ModelFileSelector({ onFileSelect }: FileDialogProps): JS
       >
         Select model file
       </button>
-      <p className="text-gray-500 text-xs italic">Supported format: .py</p>
+      {modelName ? (
+        <p className="text-gray-500 text-xs italic">Selected {modelName}</p>
+      ) : (
+        <p className="text-gray-500 text-xs italic">Supported format: .py</p>
+      )}
+
       <input
         type="file"
         ref={fileInputRef}

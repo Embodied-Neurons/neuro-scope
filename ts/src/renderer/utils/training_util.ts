@@ -2,7 +2,11 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import { OUTPUT_DIR_BASE } from '../../main'
 
-export function performTrainingIfNeeded(outputDir: string, modelName: string): Promise<void> {
+export function performTrainingIfNeeded(
+  outputDir: string,
+  modelName: string,
+  epochs: number
+): Promise<void> {
   return new Promise((resolve, reject) => {
     // Checking if outputs directory already exists
     try {
@@ -17,7 +21,7 @@ export function performTrainingIfNeeded(outputDir: string, modelName: string): P
       }
     }
 
-    const args = ['--model-name', modelName, '--output-dir', outputDir]
+    const args = ['--model-name', modelName, '--output-dir', outputDir, '--epochs', epochs]
     const command = `cd ${OUTPUT_DIR_BASE} && py run_training.py ${args.join(' ')}`
 
     const child = exec(command, { env: { ...process.env } })

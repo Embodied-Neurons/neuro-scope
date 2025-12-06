@@ -83,9 +83,12 @@ app.whenReady().then(() => {
     return detectEpoch(outputDir, epoch)
   })
 
-  ipcMain.handle('performTrainingIfNeeded', (_event, outputDir: string, modelName: string) => {
-    return performTrainingIfNeeded(outputDir, modelName)
-  })
+  ipcMain.handle(
+    'performTrainingIfNeeded',
+    (_event, outputDir: string, modelName: string, epochs: number) => {
+      return performTrainingIfNeeded(outputDir, modelName, epochs)
+    }
+  )
 
   ipcMain.handle('showImageFileDialog', async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender)!

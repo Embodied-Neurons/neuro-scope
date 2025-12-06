@@ -61,20 +61,20 @@ class Trainer(TrainerInterface):
               <code>
                 {`
 for epoch in range(num_epochs):
-  tracker.clear()
+    tracker.clear()
 
-  for _, (images, labels) in enumerate(train_loader):
-      optimizer.zero_grad()
+    for _, (images, labels) in enumerate(train_loader):
+        optimizer.zero_grad()
 
-      outputs = model(images)
-      loss = criterion(outputs, labels)
+        outputs = model(images)
+        loss = criterion(outputs, labels)
 
-      loss.backward()
-      optimizer.step()
+        loss.backward()
+        optimizer.step()
 
-      tracker.reset_after_batch()
+        tracker.reset_after_batch()
 
-  tracker.save_to_json(epoch, save_dir=output_dir)
+    tracker.save_to_json(epoch, save_dir=output_dir)
 tracker.remove_hooks()`}
               </code>
             </pre>
