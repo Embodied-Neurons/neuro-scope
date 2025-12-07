@@ -20,9 +20,11 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
   const [isAnimating, setIsAnimating] = useState(false)
   const [speed, setSpeed] = useState(500)
   const [epochCount, setEpochCount] = useState(0)
+  const [currentEpoch, setCurrentEpoch] = useState(0)
   const animationTimeoutRef = useRef<number | null>(null)
   const currentEpochRef = useRef<number>(0)
   const isAnimatingRef = useRef(false)
+  
 
   const nodeLayersRef = useRef<any>(null)
   const layerSizesRef = useRef<number[]>([])
@@ -82,6 +84,8 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
       const { renderer, camera } = initializeRendererAndCamera(graph, container, rendererRef)
       restrictCameraMovement(camera, renderer, container, posInfo)
 
+      currentEpochRef.current = epoch
+
       if (!isAnimatingRef.current) {
         if (epoch >= 0) {
           registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
@@ -113,13 +117,12 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
     if (!graphRef.current) return
 
     const graph = graphRef.current
-
     const data = await window.api.getNeuralNetworkVisualization(outputDir, epochNumber)
+
     const activations = data.activations
     const firstLayer = layerSizesRef.current[0]
 
     let counter = 0
-
     graph.forEachNode((node) => {
       const newWeight =
         counter >= firstLayer
@@ -137,8 +140,15 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
       counter++
     })
 
+    graph.forEachEdge((edge) => {
+      graph.dropEdge(edge)
+    })
+
     colorGraphNodes(graph)
   }
+
+
+
 
   useEffect(() => {
     isAnimatingRef.current = isAnimating
@@ -154,9 +164,9 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
     async function loop() {
       await applyEpochColors(currentEpochRef.current)
 
-      currentEpochRef.current =
-        (currentEpochRef.current + 1) % epochCount
-
+      const next = (currentEpochRef.current + 1) % epochCount
+      currentEpochRef.current = next
+      setCurrentEpoch(next)
       animationTimeoutRef.current = window.setTimeout(loop, speed)
     }
 
@@ -173,7 +183,8 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
     setIsAnimating((prev) => {
       const next = !prev
       if (next) {
-        currentEpochRef.current = 0
+        currentEpochRef.current = currentEpochRef.current
+        setCurrentEpoch(epoch)
       }
       return next
     })
@@ -204,7 +215,7 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
           />
         </div>
 
-        <div>Total Epochs: {epochCount}</div>
+        <div>Epoch: {currentEpoch} / {epochCount}</div>
       </div>
     </div>
   )
