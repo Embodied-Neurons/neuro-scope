@@ -94,3 +94,4 @@ export type GradStats = {
 }
 
 export type linearGradStats = Array<{ raw: number[]; norm: number[] }>
+export type trainingStatus = 'idle' | 'running' | 'done' | 'error'

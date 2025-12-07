@@ -49,10 +49,10 @@ class Trainer(TrainerInterface):
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-        print("🔍 Extracting model structure...")
+        print("Extracting model structure...")
         extract_graph_structure(model, save_path=f"./{output_dir}/graph_structure.json")
 
-        print("📦 Training started...")
+        print("Training started...")
         model.train()
 
         for epoch in range(num_epochs):
@@ -68,7 +68,7 @@ class Trainer(TrainerInterface):
 
             tracker.save_to_json(epoch, save_dir=output_dir)
 
-        print(f"✅ Finished training. {num_epochs} epochs processed.")
+        print(f"Finished training. {num_epochs} epochs processed.")
         tracker.remove_hooks()
 
 
@@ -82,5 +82,5 @@ def run(model: NeuralNetInterface, tracker: ActivationTracker, input_tensor: tor
         model(input_tensor)
         tracker.save_test_to_json(save_dir=f"{output_dir}")
 
-    print("✅ Finished running the model on the input image.")
+    print("Finished running the model on the input image.")
     tracker.remove_hooks()
