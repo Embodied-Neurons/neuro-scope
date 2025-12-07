@@ -61,3 +61,6 @@ out
 
 # Vite
 .vite
+
+# Venv
+venv311

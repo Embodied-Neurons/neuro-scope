@@ -1,38 +1,47 @@
 import torch.nn as nn
+import numpy as np
 import json
 import os
 
+from collections import defaultdict
 from models.neural_graph import NeuralGraph
 
 
 class ActivationTracker:
     def __init__(self, model):
         self.model = model
-        self.activations = {}
-        self.gradients = {}
+        self.activations = defaultdict(list)
+        self.gradients = defaultdict(list)
         self.handles = []
         self._register_hooks()
+        self.activations_idx = 1
+        self.gradients_idx = 1
 
 
     def _save_activation(self, name):
         def hook(module, input, output):
-            self.activations[name] = output.detach().cpu().numpy().tolist()
+            self.activations[f"fc{self.activations_idx}.activ"].append(output.detach().mean(dim=0).cpu().numpy().tolist())
+            self.activations_idx += 1
+
         return hook
 
 
     def _save_gradient(self, name):
         def hook(grad_output):
-            if isinstance(grad_output, tuple):
-                self.gradients[name] = grad_output[0].detach().cpu().numpy().tolist()
-            else:
-                self.gradients[name] = grad_output.detach().cpu().numpy().tolist()
+            if "weight" in name:
+                if isinstance(grad_output, tuple):
+                    self.gradients[f"fc{self.gradients_idx}.grad"].append(grad_output[0].detach().cpu().numpy().tolist())
+                else:
+                    self.gradients[f"fc{self.gradients_idx}.grad"].append(grad_output.detach().cpu().numpy().tolist())
+                
+                self.gradients_idx += 1
 
         return hook
 
 
     def _register_hooks(self):
         for name, module in self.model.named_modules():
-            if isinstance(module, (nn.ReLU, nn.Linear)):
+            if isinstance(module, nn.Linear):
                 self.handles.append(module.register_forward_hook(self._save_activation(name)))
 
         for name, param in self.model.named_parameters():
@@ -42,14 +51,38 @@ class ActivationTracker:
     def clear(self):
         self.activations.clear()
         self.gradients.clear()
+        self.reset_after_batch()
+
+    
+    def reset_after_batch(self):
+        self.activations_idx = 1
+        self.gradients_idx = 1
 
 
-    def save_to_json(self, batch_idx, save_dir="outputs"):
+    def save_to_json(self, epoch, save_dir="outputs"):
+        for activ_key in self.activations:
+            self.activations[activ_key] = np.mean(self.activations[activ_key], axis=0).tolist()
+
+        for grad_key in self.gradients:
+            self.gradients[grad_key] = np.sum(self.gradients[grad_key], axis=0).tolist()
+        
         os.makedirs(save_dir, exist_ok=True)
-        with open(os.path.join(save_dir, f"batch_{batch_idx}_activations.json"), "w") as fa:
+
+        with open(os.path.join(save_dir, f"epoch_{epoch}_activations.json"), "w") as fa:
             json.dump(self.activations, fa)
-        with open(os.path.join(save_dir, f"batch_{batch_idx}_gradients.json"), "w") as fg:
+        
+        with open(os.path.join(save_dir, f"epoch_{epoch}_gradients.json"), "w") as fg:
             json.dump(self.gradients, fg)
+
+
+    def save_test_to_json(self, save_dir="outputs"):
+        for activ_key in self.activations:
+            self.activations[activ_key] = self.activations[activ_key][0]
+
+        os.makedirs(save_dir, exist_ok=True)
+
+        with open(os.path.join(save_dir, f"test_activations.json"), "w") as fa:
+            json.dump(self.activations, fa)
 
 
     def remove_hooks(self):
@@ -63,12 +96,12 @@ def extract_graph_structure(model, save_path="outputs/graph_structure.json"):
 
     data = graph.get_data()
     structure = {
-        "nodes": [{"label": label} for label in data.node_labels],
-        "edges": data.edge_index.t().tolist(),
+        "inputSize": data.input_size,
         "layerSizes": data.layer_sizes
     }
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
     with open(save_path, "w") as f:
         json.dump(structure, f)
 

@@ -3,21 +3,22 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  getNeuralNetworkVisualization: (outputDir: string, batch: number) =>
-    ipcRenderer.invoke('getNeuralNetworkVisualization', outputDir, batch),
+  getNeuralNetworkVisualization: (outputDir: string, epoch: number) =>
+    ipcRenderer.invoke('getNeuralNetworkVisualization', outputDir, epoch),
 
-  getCompressedNeuralNetworkData: (
-    sizes: number[],
-    count?: number,
-    outputDir?: string,
-    batch?: number
-  ) => ipcRenderer.invoke('getCompressedNeuralNetworkData', sizes, count, outputDir, batch),
+  getActivationsFromImageInput: (outputDir: string) =>
+    ipcRenderer.invoke('getActivationsFromImageInput', outputDir),
 
-  detectBatch: (outputDir: string, batch: number) =>
-    ipcRenderer.invoke('detectBatch', outputDir, batch),
+  detectEpoch: (outputDir: string, epoch: number) =>
+    ipcRenderer.invoke('detectEpoch', outputDir, epoch),
 
   performTrainingIfNeeded: (outputDir: string, modelName: string) =>
-    ipcRenderer.invoke('performTrainingIfNeeded', outputDir, modelName)
+    ipcRenderer.invoke('performTrainingIfNeeded', outputDir, modelName),
+
+  showImageFileDialog: () => ipcRenderer.invoke('showImageFileDialog'),
+
+  runImageInput: (outputDir: string, modelName: string, imagePath: string) =>
+    ipcRenderer.invoke('runImageInput', outputDir, modelName, imagePath)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

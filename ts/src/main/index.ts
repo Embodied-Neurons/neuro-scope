@@ -1,11 +1,12 @@
-import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { performTrainingIfNeeded } from '../renderer/utils/training_util'
+import { runImageInput } from '../renderer/utils/image_input_util'
 import {
   getNeuralNetworkVisualization,
-  getCompressedNeuralNetworkData,
-  detectBatch
+  getActivationsFromImageInput,
+  detectEpoch
 } from '../renderer/utils/network_utils'
 
 export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..')
@@ -70,24 +71,46 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.handle('getNeuralNetworkVisualization', (_event, outputDir: string, batch: number) => {
-    return getNeuralNetworkVisualization(outputDir, batch)
+  ipcMain.handle('getNeuralNetworkVisualization', (_event, outputDir: string, epoch: number) => {
+    return getNeuralNetworkVisualization(outputDir, epoch)
   })
 
-  ipcMain.handle(
-    'getCompressedNeuralNetworkData',
-    (_event, sizes: number[], count?: number, outputDir?: string, batch?: number) => {
-      return getCompressedNeuralNetworkData(sizes, count, outputDir, batch)
-    }
-  )
+  ipcMain.handle('getActivationsFromImageInput', (_event, outputDir: string) => {
+    return getActivationsFromImageInput(outputDir)
+  })
 
-  ipcMain.handle('detectBatch', (_event, outputDir: string, batch: number) => {
-    return detectBatch(outputDir, batch)
+  ipcMain.handle('detectEpoch', (_event, outputDir: string, epoch: number) => {
+    return detectEpoch(outputDir, epoch)
   })
 
   ipcMain.handle('performTrainingIfNeeded', (_event, outputDir: string, modelName: string) => {
     return performTrainingIfNeeded(outputDir, modelName)
   })
+
+  ipcMain.handle('showImageFileDialog', async (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)!
+    const result = await dialog.showOpenDialog(window, {
+      title: 'Select image file',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Supported image files', extensions: ['jpg', 'jpeg', 'png', 'bmp'] },
+        { name: 'All files', extensions: ['*'] }
+      ]
+    })
+
+    if (result.canceled) {
+      return
+    } else {
+      return result.filePaths[0]
+    }
+  })
+
+  ipcMain.handle(
+    'runImageInput',
+    (_event, outputDir: string, modelName: string, imagePath: string) => {
+      return runImageInput(outputDir, modelName, imagePath)
+    }
+  )
 
   createWindow()
 

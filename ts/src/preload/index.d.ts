@@ -7,16 +7,13 @@ declare global {
     api: {
       getNeuralNetworkVisualization(
         outputDir: string,
-        batch: number
+        epoch: number
       ): Promise<types.NeuralNetworkData>
-      getCompressedNeuralNetworkData(
-        sizes: number[],
-        count?: number,
-        outputDir?: string,
-        batch?: number
-      ): Promise<types.CompressedData>
-      detectBatch(outputDir: string, batch: number): Promise<null>
+      getActivationsFromImageInput(outputDir: string): Promise<types.NeuralNetworkData>
+      detectEpoch(outputDir: string, epoch: number): Promise<null>
       performTrainingIfNeeded(outputDir: string, modelName: string): void
+      showImageFileDialog(): string | undefined
+      runImageInput(outputDir: string, modelName: string, imagePath: string): void
     }
   }
 }

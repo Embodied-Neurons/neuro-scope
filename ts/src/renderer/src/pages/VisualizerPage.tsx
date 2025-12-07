@@ -2,15 +2,17 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { JSX, useState } from 'react'
 import { NeuralGraph } from '../components/NeuralGraph'
 import { StatsPanel } from '../components/StatsPanel'
-import BatchControls from '../components/BatchControls'
+import ImageFileSelector from '../components/ImageFileSelector'
+import EpochControls from '../components/EpochControls'
 
 export default function VisualizerPage(): JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
   const outputDir = location.state?.outputDir || ''
+  const modelName = location.state?.modelName || ''
 
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null)
-  const [batch, setBatch] = useState(0)
+  const [epoch, setEpoch] = useState(0)
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -26,10 +28,11 @@ export default function VisualizerPage(): JSX.Element {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-[70vw] overflow-hidden">
-          <NeuralGraph batch={batch} onNodeSelect={setSelectedNode} outputDir={outputDir} />
+          <NeuralGraph epoch={epoch} onNodeSelect={setSelectedNode} outputDir={outputDir} />
         </div>
         <div className="w-[30vw] p-2 shrink-0 overflow-y-auto">
-          <BatchControls maxBatch={10} onSelectBatch={setBatch} outputDir={outputDir} />
+          <EpochControls maxEpoch={10} onSelectEpoch={setEpoch} outputDir={outputDir} />
+          <ImageFileSelector outputDir={outputDir} modelName={modelName} onSelect={setEpoch} />
           <StatsPanel nodeData={selectedNode} />
         </div>
       </div>

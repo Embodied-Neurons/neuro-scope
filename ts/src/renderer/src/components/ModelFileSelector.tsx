@@ -1,7 +1,7 @@
 import { useRef, ChangeEvent, JSX } from 'react'
 import { FileDialogProps } from '../../utils/types'
 
-export default function FileSelector({ onFileSelect }: FileDialogProps): JSX.Element {
+export default function ModelFileSelector({ onFileSelect }: FileDialogProps): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleButtonClick = (): void => {
@@ -17,10 +17,10 @@ export default function FileSelector({ onFileSelect }: FileDialogProps): JSX.Ele
 
       window.api.performTrainingIfNeeded(outputDir, modelName)
 
-      onFileSelect(outputDir)
+      onFileSelect(outputDir, modelName)
       console.log(`Selected file: ${selectedFile.name}`)
     } else {
-      onFileSelect('')
+      onFileSelect('', '')
       console.log('INFO: File selection cancelled!')
     }
 
@@ -45,7 +45,7 @@ export default function FileSelector({ onFileSelect }: FileDialogProps): JSX.Ele
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".py"
-        style={{ display: "none" }}
+        style={{ display: 'none' }}
       />
     </div>
   )

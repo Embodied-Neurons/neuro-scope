@@ -1,7 +1,7 @@
-import * as types from './types'
+import { Node, PosInfo } from './types'
 
-export function getAllNodesByLayers(nodes: types.Node[], layerSizes: number[]): types.Node[][] {
-  const nodesByLayers: types.Node[][] = []
+export function getAllNodesByLayers(nodes: Node[], layerSizes: number[]): Node[][] {
+  const nodesByLayers: Node[][] = []
   let previousNeuronCount = 0
 
   for (const layerSize of layerSizes) {
@@ -17,65 +17,21 @@ export function getAllNodesByLayers(nodes: types.Node[], layerSizes: number[]): 
   return nodesByLayers
 }
 
-export function getNodesPosInfo(
-  nodesByLayers: types.Node[][],
-  containerWidth: number,
-  containerHeight: number
-): types.PosInfo[] {
-  const posInfo: types.PosInfo[] = []
-  let x: number, minY: number, maxY: number
+export function getNodesPosInfo(nodesByLayers: Node[][]): PosInfo[] {
+  const posInfo: PosInfo[] = []
+  let minX: number, maxX: number, minY: number, maxY: number
 
-  for (const nodesLayer of nodesByLayers) {
-    x = nodesLayer[0].x
-    minY = nodesLayer[0].y
-    maxY = nodesLayer[nodesLayer.length - 1].y
+  for (const nodeLayer of nodesByLayers) {
+    const nodeLayerXs = nodeLayer.map((node) => node.x)
+    const nodeLayerYs = nodeLayer.map((node) => node.y)
 
-    posInfo.push({
-      x: x / containerWidth,
-      minY: minY / containerHeight,
-      maxY: maxY / containerHeight
-    })
+    minX = Math.min(...nodeLayerXs)
+    maxX = Math.max(...nodeLayerXs)
+    minY = Math.min(...nodeLayerYs)
+    maxY = Math.max(...nodeLayerYs)
+
+    posInfo.push({ minX, maxX, minY, maxY })
   }
 
   return posInfo
-}
-
-export function visibleNodesChanged(newNodes: types.Node[][], oldNodes: types.Node[][]): boolean {
-  for (let i = 0; i < newNodes.length; i++) {
-    if (newNodes[i].length !== oldNodes[i].length) {
-      return true
-    }
-  }
-
-  return false
-}
-
-export function anyNodeVisible(nodesByLayers: types.Node[][]): number {
-  return nodesByLayers.map((layer) => layer.length).reduce((sum, el) => sum + el, 0)
-}
-
-export function getVisibleNodes(
-  nodes: types.Node[][],
-  containerWidth: number,
-  containerHeight: number,
-  visibilityRanges: { minX: number; maxX: number; minY: number; maxY: number }
-): types.Node[][] {
-  const { minX, maxX, minY, maxY } = visibilityRanges
-  const visibleNodes: types.Node[][] = []
-
-  for (const nodeLayer of nodes) {
-    visibleNodes.push([])
-
-    if (nodeLayer[0].x / containerWidth < minX || nodeLayer[0].x / containerWidth > maxX) {
-      continue
-    }
-
-    for (const node of nodeLayer) {
-      if (node.y / containerHeight >= minY && node.y / containerHeight <= maxY) {
-        visibleNodes[visibleNodes.length - 1].push(node)
-      }
-    }
-  }
-
-  return visibleNodes
 }
