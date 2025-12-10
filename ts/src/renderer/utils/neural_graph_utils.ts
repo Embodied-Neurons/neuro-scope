@@ -125,9 +125,9 @@ export function highlightByActivation(
 
   ids.forEach((id) => {
     if (top && topSet.has(id)) {
-      graph.setNodeAttribute(id, 'color', '#ff0000')
+      graph.setNodeAttribute(id, 'color', '#00ff00')
     } else if (bottom && bottomSet.has(id)) {
-      graph.setNodeAttribute(id, 'color', '#0000ff')
+      graph.setNodeAttribute(id, 'color', '#ff0000')
     } else {
       graph.setNodeAttribute(id, 'color', '#808080')
     }
