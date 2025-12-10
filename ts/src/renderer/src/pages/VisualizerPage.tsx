@@ -5,6 +5,7 @@ import { StatsPanel } from '../components/StatsPanel'
 import ImageFileSelector from '../components/ImageFileSelector'
 import EpochControls from '../components/EpochControls'
 import { useModel } from '@renderer/context/useModel'
+import AnomalySlider from '@renderer/components/AnomalySlider'
 
 export default function VisualizerPage(): JSX.Element {
   const navigate = useNavigate()
@@ -12,6 +13,10 @@ export default function VisualizerPage(): JSX.Element {
 
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null)
   const [epoch, setEpoch] = useState(0)
+
+  const [highlightTop, setHighlightTop] = useState(false)
+  const [highlightBottom, setHighlightBottom] = useState(false)
+  const [highlightPercent, setHighlightPercent] = useState(10)
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
@@ -27,13 +32,31 @@ export default function VisualizerPage(): JSX.Element {
 
       <div className="flex flex-1 overflow-hidden p-4 gap-4">
         <div className="w-2/3 h-full bg-white rounded-xl shadow overflow-hidden">
-          <NeuralGraph epoch={epoch} onNodeSelect={setSelectedNode} outputDir={outputDir} />
+          <NeuralGraph
+            epoch={epoch}
+            onNodeSelect={setSelectedNode}
+            outputDir={outputDir}
+            highlightTop={highlightTop}
+            highlightBottom={highlightBottom}
+            highlightPercent={highlightPercent}
+          />
         </div>
 
         <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
           <div className="bg-white p-4 rounded-xl shadow">
             <h3 className="font-semibold mb-2 text-black">Epoch Controls</h3>
             <EpochControls maxEpoch={epochs} onSelectEpoch={setEpoch} outputDir={outputDir} />
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h3 className="font-semibold mb-2 text-black">Activation Highlights</h3>
+            <AnomalySlider
+              highlightTop={highlightTop}
+              highlightBottom={highlightBottom}
+              percent={highlightPercent}
+              onToggleTop={setHighlightTop}
+              onToggleBottom={setHighlightBottom}
+              onChangePercent={setHighlightPercent}
+            />
           </div>
 
           <div className="bg-white p-4 rounded-xl shadow">
