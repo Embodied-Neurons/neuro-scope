@@ -13,10 +13,10 @@ export default function ModelFileSelector(): JSX.Element {
     const selectedFile: File | null = event.target.files?.[0] || null
 
     if (selectedFile) {
-      const modelNamee: string = selectedFile.name.substring(0, selectedFile.name.length - 3)
-      const outputDir: string = `\\outputs_${modelNamee}`
+      const modelName: string = selectedFile.name.substring(0, selectedFile.name.length - 3)
+      const outputDir: string = `\\outputs_${modelName}`
       setOutputDir(outputDir)
-      setModelName(modelNamee)
+      setModelName(modelName)
       console.log(`Selected file: ${selectedFile.name} ${outputDir} ${modelName}`)
     } else {
       setOutputDir('')
