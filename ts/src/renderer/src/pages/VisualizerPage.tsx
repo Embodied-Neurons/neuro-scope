@@ -31,7 +31,7 @@ export default function VisualizerPage(): JSX.Element {
       </div>
 
       <div className="flex flex-1 overflow-hidden p-4 gap-4">
-        <div className="w-2/3 h-full bg-white rounded-xl shadow overflow-hidden">
+        <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
           <NeuralGraph
             epoch={epoch}
             onNodeSelect={setSelectedNode}

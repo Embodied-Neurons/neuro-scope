@@ -89,7 +89,7 @@ export function linearizeActivations(
   const processedActivations = processActivations(activations)
   const linearizedActivations: linearActivStats = []
 
-  for (let i = 1; i < numLayers; i++) {
+  for (let i = 0; i < numLayers; i++) {
     const entry = processedActivations[`fc${i}.activ`]
 
     for (let j = 0; j < entry.raw.length; j++) {
