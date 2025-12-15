@@ -5,18 +5,25 @@ import { buildGraph } from '../../utils/graph_building'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
 import {
   colorGraphNodes,
+  highlightByActivation,
   initializeRendererAndCamera,
   registerClickNodeListener,
   restrictCameraMovement
 } from '../../utils/neural_graph_utils'
 import { NeuralGraphProps, NeuralNetworkData } from '../../utils/types'
 
-export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
+export function NeuralGraph({
+  epoch,
+  onNodeSelect,
+  outputDir,
+  highlightTop,
+  highlightBottom,
+  highlightPercent
+}: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
-
   useEffect(() => {
     let destroyed = false
 
@@ -70,6 +77,16 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
       }
     }
   }, [epoch, onNodeSelect, outputDir])
+
+  useEffect(() => {
+    if (!graphRef.current) return
+
+    highlightByActivation(graphRef.current, highlightTop, highlightBottom, highlightPercent)
+
+    if (rendererRef.current) {
+      rendererRef.current.refresh()
+    }
+  }, [highlightTop, highlightBottom, highlightPercent])
 
   return <div ref={containerRef} className="w-full h-full" />
 }

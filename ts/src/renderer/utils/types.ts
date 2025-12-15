@@ -68,6 +68,9 @@ export type NeuralGraphProps = {
   epoch: number
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void
   outputDir: string
+  highlightTop: boolean
+  highlightBottom: boolean
+  highlightPercent: number
 }
 
 export type FileDialogProps = {

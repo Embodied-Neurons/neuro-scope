@@ -2,7 +2,7 @@ import { Graph, Node, linearActivStats, linearGradStats } from './types'
 
 export function buildGraph(graph: Graph, nodes: Node[][], activations: linearActivStats): void {
   let counter = 0
-
+  const firstLayer = nodes[0].length
   nodes.forEach((layer) => {
     layer.forEach((node) => {
       graph.addNode(node.id, {
@@ -10,8 +10,10 @@ export function buildGraph(graph: Graph, nodes: Node[][], activations: linearAct
         y: node.y,
         size: 5,
         zIndex: 1,
+        color: '#b1b1b1',
         weight: activations[counter].norm,
         activation: activations[counter].raw
+        firstLayer: counter >= firstLayer
       })
 
       counter += 1
