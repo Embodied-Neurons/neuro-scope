@@ -1,6 +1,6 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
-import { JSX, useEffect, useRef, useState } from 'react'
+import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { buildGraph } from '../../utils/graph_building'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
 import {
@@ -10,7 +10,8 @@ import {
   registerClickNodeListener,
   restrictCameraMovement
 } from '../../utils/neural_graph_utils'
-import { NeuralGraphProps, NeuralNetworkData } from '../../utils/types'
+import { NeuralGraphProps, NeuralNetworkData, Node } from '../../utils/types'
+import { useModel } from '@renderer/context/useModel'
 
 export function NeuralGraph({
   epoch,
@@ -32,27 +33,11 @@ export function NeuralGraph({
   const animationTimeoutRef = useRef<number | null>(null)
   const currentEpochRef = useRef<number>(0)
   const isAnimatingRef = useRef(false)
-  
 
-  const nodeLayersRef = useRef<any>(null)
+  const nodeLayersRef = useRef<Node[][]>(null)
   const layerSizesRef = useRef<number[]>([])
 
-  async function detectMaxEpoch(): Promise<number> {
-    let epoch = 0
-    while (true) {
-      try {
-        let result = await window.api.detectEpoch(outputDir, epoch)
-        if (result == -1){
-          break
-        }
-        epoch++
-      } catch {
-        break
-      }
-    }
-    return epoch
-  }
-
+  const { epochs } = useModel()
 
   useEffect(() => {
     let destroyed = false
@@ -72,7 +57,7 @@ export function NeuralGraph({
 
       layerSizesRef.current = data.layerSizes
 
-      const detected = await detectMaxEpoch()
+      const detected = epochs
       console.log('detected: %d', detected)
       setEpochCount(detected)
 
@@ -98,7 +83,7 @@ export function NeuralGraph({
         if (epoch >= 0) {
           registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
         } else {
-          registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, null, null)
+          registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
         }
       }
     }
@@ -118,45 +103,38 @@ export function NeuralGraph({
         graphRef.current = null
       }
     }
-  }, [epoch, onNodeSelect, outputDir])
+  }, [epoch, onNodeSelect, outputDir, epochs])
+  const applyEpochColors = useCallback(
+    async (epochNumber: number) => {
+      if (!graphRef.current) return
 
+      const graph = graphRef.current
+      const data = await window.api.getNeuralNetworkVisualization(outputDir, epochNumber)
 
-  async function applyEpochColors(epochNumber: number) {
-    if (!graphRef.current) return
+      const activations = data.activations
+      const firstLayer = layerSizesRef.current[0]
 
-    const graph = graphRef.current
-    const data = await window.api.getNeuralNetworkVisualization(outputDir, epochNumber)
+      let counter = 0
+      graph.forEachNode((node) => {
+        const newWeight = counter >= firstLayer ? activations[counter - firstLayer].norm : 0
 
-    const activations = data.activations
-    const firstLayer = layerSizesRef.current[0]
+        const newActivation = counter >= firstLayer ? activations[counter - firstLayer].raw : 0
 
-    let counter = 0
-    graph.forEachNode((node) => {
-      const newWeight =
-        counter >= firstLayer
-          ? activations[counter - firstLayer].norm
-          : 0
+        graph.setNodeAttribute(node, 'weight', newWeight)
+        graph.setNodeAttribute(node, 'activation', newActivation)
 
-      const newActivation =
-        counter >= firstLayer
-          ? activations[counter - firstLayer].raw
-          : 0
+        counter++
+      })
 
-      graph.setNodeAttribute(node, "weight", newWeight)
-      graph.setNodeAttribute(node, "activation", newActivation)
+      graph.forEachEdge((edge) => {
+        graph.dropEdge(edge)
+      })
 
-      counter++
-    })
-
-    graph.forEachEdge((edge) => {
-      graph.dropEdge(edge)
-    })
-
-    colorGraphNodes(graph)
-  }
-
-
-
+      colorGraphNodes(graph)
+      return
+    },
+    [outputDir]
+  )
 
   useEffect(() => {
     isAnimatingRef.current = isAnimating
@@ -169,7 +147,7 @@ export function NeuralGraph({
       return
     }
 
-    async function loop() {
+    async function loop(): Promise<void> {
       await applyEpochColors(currentEpochRef.current)
 
       const next = (currentEpochRef.current + 1) % epochCount
@@ -185,30 +163,36 @@ export function NeuralGraph({
         clearTimeout(animationTimeoutRef.current)
       }
     }
-  }, [isAnimating, speed, epochCount])
+  }, [isAnimating, speed, epochCount, applyEpochColors])
 
-  function toggleAnimation() {
+  function toggleAnimation(): null {
     setIsAnimating((prev) => {
       const next = !prev
       if (next) {
-        currentEpochRef.current = currentEpochRef.current
         setCurrentEpoch(epoch)
       }
       return next
     })
+    return null
   }
+
+  useEffect(() => {
+    if (!graphRef.current) return
+
+    highlightByActivation(graphRef.current, highlightTop, highlightBottom, highlightPercent)
+
+    if (rendererRef.current) {
+      rendererRef.current.refresh()
+    }
+  }, [highlightTop, highlightBottom, highlightPercent])
 
   return (
     <div className="w-full h-full relative">
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Animation Controls */}
       <div className="absolute bottom-4 left-4 bg-white/80 p-4 rounded shadow-lg space-y-3">
-        <button
-          onClick={toggleAnimation}
-          className="px-3 py-1 bg-blue-600 text-white rounded"
-        >
-          {isAnimating ? "Pause" : "Start"}
+        <button onClick={toggleAnimation} className="px-3 py-1 bg-black text-white rounded">
+          {isAnimating ? 'Pause' : 'Start'}
         </button>
 
         <div>
@@ -220,10 +204,13 @@ export function NeuralGraph({
             step={50}
             value={1200 - speed}
             onChange={(e) => setSpeed(1200 - Number(e.target.value))}
+            className="accent-black"
           />
         </div>
 
-        <div>Epoch: {currentEpoch} / {epochCount}</div>
+        <div>
+          Epoch: {currentEpoch} / {epochCount}
+        </div>
       </div>
     </div>
   )

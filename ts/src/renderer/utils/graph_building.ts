@@ -12,7 +12,7 @@ export function buildGraph(graph: Graph, nodes: Node[][], activations: linearAct
         zIndex: 1,
         color: '#b1b1b1',
         weight: activations[counter].norm,
-        activation: activations[counter].raw
+        activation: activations[counter].raw,
         firstLayer: counter >= firstLayer
       })
 
