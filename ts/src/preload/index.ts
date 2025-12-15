@@ -12,8 +12,8 @@ const api = {
   detectEpoch: (outputDir: string, epoch: number) =>
     ipcRenderer.invoke('detectEpoch', outputDir, epoch),
 
-  performTrainingIfNeeded: (outputDir: string, modelName: string) =>
-    ipcRenderer.invoke('performTrainingIfNeeded', outputDir, modelName),
+  performTrainingIfNeeded: (outputDir: string, modelName: string, epochs: number) =>
+    ipcRenderer.invoke('performTrainingIfNeeded', outputDir, modelName, epochs),
 
   showImageFileDialog: () => ipcRenderer.invoke('showImageFileDialog'),
 

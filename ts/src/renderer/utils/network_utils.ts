@@ -7,17 +7,53 @@ import { linearizeActivations, linearizeGradients } from './neuron_utils'
 function generateMlpLayout(layerSizes: number[]): types.Position[] {
   const layout: types.Position[] = []
   const numLayers = layerSizes.length
-  const xStep = numLayers > 1 ? 1 / (numLayers - 1) : 0
+  const xStep = numLayers > 1 ? 1.5 / (numLayers - 1) : 0
 
   for (let layerIdx = 0; layerIdx < numLayers; layerIdx++) {
     const xMid = layerIdx * xStep
-    const xBurst = 0.008 * Math.sqrt(layerSizes[layerIdx])
-    const yBurst = 0.08 / Math.sqrt(layerSizes[layerIdx])
+    const xBurst = 0.01 * Math.sqrt(layerSizes[layerIdx])
+    const yBurst = 0.01 / Math.sqrt(layerSizes[layerIdx])
+    const yFactor = Math.sqrt(Math.log10(layerSizes[layerIdx]))
 
     for (let i = 0; i < layerSizes[layerIdx]; i++) {
-      const x = xMid + xBurst * (Math.random() - 0.5)
-      const yMid = layerSizes[layerIdx] > 1 ? i / (layerSizes[layerIdx] - 1) : 0.5
-      const y = yMid + yBurst * (Math.random() - 0.5)
+      const yMid = yFactor * (layerSizes[layerIdx] > 1 ? i / (layerSizes[layerIdx] - 1) - 0.5 : 0.0)
+      const y = -yMid - yBurst * (Math.random() - 0.5)
+
+      const xCurvature = 0.8 * yMid * yMid
+      const x = xMid + xBurst * (Math.random() - 0.5) + xCurvature
+
+      layout.push({ x, y })
+    }
+  }
+
+  return layout
+}
+
+function generateModifiedMlpLayout(layerSizes: number[]): types.Position[] {
+  const layout: types.Position[] = []
+  const numLayers = layerSizes.length
+  const xStep = numLayers > 1 ? 1.5 / (numLayers - 1) : 0
+  const side = Math.round(Math.sqrt(layerSizes[0]))
+
+  for (let i = 0; i < side; i++) {
+    for (let j = 0; j < side; j++) {
+      layout.push({ x: (0.8 * j) / side, y: -0.8 * (i / side - 0.5) })
+    }
+  }
+
+  for (let layerIdx = 1; layerIdx < numLayers; layerIdx++) {
+    const xMid = 0.8 - 0.01 * Math.sqrt(layerSizes[0]) + layerIdx * xStep
+    const xBurst = 0.01 * Math.sqrt(layerSizes[layerIdx])
+    const yBurst = 0.01 / Math.sqrt(layerSizes[layerIdx])
+    const yFactor = Math.sqrt(Math.log10(layerSizes[layerIdx]))
+
+    for (let i = 0; i < layerSizes[layerIdx]; i++) {
+      const yMid = yFactor * (layerSizes[layerIdx] > 1 ? i / (layerSizes[layerIdx] - 1) - 0.5 : 0.0)
+      const y = -yMid - yBurst * (Math.random() - 0.5)
+
+      const xCurvature = 0.8 * yMid * yMid
+      const x = xMid + xBurst * (Math.random() - 0.5) + xCurvature
+
       layout.push({ x, y })
     }
   }
@@ -108,7 +144,7 @@ export async function getActivationsFromImageInput(
   const activations: Record<string, number[]> = JSON.parse(actRaw)
   const linearizedActivations = linearizeActivations(activations, structure.layerSizes.length)
 
-  const positions = generateMlpLayout(structure.layerSizes)
+  const positions = generateModifiedMlpLayout(structure.layerSizes)
   const nodesNum = structure.layerSizes.reduce((pSum, a) => pSum + a, 0)
   const nodes: types.Node[] = []
 

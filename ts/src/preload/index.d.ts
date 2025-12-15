@@ -11,7 +11,7 @@ declare global {
       ): Promise<types.NeuralNetworkData>
       getActivationsFromImageInput(outputDir: string): Promise<types.NeuralNetworkData>
       detectEpoch(outputDir: string, epoch: number): Promise<null>
-      performTrainingIfNeeded(outputDir: string, modelName: string): void
+      performTrainingIfNeeded(outputDir: string, modelName: string, epochs: number): void
       showImageFileDialog(): string | undefined
       runImageInput(outputDir: string, modelName: string, imagePath: string): void
     }

@@ -1,8 +1,9 @@
 import { useRef, ChangeEvent, JSX } from 'react'
-import { FileDialogProps } from '../../utils/types'
+import { useModel } from '@renderer/context/useModel'
 
-export default function ModelFileSelector({ onFileSelect }: FileDialogProps): JSX.Element {
+export default function ModelFileSelector(): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { setOutputDir, setModelName, modelName } = useModel()
 
   const handleButtonClick = (): void => {
     fileInputRef.current?.click()
@@ -14,13 +15,12 @@ export default function ModelFileSelector({ onFileSelect }: FileDialogProps): JS
     if (selectedFile) {
       const modelName: string = selectedFile.name.substring(0, selectedFile.name.length - 3)
       const outputDir: string = `\\outputs_${modelName}`
-
-      window.api.performTrainingIfNeeded(outputDir, modelName)
-
-      onFileSelect(outputDir, modelName)
-      console.log(`Selected file: ${selectedFile.name}`)
+      setOutputDir(outputDir)
+      setModelName(modelName)
+      console.log(`Selected file: ${selectedFile.name} ${outputDir} ${modelName}`)
     } else {
-      onFileSelect('', '')
+      setOutputDir('')
+      setModelName('')
       console.log('INFO: File selection cancelled!')
     }
 
@@ -35,11 +35,16 @@ export default function ModelFileSelector({ onFileSelect }: FileDialogProps): JS
       <button
         onClick={handleButtonClick}
         type="button"
-        className="bg-white text-black rounded-xl px-4 py-2 font-medium hover:bg-gray-200 transition"
+        className="bg-black text-white  rounded-xl px-4 py-2 font-medium hover:bg-gray-700 transition"
       >
         Select model file
       </button>
-      <p className="text-gray-500 text-xs italic">Supported format: .py</p>
+      {modelName ? (
+        <p className="text-gray-500 text-xs italic">Selected {modelName}</p>
+      ) : (
+        <p className="text-gray-500 text-xs italic">Supported format: .py</p>
+      )}
+
       <input
         type="file"
         ref={fileInputRef}

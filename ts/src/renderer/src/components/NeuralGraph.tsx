@@ -5,13 +5,21 @@ import { buildGraph } from '../../utils/graph_building'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
 import {
   colorGraphNodes,
+  highlightByActivation,
   initializeRendererAndCamera,
   registerClickNodeListener,
   restrictCameraMovement
 } from '../../utils/neural_graph_utils'
 import { NeuralGraphProps, NeuralNetworkData } from '../../utils/types'
 
-export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps): JSX.Element {
+export function NeuralGraph({
+  epoch,
+  onNodeSelect,
+  outputDir,
+  highlightTop,
+  highlightBottom,
+  highlightPercent
+}: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)

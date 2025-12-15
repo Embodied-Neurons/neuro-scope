@@ -54,8 +54,8 @@ export function registerClickNodeListener(
   graphRef: RefObject<types.Graph | null>,
   selectedNodeRef: RefObject<string | null>,
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void,
-  nodes: types.Node[][] | null,
-  data: types.NeuralNetworkData | null
+  nodes: types.Node[][],
+  data: types.NeuralNetworkData
 ): void {
   renderer.on('clickNode', ({ node }: { node: string }) => {
     if (!graphRef.current) return
@@ -73,10 +73,7 @@ export function registerClickNodeListener(
 
     if (selectedNodeRef.current !== node) {
       selectedNodeRef.current = node
-
-      if (nodes !== null && data !== null) {
-        buildEdges(graph, nodes, data.gradients!, node, data.layerSizes)
-      }
+      buildEdges(graph, nodes, data.gradients ?? null, node, data.layerSizes)
 
       const nodeData = graph.getNodeAttributes(node)
       graph.setNodeAttribute(node, 'zIndex', 2)
@@ -84,6 +81,52 @@ export function registerClickNodeListener(
     } else {
       selectedNodeRef.current = null
       onNodeSelect(null)
+    }
+  })
+}
+
+import { Graph } from './types'
+
+export function highlightByActivation(
+  graph: Graph,
+  top: boolean,
+  bottom: boolean,
+  percent: number
+): void {
+  const ids = graph.nodes()
+
+  if (!top && !bottom) {
+    colorGraphNodes(graph)
+    return
+  }
+
+  const nodes = ids
+    .filter((id) => {
+      const attrs = graph.getNodeAttributes(id)
+      return attrs.firstLayer
+    })
+    .map((id) => {
+      const attrs = graph.getNodeAttributes(id)
+      return {
+        id,
+        activation: typeof attrs.activation === 'number' ? attrs.activation : 0
+      }
+    })
+
+  const fraction = Math.max(1, Math.min(50, percent)) / 100
+  const sorted = [...nodes].sort((a, b) => a.activation - b.activation)
+  const count = Math.max(1, Math.floor(nodes.length * fraction))
+
+  const bottomSet = new Set(sorted.slice(0, count).map((n) => n.id))
+  const topSet = new Set(sorted.slice(-count).map((n) => n.id))
+
+  ids.forEach((id) => {
+    if (top && topSet.has(id)) {
+      graph.setNodeAttribute(id, 'color', '#00ff00')
+    } else if (bottom && bottomSet.has(id)) {
+      graph.setNodeAttribute(id, 'color', '#ff0000')
+    } else {
+      graph.setNodeAttribute(id, 'color', '#808080')
     }
   })
 }

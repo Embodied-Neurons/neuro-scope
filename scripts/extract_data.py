@@ -14,11 +14,11 @@ class ActivationTracker:
         self.gradients = defaultdict(list)
         self.handles = []
         self._register_hooks()
-        self.activations_idx = 1
+        self.activations_idx = 0
         self.gradients_idx = 1
 
 
-    def _save_activation(self, name):
+    def _save_activation(self):
         def hook(module, input, output):
             self.activations[f"fc{self.activations_idx}.activ"].append(output.detach().mean(dim=0).cpu().numpy().tolist())
             self.activations_idx += 1
@@ -40,9 +40,18 @@ class ActivationTracker:
 
 
     def _register_hooks(self):
-        for name, module in self.model.named_modules():
+        prev_layer = None
+        flag = True
+
+        for _, module in self.model.named_modules():
             if isinstance(module, nn.Linear):
-                self.handles.append(module.register_forward_hook(self._save_activation(name)))
+                if prev_layer is not None and flag:
+                    self.handles.append(prev_layer.register_forward_hook(self._save_activation()))
+                    flag = False
+
+                self.handles.append(module.register_forward_hook(self._save_activation()))
+            
+            prev_layer = module
 
         for name, param in self.model.named_parameters():
             self.handles.append(param.register_hook(self._save_gradient(name)))
@@ -55,7 +64,7 @@ class ActivationTracker:
 
     
     def reset_after_batch(self):
-        self.activations_idx = 1
+        self.activations_idx = 0
         self.gradients_idx = 1
 
 

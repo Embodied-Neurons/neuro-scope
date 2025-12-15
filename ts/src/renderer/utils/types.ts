@@ -68,6 +68,9 @@ export type NeuralGraphProps = {
   epoch: number
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void
   outputDir: string
+  highlightTop: boolean
+  highlightBottom: boolean
+  highlightPercent: number
 }
 
 export type FileDialogProps = {
@@ -94,3 +97,4 @@ export type GradStats = {
 }
 
 export type linearGradStats = Array<{ raw: number[]; norm: number[] }>
+export type trainingStatus = 'idle' | 'running' | 'done' | 'error'

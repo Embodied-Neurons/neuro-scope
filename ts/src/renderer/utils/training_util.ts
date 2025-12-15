@@ -1,29 +1,72 @@
+import { exec } from 'child_process'
 import fs from 'fs'
-import child_process from 'child_process'
+import path from 'path'
 import { OUTPUT_DIR_BASE } from '../../main'
 
-export function performTrainingIfNeeded(outputDir: string, modelName: string): void {
-  // Checking if outputs directory already exists
-  try {
-    fs.statSync(`${OUTPUT_DIR_BASE}\\${outputDir}`)
-    console.log('INFO: Output directory already exists! Skipping training.')
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-      try {
-        const args: string[] = ['--model-name', modelName, '--output-dir', outputDir]
-        const command = `cd ${OUTPUT_DIR_BASE} && py run_training.py ${args.join(' ')}`
-        const stdout = child_process.execSync(command, {
-          encoding: 'utf8',
-          env: { ...process.env, PYTHONIOENCODING: 'utf8' }
-        })
-        // optional, stdout from child process (emojis are bugged for example)
-        console.log(stdout)
-      } catch (error) {
-        const errMessage = error instanceof Error ? error.message : String(error)
-        console.error(`INFO: Error occurred! ${errMessage}`)
+export function performTrainingIfNeeded(
+  outputDir: string,
+  modelName: string,
+  epochs: number
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const fullOutputPath = path.join(OUTPUT_DIR_BASE, outputDir)
+
+    if (fs.existsSync(fullOutputPath)) {
+      console.log('Output folder exists, checking its contents...')
+
+      const files = fs.readdirSync(fullOutputPath)
+
+      // Expected filenames
+      const expected = new Set<string>([
+        'graph_structure.json',
+        ...Array.from({ length: epochs }, (_, i) => `epoch_${i}_activations.json`),
+        ...Array.from({ length: epochs }, (_, i) => `epoch_${i}_gradients.json`)
+      ])
+      let valid = true
+      // If file not in expected
+      for (const file of files) {
+        if (!expected.has(file)) {
+          valid = false
+          console.log(`Unexpected file detected: ${file}`)
+          break
+        }
       }
-    } else {
-      console.log(`INFO: Unknown error: ${err}`)
+
+      // Check for gradients,activations and structure
+      for (const file of expected) {
+        if (!files.includes(file)) {
+          valid = false
+          console.log(`Missing expected file: ${file}`)
+          break
+        }
+      }
+
+      if (valid) {
+        console.log('All expected files are present. Skipping training.')
+        resolve()
+        return
+      }
+
+      // Folder is invalid in some way so clean it
+      try {
+        fs.rmSync(fullOutputPath, { recursive: true, force: true })
+      } catch (err) {
+        reject(err)
+        return
+      }
     }
-  }
+
+    const args = ['--model-name', modelName, '--output-dir', outputDir, '--epochs', epochs]
+    const command = `cd ${OUTPUT_DIR_BASE} && py run_training.py ${args.join(' ')}`
+
+    const child = exec(command, { env: { ...process.env } })
+
+    child.stdout?.on('data', (d) => console.log(d))
+    child.stderr?.on('data', (d) => console.error(d))
+
+    child.on('exit', (code) => {
+      if (code === 0) resolve()
+      else reject(new Error(`Training failed with exit code ${code}`))
+    })
+  })
 }
