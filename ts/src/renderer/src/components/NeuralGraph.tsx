@@ -50,7 +50,7 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
       if (epoch >= 0) {
         registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
       } else {
-        registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, null, null)
+        registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
       }
     }
 
