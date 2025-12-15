@@ -204,14 +204,14 @@ export function NeuralGraph({ epoch, onNodeSelect, outputDir }: NeuralGraphProps
         </button>
 
         <div>
-          <label>Speed: {speed} ms</label>
+          <label>Speed: {speed}</label>
           <input
             type="range"
-            min={50}
+            min={200}
             max={1000}
             step={50}
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
+            value={1200 - speed}
+            onChange={(e) => setSpeed(1200 - Number(e.target.value))}
           />
         </div>
 
