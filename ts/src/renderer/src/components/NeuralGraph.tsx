@@ -105,36 +105,32 @@ export function NeuralGraph({
     }
   }, [epoch, onNodeSelect, outputDir, epochs])
   const applyEpochColors = useCallback(
-    async (epochNumber: number) => {
-      if (!graphRef.current) return
+  async (epochNumber: number) => {
+    if (!graphRef.current || !nodeLayersRef.current) return
 
-      const graph = graphRef.current
-      const data = await window.api.getNeuralNetworkVisualization(outputDir, epochNumber)
+    const graph = graphRef.current
+    const data = await window.api.getNeuralNetworkVisualization(outputDir, epochNumber)
 
-      const activations = data.activations
-      const firstLayer = layerSizesRef.current[0]
+    const activations = data.activations
+    const layers = nodeLayersRef.current
 
-      let counter = 0
-      graph.forEachNode((node) => {
-        const newWeight = counter >= firstLayer ? activations[counter - firstLayer].norm : 0
+    let activationIndex = 0
 
-        const newActivation = counter >= firstLayer ? activations[counter - firstLayer].raw : 0
+    for (let layer = 1; layer < layers.length; layer++) {
+      for (const node of layers[layer]) {
+        const act = activations[activationIndex]
 
-        graph.setNodeAttribute(node, 'weight', newWeight)
-        graph.setNodeAttribute(node, 'activation', newActivation)
+        graph.setNodeAttribute(node.id, 'weight', act?.norm ?? 0)
+        graph.setNodeAttribute(node.id, 'activation', act?.raw ?? 0)
 
-        counter++
-      })
+        activationIndex++
+      }
+    }
 
-      graph.forEachEdge((edge) => {
-        graph.dropEdge(edge)
-      })
-
-      colorGraphNodes(graph)
-      return
-    },
-    [outputDir]
-  )
+    colorGraphNodes(graph)
+  },
+  [outputDir]
+)
 
   useEffect(() => {
     isAnimatingRef.current = isAnimating
