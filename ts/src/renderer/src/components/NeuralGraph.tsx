@@ -104,33 +104,39 @@ export function NeuralGraph({
       }
     }
   }, [epoch, onNodeSelect, outputDir, epochs])
+
   const applyEpochColors = useCallback(
-  async (epochNumber: number) => {
-    if (!graphRef.current || !nodeLayersRef.current) return
+    async (epochNumber: number) => {
+      if (!graphRef.current) return
 
-    const graph = graphRef.current
-    const data = await window.api.getNeuralNetworkVisualization(outputDir, epochNumber)
+      const graph = graphRef.current
+      const data = await window.api.getNeuralNetworkVisualization(outputDir, epochNumber)
 
-    const activations = data.activations
-    const layers = nodeLayersRef.current
+      const activations = data.activations
+      const firstLayerSize = layerSizesRef.current[0]
 
-    let activationIndex = 0
+      let counter = 0
 
-    for (let layer = 1; layer < layers.length; layer++) {
-      for (const node of layers[layer]) {
-        const act = activations[activationIndex]
+      graph.forEachNode((nodeId) => {
+        if (counter < firstLayerSize) {
+          counter++
+          return
+        }
 
-        graph.setNodeAttribute(node.id, 'weight', act?.norm ?? 0)
-        graph.setNodeAttribute(node.id, 'activation', act?.raw ?? 0)
+        const act = activations[counter]
 
-        activationIndex++
-      }
-    }
+        graph.setNodeAttribute(nodeId, 'weight', act?.norm ?? 0)
+        graph.setNodeAttribute(nodeId, 'activation', act?.raw ?? 0)
 
-    colorGraphNodes(graph)
-  },
-  [outputDir]
-)
+        counter++
+      })
+
+      colorGraphNodes(graph)
+      rendererRef.current?.refresh()
+    },
+    [outputDir]
+  )
+
 
   useEffect(() => {
     isAnimatingRef.current = isAnimating
