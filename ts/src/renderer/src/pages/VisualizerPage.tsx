@@ -11,6 +11,8 @@ export default function VisualizerPage(): JSX.Element {
   const navigate = useNavigate()
   const { modelName, outputDir, epochs } = useModel()
 
+  const [tab, setTab] = useState<'visualization' | 'animation'>('visualization')
+
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null)
   const [epoch, setEpoch] = useState(0)
 
@@ -30,46 +32,90 @@ export default function VisualizerPage(): JSX.Element {
         </button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden p-4 gap-4">
-        <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
-          <NeuralGraph
-            epoch={epoch}
-            onNodeSelect={setSelectedNode}
-            outputDir={outputDir}
-            highlightTop={highlightTop}
-            highlightBottom={highlightBottom}
-            highlightPercent={highlightPercent}
-          />
-        </div>
+      <div className="flex border-b bg-gray-50 px-4">
+        <button
+          onClick={() => setTab('visualization')}
+          className={`px-4 py-2 border-b-2 transition ${
+            tab === 'visualization'
+              ? 'border-black font-semibold bg-white'
+              : 'border-transparent text-gray-500 hover:text-black'
+          }`}
+        >
+          Visualization
+        </button>
 
-        <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="font-semibold mb-2 text-black">Epoch Controls</h3>
-            <EpochControls maxEpoch={epochs} onSelectEpoch={setEpoch} outputDir={outputDir} />
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="font-semibold mb-2 text-black">Activation Highlights</h3>
-            <AnomalySlider
+        <button
+          onClick={() => setTab('animation')}
+          className={`px-4 py-2 border-b-2 transition ${
+            tab === 'animation'
+              ? 'border-black font-semibold bg-white'
+              : 'border-transparent text-gray-500 hover:text-black'
+          }`}
+        >
+          Animation
+        </button>
+      </div>
+
+      {tab === 'visualization' && (
+        <div className="flex flex-1 overflow-hidden p-4 gap-4">
+          <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
+            <NeuralGraph
+              epoch={epoch}
+              onNodeSelect={setSelectedNode}
+              outputDir={outputDir}
               highlightTop={highlightTop}
               highlightBottom={highlightBottom}
-              percent={highlightPercent}
-              onToggleTop={setHighlightTop}
-              onToggleBottom={setHighlightBottom}
-              onChangePercent={setHighlightPercent}
+              highlightPercent={highlightPercent}
+              showAnimation={false}
             />
           </div>
 
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="font-semibold mb-2 text-black">Feed Image to Model</h3>
-            <ImageFileSelector outputDir={outputDir} modelName={modelName} onSelect={setEpoch} />
-          </div>
+          <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
+            <div className="bg-white p-4 rounded-xl shadow">
+              <h3 className="font-semibold mb-2 text-black">Epoch Controls</h3>
+              <EpochControls maxEpoch={epochs} onSelectEpoch={setEpoch} outputDir={outputDir} />
+            </div>
 
-          <div className="bg-white p-4 rounded-xl shadow flex-1">
-            <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
-            <StatsPanel nodeData={selectedNode} />
+            <div className="bg-white p-4 rounded-xl shadow">
+              <h3 className="font-semibold mb-2 text-black">Activation Highlights</h3>
+              <AnomalySlider
+                highlightTop={highlightTop}
+                highlightBottom={highlightBottom}
+                percent={highlightPercent}
+                onToggleTop={setHighlightTop}
+                onToggleBottom={setHighlightBottom}
+                onChangePercent={setHighlightPercent}
+              />
+            </div>
+
+            <div className="bg-white p-4 rounded-xl shadow">
+              <h3 className="font-semibold mb-2 text-black">Feed Image to Model</h3>
+              <ImageFileSelector outputDir={outputDir} modelName={modelName} onSelect={setEpoch} />
+            </div>
+
+            <div className="bg-white p-4 rounded-xl shadow flex-1">
+              <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
+              <StatsPanel nodeData={selectedNode} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {tab === 'animation' && (
+        <div className="flex flex-1 p-4">
+          <div className="w-full h-full bg-blue-950 rounded-xl shadow overflow-hidden">
+            <NeuralGraph
+              epoch={epoch}
+              onNodeSelect={() => {}}
+              outputDir={outputDir}
+              highlightTop={false}
+              highlightBottom={false}
+              highlightPercent={0}
+              showAnimation={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
