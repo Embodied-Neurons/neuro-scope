@@ -1,29 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { colorGraphNodes } from '../../utils/neural_graph_utils'
 import Graph from 'graphology'
 import Sigma from 'sigma'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { colorGraphNodes } from '../../utils/neural_graph_utils'
+import { NeuralAnimationState } from '../../utils/types'
 
-interface UseNeuralAnimationProps {
-  graphRef: React.RefObject<Graph | null>
-  rendererRef: React.RefObject<Sigma | null>
-  outputDir: string
-  epochCount: number
-  initialEpoch: number
+export default function useNeuralAnimation(
+  graphRef: React.RefObject<Graph | null>,
+  rendererRef: React.RefObject<Sigma | null>,
+  outputDir: string,
+  epochCount: number,
   layerSizesRef: React.RefObject<number[]>
-}
-
-export function useNeuralAnimation({
-  graphRef,
-  rendererRef,
-  outputDir,
-  epochCount,
-  initialEpoch,
-  layerSizesRef
-}: UseNeuralAnimationProps) {
+): NeuralAnimationState {
   const [isAnimating, setIsAnimating] = useState(false)
   const [speed, setSpeed] = useState(500)
-  const [currentEpoch, setCurrentEpoch] = useState(initialEpoch)
 
+  // Initial epoch is always 0
+  const initialEpoch = 0
+
+  const [currentEpoch, setCurrentEpoch] = useState(initialEpoch)
   const timeoutRef = useRef<number | null>(null)
   const epochRef = useRef(initialEpoch)
 
@@ -51,13 +45,13 @@ export function useNeuralAnimation({
       colorGraphNodes(graphRef.current)
       rendererRef.current?.refresh()
     },
-    [outputDir]
+    [graphRef, layerSizesRef, outputDir, rendererRef]
   )
 
   useEffect(() => {
     if (!isAnimating || epochCount === 0) return
 
-    const loop = async () => {
+    const loop = async (): Promise<void> => {
       await applyEpochColors(epochRef.current)
       epochRef.current = (epochRef.current + 1) % epochCount
       setCurrentEpoch(epochRef.current)

@@ -53,6 +53,15 @@ export type NeuralNetworkData = {
   layerSizes: number[]
 }
 
+// Neural animation state used for animation
+export type NeuralAnimationState = {
+  isAnimating: boolean
+  toggle: () => void
+  speed: number
+  setSpeed: (v: number) => void
+  currentEpoch: number
+}
+
 // Properties types for various components
 export type EpochControlsProps = {
   maxEpoch: number
@@ -73,6 +82,20 @@ export type NeuralGraphProps = {
   highlightPercent: number
 }
 
+export type NeuralImageInputProps = {
+  imagePath: string
+  onNodeSelect: (nodeData: Record<string, unknown> | null) => void
+  outputDir: string
+  highlightTop: boolean
+  highlightBottom: boolean
+  highlightPercent: number
+}
+
+export type NeuralAnimationControlsProps = {
+  animation: NeuralAnimationState
+  epochCount: number
+}
+
 export type FileDialogProps = {
   onFileSelect: (outputDir: string, modelName: string) => void
 }
@@ -80,7 +103,7 @@ export type FileDialogProps = {
 export type ImageDialogProps = {
   outputDir: string
   modelName: string
-  onSelect: (epoch: number) => void
+  onSelect: (imagePath: string) => void
 }
 
 // Stats types for activations and gradients
@@ -97,4 +120,6 @@ export type GradStats = {
 }
 
 export type linearGradStats = Array<{ raw: number[]; norm: number[] }>
+
+// Model training status
 export type trainingStatus = 'idle' | 'running' | 'done' | 'error'

@@ -10,23 +10,20 @@ import {
   registerClickNodeListener,
   restrictCameraMovement
 } from '../../utils/neural_graph_utils'
-import { NeuralGraphProps, NeuralNetworkData } from '../../utils/types'
-import { useModel } from '../context/useModel'
+import { NeuralImageInputProps, NeuralNetworkData } from '../../utils/types'
 
-export default function NeuralGraph({
-  epoch,
+export default function NeuralImageInput({
+  imagePath,
   onNodeSelect,
   outputDir,
   highlightTop,
   highlightBottom,
   highlightPercent
-}: NeuralGraphProps): JSX.Element {
+}: NeuralImageInputProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
-
-  const { epochs } = useModel()
 
   useEffect(() => {
     let destroyed = false
@@ -34,11 +31,7 @@ export default function NeuralGraph({
     async function init(): Promise<void> {
       if (!containerRef.current) return
 
-      const data: NeuralNetworkData = await window.api.getNeuralNetworkVisualization(
-        outputDir,
-        epoch
-      )
-
+      const data: NeuralNetworkData = await window.api.getActivationsFromImageInput(outputDir)
       const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
       const posInfo = getNodesPosInfo(nodes)
 
@@ -70,7 +63,7 @@ export default function NeuralGraph({
       // Reset selected node
       onNodeSelect(null)
     }
-  }, [epoch, outputDir, onNodeSelect, epochs])
+  }, [imagePath, outputDir, onNodeSelect])
 
   useEffect(() => {
     if (!graphRef.current) return

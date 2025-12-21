@@ -43,7 +43,8 @@ export default function EpochControls({
           >
             {epochs.map((b) => (
               <option key={b} value={b}>
-                Epoch {b}
+                {/* Display epoch starting from 1 */}
+                Epoch {b + 1}
               </option>
             ))}
           </select>

@@ -15,9 +15,7 @@ export default function ImageFileSelector({
         window.api.runImageInput(outputDir, modelName, imagePath)
 
         console.log(`Selected image (absolute path): ${imagePath}`)
-
-        // Convention: setting epoch to negative value
-        onSelect(-1)
+        onSelect(imagePath)
       } else {
         console.log('INFO: Image selection cancelled!')
       }

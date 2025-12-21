@@ -1,7 +1,7 @@
 import { JSX } from 'react'
 import { StatsPanelProps } from '../../utils/types'
 
-export function StatsPanel({ nodeData }: StatsPanelProps): JSX.Element {
+export default function StatsPanel({ nodeData }: StatsPanelProps): JSX.Element {
   if (!nodeData) {
     return <div className="p-4 text-gray-500">Click on a node to see its details.</div>
   }
