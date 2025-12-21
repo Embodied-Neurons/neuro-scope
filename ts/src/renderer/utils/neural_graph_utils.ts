@@ -2,7 +2,7 @@ import { RefObject } from 'react'
 import Sigma from 'sigma'
 import * as types from './types'
 import { calculateBounds } from './camera_bounding'
-import { buildEdges } from './graph_building'
+import { findNodeLayer, buildEdges } from './graph_building'
 
 export function colorGraphNodes(graph: types.Graph): void {
   const graphNodes = graph.nodes()
@@ -65,9 +65,16 @@ export function registerClickNodeListener(
     if (selectedNodeRef.current) {
       const prevNode = selectedNodeRef.current
       const prevEdges = graph.edges(prevNode)
-      graph.setNodeAttribute(prevNode, 'zIndex', 1)
+      const prevNodeLayer = findNodeLayer(Number(prevNode), data.layerSizes)
       prevEdges.forEach((edge) => {
         graph.dropEdge(edge)
+      })
+
+      nodes[prevNodeLayer].forEach((n) => {
+        const weight = graph.getNodeAttribute(n.id, 'weight') as number
+        const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
+        graph.setNodeAttribute(n.id, 'color', color)
+        graph.setNodeAttribute(n.id, 'zIndex', 1)
       })
     }
 
@@ -76,7 +83,16 @@ export function registerClickNodeListener(
       buildEdges(graph, nodes, data.gradients ?? null, node, data.layerSizes)
 
       const nodeData = graph.getNodeAttributes(node)
+      const nodeLayer = findNodeLayer(Number(node), data.layerSizes)
       graph.setNodeAttribute(node, 'zIndex', 2)
+      nodes[nodeLayer].forEach((n) => {
+        if (n.id !== node) {
+          const weight = graph.getNodeAttribute(n.id, 'weight') as number
+          const color = `rgb(${Math.round(85 * (1 - weight))}, ${Math.round(85 * weight)}, 0)`
+          graph.setNodeAttribute(n.id, 'color', color)
+        }
+      })
+
       onNodeSelect({ ...nodeData })
     } else {
       selectedNodeRef.current = null
@@ -85,10 +101,8 @@ export function registerClickNodeListener(
   })
 }
 
-import { Graph } from './types'
-
 export function highlightByActivation(
-  graph: Graph,
+  graph: types.Graph,
   top: boolean,
   bottom: boolean,
   percent: number

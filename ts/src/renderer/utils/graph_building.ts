@@ -21,6 +21,23 @@ export function buildGraph(graph: Graph, nodes: Node[][], activations: linearAct
   })
 }
 
+export function findNodeLayer(nodeId: number, layerSizes: number[]): number {
+  const numLayers = layerSizes.length
+  let layerIdx = numLayers
+  let neuronCount = 0
+
+  for (let i = 0; i < numLayers; i++) {
+    if (neuronCount <= nodeId && nodeId < neuronCount + layerSizes[i]) {
+      layerIdx = i
+      break
+    }
+
+    neuronCount += layerSizes[i]
+  }
+
+  return layerIdx
+}
+
 export function buildEdges(
   graph: Graph,
   nodes: Node[][],
@@ -28,19 +45,10 @@ export function buildEdges(
   node: string,
   layerSizes: number[]
 ): void {
-  let layerIdx = 0
   const idNumber = Number(node)
   const numLayers = layerSizes.length
-  let neuronCount = 0
-
-  for (let i = 0; i < numLayers; i++) {
-    if (neuronCount <= idNumber && idNumber < neuronCount + layerSizes[i]) {
-      layerIdx = i
-      break
-    }
-
-    neuronCount += layerSizes[i]
-  }
+  const layerIdx = findNodeLayer(idNumber, layerSizes)
+  const neuronCount = layerSizes.slice(0, layerIdx).reduce((a, b) => a + b, 0)
 
   if (layerIdx > 0) {
     if (layerIdx == 1 && gradients === null) {

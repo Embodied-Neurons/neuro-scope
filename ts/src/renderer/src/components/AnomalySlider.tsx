@@ -54,6 +54,7 @@ export default function AnomalySlider({
           className="w-full accent-black"
         />
       </div>
+      <p className="text-gray-500 text-xs italic">Note: first layer (input layer) is excluded</p>
     </div>
   )
 }
