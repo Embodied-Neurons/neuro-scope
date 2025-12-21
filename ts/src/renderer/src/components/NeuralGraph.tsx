@@ -8,6 +8,7 @@ import {
   highlightByActivation,
   initializeRendererAndCamera,
   registerClickNodeListener,
+  registerClickStageListener,
   restrictCameraMovement
 } from '../../utils/neural_graph_utils'
 import { NeuralGraphProps, NeuralNetworkData } from '../../utils/types'
@@ -58,6 +59,7 @@ export default function NeuralGraph({
 
       restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
       registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
+      registerClickStageListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
     }
 
     init()

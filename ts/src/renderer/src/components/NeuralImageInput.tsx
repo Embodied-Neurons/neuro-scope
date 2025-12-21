@@ -8,6 +8,7 @@ import {
   highlightByActivation,
   initializeRendererAndCamera,
   registerClickNodeListener,
+  registerClickStageListener,
   restrictCameraMovement
 } from '../../utils/neural_graph_utils'
 import { NeuralImageInputProps, NeuralNetworkData } from '../../utils/types'
@@ -51,6 +52,7 @@ export default function NeuralImageInput({
 
       restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
       registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
+      registerClickStageListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
     }
 
     init()

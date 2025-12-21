@@ -101,6 +101,40 @@ export function registerClickNodeListener(
   })
 }
 
+export function registerClickStageListener(
+  renderer: types.SigmaRenderer,
+  graphRef: RefObject<types.Graph | null>,
+  selectedNodeRef: RefObject<string | null>,
+  onNodeSelect: (nodeData: Record<string, unknown> | null) => void,
+  nodes: types.Node[][],
+  data: types.NeuralNetworkData
+): void {
+  renderer.on('clickStage', () => {
+    if (!graphRef.current) return
+
+    const graph = graphRef.current
+
+    if (selectedNodeRef.current) {
+      const prevNode = selectedNodeRef.current
+      const prevEdges = graph.edges(prevNode)
+      const prevNodeLayer = findNodeLayer(Number(prevNode), data.layerSizes)
+      prevEdges.forEach((edge) => {
+        graph.dropEdge(edge)
+      })
+
+      nodes[prevNodeLayer].forEach((n) => {
+        const weight = graph.getNodeAttribute(n.id, 'weight') as number
+        const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
+        graph.setNodeAttribute(n.id, 'color', color)
+        graph.setNodeAttribute(n.id, 'zIndex', 1)
+      })
+
+      selectedNodeRef.current = null
+      onNodeSelect(null)
+    }
+  })
+}
+
 export function highlightByActivation(
   graph: types.Graph,
   top: boolean,
