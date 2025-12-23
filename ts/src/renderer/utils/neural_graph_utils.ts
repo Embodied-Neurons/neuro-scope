@@ -178,3 +178,46 @@ export function highlightByActivation(
     }
   })
 }
+export function findExtremeGradients(
+  neuronIdx: string,
+  graph: types.Graph
+): {
+  min: number | null
+  max: number | null
+  minEdge: string | null
+  maxEdge: string | null
+} {
+  let min: number | null = null
+  let max: number | null = null
+  let minEdge: string | null = null
+  let maxEdge: string | null = null
+
+  graph.forEachEdge(neuronIdx, (edgeKey, attributes) => {
+    const value = attributes.val
+    if (typeof value !== 'number') return
+
+    if (min === null || value < min) {
+      min = value
+      minEdge = edgeKey
+    }
+
+    if (max === null || value > max) {
+      max = value
+      maxEdge = edgeKey
+    }
+  })
+
+  return { min, max, minEdge, maxEdge }
+}
+
+export function clearEdgeHighlight(graph: types.Graph, edgeKey: string | null): void {
+  if (!edgeKey) return
+  graph.setEdgeAttribute(edgeKey, 'color', graph.getEdgeAttribute(edgeKey, 'originalColor'))
+  graph.removeEdgeAttribute(edgeKey, 'size')
+}
+
+export function highlightEdge(graph: types.Graph, edgeKey: string | null, color: string): void {
+  if (!edgeKey) return
+  graph.setEdgeAttribute(edgeKey, 'color', color)
+  graph.setEdgeAttribute(edgeKey, 'size', 2.5)
+}

@@ -70,6 +70,7 @@ function processActivations(activations: Record<string, number[]>): Record<strin
   const extremes: number[][] = []
 
   for (const [key, list] of Object.entries(activations)) {
+    console.log(key)
     if (!key.endsWith('.activ')) continue
 
     let layerMin = Infinity
@@ -91,12 +92,13 @@ function processActivations(activations: Record<string, number[]>): Record<strin
 
     const layerMin = extremes[idx][0]
     const layerMax = extremes[idx][1]
-    idx++
 
     out[key] = {
       raw: list,
-      norm: normalizeList(list, layerMin, layerMax)
+      norm: normalizeList(list, layerMin, layerMax),
+      extremes: extremes[idx]
     }
+    idx++
   }
 
   return out
@@ -107,7 +109,8 @@ export function linearizeActivations(
   numLayers: number
 ): linearActivStats {
   const processedActivations = processActivations(activations)
-  const linearizedActivations: linearActivStats = []
+  const linearizedActivations: Array<{ raw: number; norm: number }> = []
+  const extremes: number[][] = []
 
   for (let i = 0; i < numLayers; i++) {
     const entry = processedActivations[`fc${i}.activ`]
@@ -115,7 +118,8 @@ export function linearizeActivations(
     for (let j = 0; j < entry.raw.length; j++) {
       linearizedActivations.push({ raw: entry.raw[j], norm: entry.norm[j] })
     }
+    extremes.push(entry.extremes)
   }
 
-  return linearizedActivations
+  return { linear: linearizedActivations, extremes: extremes }
 }

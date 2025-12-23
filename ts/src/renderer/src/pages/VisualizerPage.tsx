@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { JSX, useState } from 'react'
+import { JSX, useRef, useState } from 'react'
 import NeuralGraph from '../components/NeuralGraph'
 import StatsPanel from '../components/StatsPanel'
 import EpochControls from '../components/EpochControls'
@@ -8,6 +8,7 @@ import NeuralImageInput from '../components/NeuralImageInput'
 import ImageFileSelector from '../components/ImageFileSelector'
 import NeuralAnimation from '../components/NeuralAnimation'
 import { useModel } from '../context/useModel'
+import Graph from 'graphology'
 
 export default function VisualizerPage(): JSX.Element {
   const navigate = useNavigate()
@@ -22,6 +23,8 @@ export default function VisualizerPage(): JSX.Element {
   const [highlightTop, setHighlightTop] = useState(false)
   const [highlightBottom, setHighlightBottom] = useState(false)
   const [highlightPercent, setHighlightPercent] = useState(10)
+
+  const graphRef = useRef<Graph | null>(null)
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
@@ -82,6 +85,7 @@ export default function VisualizerPage(): JSX.Element {
               highlightTop={highlightTop}
               highlightBottom={highlightBottom}
               highlightPercent={highlightPercent}
+              graphRef={graphRef}
             />
           </div>
 
@@ -105,7 +109,7 @@ export default function VisualizerPage(): JSX.Element {
 
             <div className="bg-white p-4 rounded-xl shadow flex-1">
               <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
-              <StatsPanel nodeData={selectedNode} />
+              <StatsPanel nodeData={selectedNode} graphRef={graphRef} />
             </div>
           </div>
         </div>
@@ -162,7 +166,7 @@ export default function VisualizerPage(): JSX.Element {
             {imagePath && (
               <div className="bg-white p-4 rounded-xl shadow flex-1">
                 <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
-                <StatsPanel nodeData={selectedNode} />
+                <StatsPanel nodeData={selectedNode} graphRef={graphRef} />
               </div>
             )}
           </div>

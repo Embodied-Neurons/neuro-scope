@@ -20,11 +20,11 @@ export default function NeuralGraph({
   outputDir,
   highlightTop,
   highlightBottom,
-  highlightPercent
+  highlightPercent,
+  graphRef
 }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
-  const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
 
   const { epochs } = useModel()
@@ -72,13 +72,13 @@ export default function NeuralGraph({
       // Reset selected node
       onNodeSelect(null)
     }
-  }, [epoch, outputDir, onNodeSelect, epochs])
+  }, [epoch, outputDir, onNodeSelect, epochs, graphRef])
 
   useEffect(() => {
     if (!graphRef.current) return
     highlightByActivation(graphRef.current, highlightTop, highlightBottom, highlightPercent)
     rendererRef.current?.refresh()
-  }, [highlightTop, highlightBottom, highlightPercent])
+  }, [highlightTop, highlightBottom, highlightPercent, graphRef])
 
   return (
     <div className="w-full h-full relative">

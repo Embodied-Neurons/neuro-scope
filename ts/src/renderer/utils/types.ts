@@ -71,6 +71,7 @@ export type EpochControlsProps = {
 
 export type StatsPanelProps = {
   nodeData: Record<string, unknown> | null
+  graphRef: RefObject<Graph | null>
 }
 
 export type NeuralGraphProps = {
@@ -80,6 +81,7 @@ export type NeuralGraphProps = {
   highlightTop: boolean
   highlightBottom: boolean
   highlightPercent: number
+  graphRef: RefObject<Graph | null>
 }
 
 export type NeuralImageInputProps = {
@@ -110,9 +112,13 @@ export type ImageDialogProps = {
 export type ActivStats = {
   raw: number[]
   norm: number[]
+  extremes: number[]
 }
 
-export type linearActivStats = Array<{ raw: number; norm: number }>
+export type linearActivStats = {
+  linear: Array<{ raw: number; norm: number }>
+  extremes: number[][]
+}
 
 export type GradStats = {
   raw: number[][]
