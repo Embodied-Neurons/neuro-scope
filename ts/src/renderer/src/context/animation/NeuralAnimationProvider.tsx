@@ -1,32 +1,39 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { colorGraphNodes } from '../../utils/neural_graph_utils'
-import { NeuralAnimationState } from '../../utils/types'
+import { NeuralAnimationContext } from './NeuralAnimationContext'
+import { colorGraphNodes } from '../../../utils/neural_graph_utils'
 
-export default function useNeuralAnimation(
-  graphRef: React.RefObject<Graph | null>,
-  rendererRef: React.RefObject<Sigma | null>,
-  outputDir: string,
-  epochCount: number,
+interface Props {
+  children: React.ReactNode
+  graphRef: React.RefObject<Graph | null>
+  rendererRef: React.RefObject<Sigma | null>
+  outputDir: string
+  epochCount: number
   layerSizesRef: React.RefObject<number[]>
-): NeuralAnimationState {
+}
+
+export function NeuralAnimationProvider({
+  children,
+  graphRef,
+  rendererRef,
+  outputDir,
+  epochCount,
+  layerSizesRef
+}: Props) {
   const [isAnimating, setIsAnimating] = useState(false)
   const [speed, setSpeed] = useState(500)
+  const [currentEpoch, setCurrentEpoch] = useState(0)
 
-  // Initial epoch is always 0
-  const initialEpoch = 0
-
-  const [currentEpoch, setCurrentEpoch] = useState(initialEpoch)
   const timeoutRef = useRef<number | null>(null)
-  const epochRef = useRef(initialEpoch)
+  const epochRef = useRef(0)
 
   const applyEpochColors = useCallback(
     async (epoch: number) => {
       if (!graphRef.current) return
 
       const data = await window.api.getNeuralNetworkVisualization(outputDir, epoch)
-      const activations = data.activations
+      const activations = data.activations.linear
       const firstLayerSize = layerSizesRef.current[0]
 
       let counter = 0
@@ -52,10 +59,15 @@ export default function useNeuralAnimation(
     if (!isAnimating || epochCount === 0) return
 
     const loop = async (): Promise<void> => {
+      if (!isAnimating) return
+
       await applyEpochColors(epochRef.current)
       epochRef.current = (epochRef.current + 1) % epochCount
       setCurrentEpoch(epochRef.current)
-      timeoutRef.current = window.setTimeout(loop, speed)
+
+      if (isAnimating) {
+        timeoutRef.current = window.setTimeout(loop, speed)
+      }
     }
 
     loop()
@@ -65,11 +77,17 @@ export default function useNeuralAnimation(
     }
   }, [isAnimating, speed, epochCount, applyEpochColors])
 
-  return {
-    isAnimating,
-    toggle: () => setIsAnimating((v) => !v),
-    speed,
-    setSpeed,
-    currentEpoch
-  }
+  return (
+    <NeuralAnimationContext.Provider
+      value={{
+        isAnimating,
+        toggle: () => setIsAnimating((v) => !v),
+        speed,
+        setSpeed,
+        currentEpoch
+      }}
+    >
+      {children}
+    </NeuralAnimationContext.Provider>
+  )
 }

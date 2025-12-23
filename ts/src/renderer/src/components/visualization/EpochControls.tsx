@@ -1,5 +1,5 @@
 import { JSX, useEffect, useState } from 'react'
-import { EpochControlsProps } from '../../utils/types'
+import { EpochControlsProps } from '../../../utils/types'
 
 export default function EpochControls({
   maxEpoch,
@@ -32,7 +32,7 @@ export default function EpochControls({
 
   return (
     <div id="epoch-panel" className="p-2">
-      {epochs.length == 0 ? (
+      {epochs.length < 0 ? (
         'No epochs found'
       ) : (
         <>

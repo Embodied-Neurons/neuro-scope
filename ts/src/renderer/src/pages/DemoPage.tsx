@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { JSX } from 'react'
-import { useModel } from '@renderer/context/useModel'
+import { useModel } from '@renderer/context/model/useModel'
 
 export default function DemoPage(): JSX.Element {
   const navigate = useNavigate()

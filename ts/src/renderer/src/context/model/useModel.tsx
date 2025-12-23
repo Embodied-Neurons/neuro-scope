@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { ModelContext, ModelContextType } from '@renderer/context/ModelContext'
+import { ModelContext, ModelContextType } from '@renderer/context/model/ModelContext'
 
 export const useModel = (): ModelContextType => {
   const ctx = useContext(ModelContext)

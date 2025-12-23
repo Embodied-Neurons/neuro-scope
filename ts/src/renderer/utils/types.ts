@@ -94,7 +94,6 @@ export type NeuralImageInputProps = {
 }
 
 export type NeuralAnimationControlsProps = {
-  animation: NeuralAnimationState
   epochCount: number
 }
 

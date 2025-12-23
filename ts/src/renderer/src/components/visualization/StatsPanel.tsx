@@ -1,11 +1,11 @@
 import { JSX, useEffect, useState } from 'react'
-import { StatsPanelProps } from '../../utils/types'
-import StatsBar from '@renderer/components/StatsBar'
+import { StatsPanelProps } from '../../../utils/types'
+import StatsBar from '@renderer/components/visualization/StatsBar'
 import {
   clearEdgeHighlight,
   findExtremeGradients,
   highlightEdge
-} from '../../utils/neural_graph_utils'
+} from '../../../utils/neural_graph_utils'
 
 export default function StatsPanel({ nodeData, graphRef }: StatsPanelProps): JSX.Element {
   const [showMin, setShowMin] = useState(false)

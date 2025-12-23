@@ -1,8 +1,8 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { JSX, useEffect, useRef } from 'react'
-import { buildGraph } from '../../utils/graph_building'
-import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
+import { buildGraph } from '../../../utils/graph_building'
+import { getAllNodesByLayers, getNodesPosInfo } from '../../../utils/node_manipulation'
 import {
   colorGraphNodes,
   highlightByActivation,
@@ -10,9 +10,9 @@ import {
   registerClickNodeListener,
   registerClickStageListener,
   restrictCameraMovement
-} from '../../utils/neural_graph_utils'
-import { NeuralGraphProps, NeuralNetworkData } from '../../utils/types'
-import { useModel } from '../context/useModel'
+} from '../../../utils/neural_graph_utils'
+import { NeuralGraphProps, NeuralNetworkData } from '../../../utils/types'
+import { useModel } from '../../context/model/useModel'
 
 export default function NeuralGraph({
   epoch,

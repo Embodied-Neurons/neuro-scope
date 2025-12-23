@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
 import ModelFileSelector from '../components/ModelFileSelector'
 import { trainingStatus } from '../../utils/types'
-import { useModel } from '@renderer/context/useModel'
+import { useModel } from '@renderer/context/model/useModel'
 
 export default function MainPage(): JSX.Element {
   const { setModelName, setOutputDir, setEpochs, epochs, modelName, outputDir } = useModel()
