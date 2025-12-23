@@ -109,7 +109,7 @@ export default function VisualizerPage(): JSX.Element {
 
             <div className="bg-white p-4 rounded-xl shadow flex-1">
               <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
-              <StatsPanel nodeData={selectedNode} graphRef={graphRef} />
+              <StatsPanel nodeData={selectedNode} graphRef={graphRef} allowGrads={true} />
             </div>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function VisualizerPage(): JSX.Element {
             {imagePath && (
               <div className="bg-white p-4 rounded-xl shadow flex-1">
                 <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
-                <StatsPanel nodeData={selectedNode} graphRef={graphRef} />
+                <StatsPanel nodeData={selectedNode} graphRef={graphRef} allowGrads={false} />
               </div>
             )}
           </div>

@@ -72,6 +72,7 @@ export type EpochControlsProps = {
 export type StatsPanelProps = {
   nodeData: Record<string, unknown> | null
   graphRef: RefObject<Graph | null>
+  allowGrads: boolean
 }
 
 export type NeuralGraphProps = {

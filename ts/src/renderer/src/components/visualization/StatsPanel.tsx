@@ -7,7 +7,11 @@ import {
   highlightEdge
 } from '../../../utils/neural_graph_utils'
 
-export default function StatsPanel({ nodeData, graphRef }: StatsPanelProps): JSX.Element {
+export default function StatsPanel({
+  nodeData,
+  graphRef,
+  allowGrads
+}: StatsPanelProps): JSX.Element {
   const [showMin, setShowMin] = useState(false)
   const [showMax, setShowMax] = useState(false)
   const [extremes, setExtremes] = useState<{
@@ -16,7 +20,7 @@ export default function StatsPanel({ nodeData, graphRef }: StatsPanelProps): JSX
   }>({ min: null, max: null })
 
   useEffect(() => {
-    if (!nodeData || !graphRef.current) return
+    if (!nodeData || !graphRef.current || !allowGrads) return
 
     const graph = graphRef.current
     const { idx } = nodeData
@@ -37,7 +41,7 @@ export default function StatsPanel({ nodeData, graphRef }: StatsPanelProps): JSX
 
     if (showMin) highlightEdge(graph, minEdge, '#ff0000')
     if (showMax) highlightEdge(graph, maxEdge, '#00ff00')
-  }, [showMin, showMax, nodeData, graphRef])
+  }, [showMin, showMax, nodeData, graphRef, allowGrads])
 
   if (!nodeData) {
     return (
@@ -73,54 +77,55 @@ export default function StatsPanel({ nodeData, graphRef }: StatsPanelProps): JSX
         max={Number(layerMax)}
         gradient="red-green"
       />
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={showMin}
-              onChange={(e) => setShowMin(e.target.checked)}
-              className="accent-black"
-            />
-            Highlight min gradient
-          </label>
-          {showMin && extremes.min !== null && (
-            <span className="flex items-center gap-2 font-mono text-red-600">
-              <span className="w-2 h-2 rounded-full bg-red-600" />
-              {extremes.min}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={showMax}
-              onChange={(e) => setShowMax(e.target.checked)}
-              className="accent-black"
-            />
-            Highlight max gradient
-          </label>
-
-          {showMax && extremes.max !== null && (
-            <span className="flex items-center gap-2 font-mono text-green-600">
-              <span className="w-2 h-2 rounded-full bg-green-600" />
-              {extremes.max}
-            </span>
-          )}
-        </div>
-
-        {showMin && showMax && extremes.min === extremes.max && extremes.min !== null && (
-          <div className="flex items-center justify-end text-sm">
-            <span className="flex items-center gap-2 font-mono text-purple-600">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              {extremes.min}
-            </span>
+      {allowGrads && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={showMin}
+                onChange={(e) => setShowMin(e.target.checked)}
+                className="accent-black"
+              />
+              Highlight min gradient
+            </label>
+            {showMin && extremes.min !== null && (
+              <span className="flex items-center gap-2 font-mono text-red-600">
+                <span className="w-2 h-2 rounded-full bg-red-600" />
+                {extremes.min}
+              </span>
+            )}
           </div>
-        )}
-      </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={showMax}
+                onChange={(e) => setShowMax(e.target.checked)}
+                className="accent-black"
+              />
+              Highlight max gradient
+            </label>
+
+            {showMax && extremes.max !== null && (
+              <span className="flex items-center gap-2 font-mono text-green-600">
+                <span className="w-2 h-2 rounded-full bg-green-600" />
+                {extremes.max}
+              </span>
+            )}
+          </div>
+
+          {showMin && showMax && extremes.min === extremes.max && extremes.min !== null && (
+            <div className="flex items-center justify-end text-sm">
+              <span className="flex items-center gap-2 font-mono text-purple-600">
+                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                {extremes.min}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
