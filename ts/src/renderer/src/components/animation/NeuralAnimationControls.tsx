@@ -3,16 +3,14 @@ import { NeuralAnimationControlsProps } from '../../../utils/types'
 import useNeuralAnimation from '@renderer/context/animation/useNeuralAnimation'
 
 export default function NeuralAnimationControls({
-                                                  epochCount
-                                                }: NeuralAnimationControlsProps): JSX.Element {
+  epochCount
+}: NeuralAnimationControlsProps): JSX.Element {
   const { isAnimating, toggle, speed, setSpeed, currentEpoch } = useNeuralAnimation()
 
   return (
     <div className="bg-white/90 p-5 rounded-2xl flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-1">
-        <label className="font-medium text-black">
-          Speed: {speed}ms
-        </label>
+        <label className="font-medium text-black">Speed: {speed}ms</label>
         <input
           type="range"
           min={200}

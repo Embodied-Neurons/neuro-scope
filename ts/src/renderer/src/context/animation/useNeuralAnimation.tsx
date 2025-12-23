@@ -1,7 +1,8 @@
 import { useContext } from 'react'
 import { NeuralAnimationContext } from './NeuralAnimationContext'
+import { NeuralAnimationState } from '../../../utils/types'
 
-export default function useNeuralAnimation() {
+export default function useNeuralAnimation(): NeuralAnimationState {
   const ctx = useContext(NeuralAnimationContext)
 
   if (!ctx) {

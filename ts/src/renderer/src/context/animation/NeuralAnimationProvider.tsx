@@ -1,6 +1,6 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { NeuralAnimationContext } from './NeuralAnimationContext'
 import { colorGraphNodes } from '../../../utils/neural_graph_utils'
 
@@ -13,14 +13,14 @@ interface Props {
   layerSizesRef: React.RefObject<number[]>
 }
 
-export function NeuralAnimationProvider({
+export const NeuralAnimationProvider = ({
   children,
   graphRef,
   rendererRef,
   outputDir,
   epochCount,
   layerSizesRef
-}: Props) {
+}: Props): JSX.Element => {
   const [isAnimating, setIsAnimating] = useState(false)
   const [speed, setSpeed] = useState(500)
   const [currentEpoch, setCurrentEpoch] = useState(0)

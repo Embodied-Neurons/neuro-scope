@@ -1,6 +1,6 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
-import { JSX, useEffect, useRef } from 'react'
+import { JSX, useEffect, useRef, useState } from 'react'
 import { buildGraph } from '../../utils/graph_building'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
 import {
@@ -25,6 +25,7 @@ export default function NeuralImageInput({
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let destroyed = false
@@ -32,27 +33,34 @@ export default function NeuralImageInput({
     async function init(): Promise<void> {
       if (!containerRef.current) return
 
-      const data: NeuralNetworkData = await window.api.getActivationsFromImageInput(outputDir)
-      const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
-      const posInfo = getNodesPosInfo(nodes)
+      setLoading(true)
+      try {
+        const data: NeuralNetworkData = await window.api.getActivationsFromImageInput(outputDir)
+        if (destroyed) return
 
-      const graph = new Graph()
-      graphRef.current = graph
+        const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
+        const posInfo = getNodesPosInfo(nodes)
 
-      buildGraph(graph, nodes, data.activations)
-      colorGraphNodes(graph)
+        const graph = new Graph()
+        graphRef.current = graph
 
-      if (destroyed) return
+        buildGraph(graph, nodes, data.activations)
+        colorGraphNodes(graph)
 
-      const { renderer, camera } = initializeRendererAndCamera(
-        graph,
-        containerRef.current,
-        rendererRef
-      )
+        if (destroyed) return
 
-      restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
-      registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
-      registerClickStageListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
+        const { renderer, camera } = initializeRendererAndCamera(
+          graph,
+          containerRef.current,
+          rendererRef
+        )
+
+        restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
+        registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
+        registerClickStageListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
+      } finally {
+        if (!destroyed) setLoading(false)
+      }
     }
 
     init()
@@ -61,8 +69,6 @@ export default function NeuralImageInput({
       destroyed = true
       rendererRef.current?.kill()
       graphRef.current?.clear()
-
-      // Reset selected node
       onNodeSelect(null)
     }
   }, [imagePath, outputDir, onNodeSelect])
@@ -76,6 +82,14 @@ export default function NeuralImageInput({
   return (
     <div className="w-full h-full relative">
       <div ref={containerRef} className="w-full h-full" />
+      {loading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-black" />
+          <span className="text-black font-medium text-lg">
+            Calculating the zeroes of the Riemann-Zeta function...
+          </span>
+        </div>
+      )}
     </div>
   )
 }
