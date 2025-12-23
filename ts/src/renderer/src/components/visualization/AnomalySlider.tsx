@@ -18,7 +18,7 @@ export default function AnomalySlider({
   onChangePercent
 }: AnomalySliderProps): JSX.Element {
   return (
-    <div className="bg-white p-4">
+    <div className="bg-white p-2">
       <label className="flex items-center gap-2">
         <input
           type="checkbox"

@@ -45,7 +45,7 @@ export default function StatsPanel({
 
   if (!nodeData) {
     return (
-      <div className="p-3 text-gray-500 flex items-center justify-center">
+      <div className="p-2 text-gray-500 flex items-center justify-center">
         Click a node to inspect its behavior
       </div>
     )
@@ -54,7 +54,7 @@ export default function StatsPanel({
   const { idx, layer, activation, color, layerMin, layerMax } = nodeData
 
   return (
-    <div className="p-3 space-y-6 animate-fade-in">
+    <div className="p-2 space-y-4 animate-fade-in">
       <div>
         <h2 className="text-lg font-semibold">Neuron</h2>
         <p className="text-sm text-gray-500">

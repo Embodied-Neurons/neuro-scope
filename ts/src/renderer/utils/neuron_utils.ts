@@ -70,16 +70,10 @@ function processActivations(activations: Record<string, number[]>): Record<strin
   const extremes: number[][] = []
 
   for (const [key, list] of Object.entries(activations)) {
-    console.log(key)
     if (!key.endsWith('.activ')) continue
 
-    let layerMin = Infinity
-    let layerMax = -Infinity
-
-    for (const v of list) {
-      if (v < layerMin) layerMin = v
-      if (v > layerMax) layerMax = v
-    }
+    const layerMin = Math.min(...list)
+    const layerMax = Math.max(...list)
 
     extremes.push([layerMin, layerMax])
   }

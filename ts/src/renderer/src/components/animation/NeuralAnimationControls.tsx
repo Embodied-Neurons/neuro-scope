@@ -8,7 +8,7 @@ export default function NeuralAnimationControls({
   const { isAnimating, toggle, speed, setSpeed, currentEpoch } = useNeuralAnimation()
 
   return (
-    <div className="bg-white/90 p-5 rounded-2xl flex flex-col gap-4 w-full">
+    <div className="p-2 rounded-2xl flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-1">
         <label className="font-medium text-black">Speed: {speed}ms</label>
         <input
@@ -27,7 +27,7 @@ export default function NeuralAnimationControls({
       </div>
       <button
         onClick={toggle}
-        className="w-full px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition"
+        className="w-full px-3 py-1 bg-black text-white rounded-lg font-semibold hover:bg-gray-700 transition"
       >
         {isAnimating ? 'Pause' : 'Start'}
       </button>
