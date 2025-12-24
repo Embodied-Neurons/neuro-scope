@@ -66,7 +66,6 @@ export type NeuralAnimationState = {
 export type EpochControlsProps = {
   maxEpoch: number
   onSelectEpoch: (epoch: number) => void
-  outputDir: string
 }
 
 export type StatsPanelProps = {

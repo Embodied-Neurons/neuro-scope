@@ -68,8 +68,6 @@ export default function NeuralGraph({
       destroyed = true
       rendererRef.current?.kill()
       graphRef.current?.clear()
-
-      // Reset selected node
       onNodeSelect(null)
     }
   }, [epoch, outputDir, onNodeSelect, epochs, graphRef])

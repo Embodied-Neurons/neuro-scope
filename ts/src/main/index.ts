@@ -5,8 +5,7 @@ import { performTrainingIfNeeded } from '../renderer/utils/training_util'
 import { runImageInput } from '../renderer/utils/image_input_util'
 import {
   getNeuralNetworkVisualization,
-  getActivationsFromImageInput,
-  detectEpoch
+  getActivationsFromImageInput
 } from '../renderer/utils/network_utils'
 
 export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..')
@@ -77,10 +76,6 @@ app.whenReady().then(() => {
 
   ipcMain.handle('getActivationsFromImageInput', (_event, outputDir: string) => {
     return getActivationsFromImageInput(outputDir)
-  })
-
-  ipcMain.handle('detectEpoch', (_event, outputDir: string, epoch: number) => {
-    return detectEpoch(outputDir, epoch)
   })
 
   ipcMain.handle(

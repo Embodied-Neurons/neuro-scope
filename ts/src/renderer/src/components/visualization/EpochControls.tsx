@@ -1,34 +1,16 @@
-import { JSX, useEffect, useState } from 'react'
+import { JSX, useState } from 'react'
 import { EpochControlsProps } from '../../../utils/types'
 
 export default function EpochControls({
   maxEpoch,
-  onSelectEpoch,
-  outputDir
+  onSelectEpoch
 }: EpochControlsProps): JSX.Element {
-  const [epochs, setEpochs] = useState<number[]>([])
   const [selectedEpoch, setSelectedEpoch] = useState<number>(0)
+  const epochs: number[] = []
 
-  useEffect(() => {
-    async function detectEpochs(): Promise<void> {
-      const detectedEpochs: number[] = []
-      let epoch = 0
-
-      while (epoch < maxEpoch) {
-        try {
-          await window.api.detectEpoch(outputDir, epoch)
-          detectedEpochs.push(epoch)
-          epoch++
-        } catch {
-          epoch++
-        }
-      }
-      setEpochs(detectedEpochs)
-      return
-    }
-
-    detectEpochs()
-  }, [outputDir, maxEpoch])
+  for (let epoch = 0; epoch < maxEpoch; epoch++) {
+    epochs.push(epoch)
+  }
 
   return (
     <div id="epoch-panel" className="p-2">

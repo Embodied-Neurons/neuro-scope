@@ -25,6 +25,7 @@ export default function NeuralImageInput({
   const rendererRef = useRef<Sigma | null>(null)
   const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -77,7 +78,19 @@ export default function NeuralImageInput({
     if (!graphRef.current) return
     highlightByActivation(graphRef.current, highlightTop, highlightBottom, highlightPercent)
     rendererRef.current?.refresh()
-  }, [highlightTop, highlightBottom, highlightPercent])
+  }, [highlightTop, highlightBottom, highlightPercent, graphRef])
+
+  // Set of really funny messages that can be displayed during loading
+  const loadingMessages = [
+    'Calculating the zeroes of the Riemann-Zeta function...',
+    'Searching for the Ark of the Covenant...',
+    'Proving that P=NP or actually not...',
+    'Iterating over all prime numbers...',
+    'Optimizing linear search algorithms...'
+  ]
+
+  // Randomly chosen index
+  const idx = Math.floor(Math.random() * loadingMessages.length)
 
   return (
     <div className="w-full h-full relative">
@@ -85,9 +98,7 @@ export default function NeuralImageInput({
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 gap-4">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-black" />
-          <span className="text-black font-medium text-lg">
-            Calculating the zeroes of the Riemann-Zeta function...
-          </span>
+          <span className="text-black font-medium text-lg">{loadingMessages[idx]}</span>
         </div>
       )}
     </div>

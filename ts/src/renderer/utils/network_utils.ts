@@ -162,18 +162,3 @@ export async function getActivationsFromImageInput(
     layerSizes: structure.layerSizes
   }
 }
-
-export async function detectEpoch(outputDir: string, epoch: number): Promise<number | null> {
-  const actPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_activations.json`)
-  const gradPath = path.join(OUTPUT_DIR_BASE, outputDir, `epoch_${epoch}_gradients.json`)
-
-  try {
-    await fs.access(actPath)
-    await fs.access(gradPath)
-  } catch {
-    console.log('INFO: all epochs detected!')
-    return -1
-  }
-
-  return null
-}

@@ -92,7 +92,7 @@ export default function VisualizerPage(): JSX.Element {
           <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
             <div className="bg-white p-4 rounded-xl shadow">
               <h3 className="font-semibold mb-2 text-black">Epoch Controls</h3>
-              <EpochControls maxEpoch={epochs} onSelectEpoch={setEpoch} outputDir={outputDir} />
+              <EpochControls maxEpoch={epochs} onSelectEpoch={setEpoch} />
             </div>
 
             <div className="bg-white p-4 rounded-xl shadow">
