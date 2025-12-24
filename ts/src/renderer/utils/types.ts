@@ -64,6 +64,7 @@ export type NeuralAnimationState = {
 
 // Properties types for various components
 export type EpochControlsProps = {
+  currentEpoch: number
   maxEpoch: number
   onSelectEpoch: (epoch: number) => void
 }
@@ -100,6 +101,7 @@ export type NeuralImageInputProps = {
   highlightTop: boolean
   highlightBottom: boolean
   highlightPercent: number
+  graphRef: RefObject<Graph | null>
 }
 
 export type NeuralAnimationControlsProps = {

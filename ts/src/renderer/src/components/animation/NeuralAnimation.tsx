@@ -47,11 +47,8 @@ export default function NeuralAnimation({ outputDir }: { outputDir: string }): J
 
       if (destroyed) return
 
-      const { renderer, camera } = initializeRendererAndCamera(
-        graph,
-        containerRef.current,
-        rendererRef
-      )
+      const { renderer, camera } = initializeRendererAndCamera(graph, containerRef.current)
+      rendererRef.current = renderer
 
       restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
     }

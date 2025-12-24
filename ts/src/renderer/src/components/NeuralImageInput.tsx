@@ -19,11 +19,11 @@ export default function NeuralImageInput({
   outputDir,
   highlightTop,
   highlightBottom,
-  highlightPercent
+  highlightPercent,
+  graphRef
 }: NeuralImageInputProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
-  const graphRef = useRef<Graph | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
   const clickNodeListenerRef = useRef<({ node }) => void>((): void => {})
   const clickStageListenerRef = useRef<() => void>((): void => {})
@@ -88,7 +88,7 @@ export default function NeuralImageInput({
       graphRef.current?.clear()
       onNodeSelect(null)
     }
-  }, [imagePath, outputDir, onNodeSelect])
+  }, [imagePath, outputDir, onNodeSelect, graphRef])
 
   useEffect(() => {
     if (!graphRef.current) return

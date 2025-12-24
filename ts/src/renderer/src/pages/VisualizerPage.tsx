@@ -16,7 +16,6 @@ export default function VisualizerPage(): JSX.Element {
 
   const [tab, setTab] = useState<'visualization' | 'image-input' | 'animation'>('visualization')
 
-  const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null)
   const [epoch, setEpoch] = useState(0)
   const [imagePath, setImagePath] = useState('')
 
@@ -24,7 +23,11 @@ export default function VisualizerPage(): JSX.Element {
   const [highlightBottom, setHighlightBottom] = useState(false)
   const [highlightPercent, setHighlightPercent] = useState(10)
 
-  const graphRef = useRef<Graph | null>(null)
+  // Distinct selected nodes and graph refs for visualization and image input tabs
+  const [selectedNodeVis, setSelectedNodeVis] = useState<Record<string, unknown> | null>(null)
+  const [selectedNodeImg, setSelectedNodeImg] = useState<Record<string, unknown> | null>(null)
+  const graphRefVis = useRef<Graph | null>(null)
+  const graphRefImg = useRef<Graph | null>(null)
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
@@ -80,19 +83,19 @@ export default function VisualizerPage(): JSX.Element {
           <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
             <NeuralGraph
               epoch={epoch}
-              onNodeSelect={setSelectedNode}
+              onNodeSelect={setSelectedNodeVis}
               outputDir={outputDir}
               highlightTop={highlightTop}
               highlightBottom={highlightBottom}
               highlightPercent={highlightPercent}
-              graphRef={graphRef}
+              graphRef={graphRefVis}
             />
           </div>
 
           <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
             <div className="bg-white p-4 rounded-xl shadow">
               <h3 className="font-semibold mb-2 text-black">Epoch Controls</h3>
-              <EpochControls maxEpoch={epochs} onSelectEpoch={setEpoch} />
+              <EpochControls currentEpoch={epoch} maxEpoch={epochs} onSelectEpoch={setEpoch} />
             </div>
 
             <div className="bg-white p-4 rounded-xl shadow">
@@ -109,7 +112,7 @@ export default function VisualizerPage(): JSX.Element {
 
             <div className="bg-white p-4 rounded-xl shadow flex-1">
               <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
-              <StatsPanel nodeData={selectedNode} graphRef={graphRef} allowGrads={true} />
+              <StatsPanel nodeData={selectedNodeVis} graphRef={graphRefVis} allowGrads={true} />
             </div>
           </div>
         </div>
@@ -122,11 +125,12 @@ export default function VisualizerPage(): JSX.Element {
             <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
               <NeuralImageInput
                 imagePath={imagePath}
-                onNodeSelect={setSelectedNode}
+                onNodeSelect={setSelectedNodeImg}
                 outputDir={outputDir}
                 highlightTop={highlightTop}
                 highlightBottom={highlightBottom}
                 highlightPercent={highlightPercent}
+                graphRef={graphRefImg}
               />
             </div>
           )}
@@ -166,7 +170,7 @@ export default function VisualizerPage(): JSX.Element {
             {imagePath && (
               <div className="bg-white p-4 rounded-xl shadow flex-1">
                 <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
-                <StatsPanel nodeData={selectedNode} graphRef={graphRef} allowGrads={false} />
+                <StatsPanel nodeData={selectedNodeImg} graphRef={graphRefImg} allowGrads={false} />
               </div>
             )}
           </div>

@@ -2,10 +2,11 @@ import { JSX, useState } from 'react'
 import { EpochControlsProps } from '../../../utils/types'
 
 export default function EpochControls({
+  currentEpoch,
   maxEpoch,
   onSelectEpoch
 }: EpochControlsProps): JSX.Element {
-  const [selectedEpoch, setSelectedEpoch] = useState<number>(0)
+  const [selectedEpoch, setSelectedEpoch] = useState<number>(currentEpoch)
   const epochs: number[] = []
 
   for (let epoch = 0; epoch < maxEpoch; epoch++) {

@@ -59,6 +59,8 @@ export const NeuralAnimationProvider = ({
     if (!isAnimating || epochCount === 0) return
 
     const loop = async (): Promise<void> => {
+      if (!isAnimating) return
+
       epochRef.current = (epochRef.current + 1) % epochCount
       await applyEpochColors(epochRef.current)
       setCurrentEpoch(epochRef.current)
