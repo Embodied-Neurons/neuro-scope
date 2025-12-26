@@ -74,6 +74,15 @@ export type StatsPanelProps = {
   allowGrads: boolean
 }
 
+export type AnomalySliderProps = {
+  highlightTop: boolean
+  highlightBottom: boolean
+  percent: number
+  onToggleTop: (v: boolean) => void
+  onToggleBottom: (v: boolean) => void
+  onChangePercent: (v: number) => void
+}
+
 export type NeuralGraphProps = {
   epoch: number
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void

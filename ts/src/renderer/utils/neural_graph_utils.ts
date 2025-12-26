@@ -15,8 +15,7 @@ export function colorGraphNodes(graph: types.Graph): void {
 
 export function initializeRendererAndCamera(
   graph: types.Graph,
-  container: HTMLDivElement,
-  rendererRef: RefObject<Sigma<types.Attributes, types.Attributes, types.Attributes> | null>
+  container: HTMLDivElement
 ): { renderer: types.SigmaRenderer; camera: types.Camera } {
   const renderer = new Sigma(graph, container, {
     minCameraRatio: 0.05,
@@ -24,7 +23,6 @@ export function initializeRendererAndCamera(
     zIndex: true
   })
 
-  rendererRef.current = renderer
   const camera = renderer.getCamera()
   camera.setState({ x: 0.5, y: 0.5, ratio: 1.0 })
 
@@ -49,15 +47,14 @@ export function restrictCameraMovement(
   })
 }
 
-export function registerClickNodeListener(
-  renderer: types.SigmaRenderer,
+export function createClickNodeListener(
   graphRef: RefObject<types.Graph | null>,
   selectedNodeRef: RefObject<string | null>,
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void,
   nodes: types.Node[][],
   data: types.NeuralNetworkData
-): void {
-  renderer.on('clickNode', ({ node }: { node: string }) => {
+): ({ node }: { node: string }) => void {
+  return ({ node }: { node: string }) => {
     if (!graphRef.current) return
 
     const graph = graphRef.current
@@ -98,18 +95,17 @@ export function registerClickNodeListener(
       selectedNodeRef.current = null
       onNodeSelect(null)
     }
-  })
+  }
 }
 
-export function registerClickStageListener(
-  renderer: types.SigmaRenderer,
+export function createClickStageListener(
   graphRef: RefObject<types.Graph | null>,
   selectedNodeRef: RefObject<string | null>,
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void,
   nodes: types.Node[][],
   data: types.NeuralNetworkData
-): void {
-  renderer.on('clickStage', () => {
+): () => void {
+  return () => {
     if (!graphRef.current) return
 
     const graph = graphRef.current
@@ -132,7 +128,7 @@ export function registerClickStageListener(
       selectedNodeRef.current = null
       onNodeSelect(null)
     }
-  })
+  }
 }
 
 export function highlightByActivation(
@@ -144,7 +140,10 @@ export function highlightByActivation(
   const ids = graph.nodes()
 
   if (!top && !bottom) {
-    colorGraphNodes(graph)
+    // Check if there is any selected node (which means, there are edges present)
+    const edges = graph.edges()
+
+    if (!edges.length) colorGraphNodes(graph)
     return
   }
 

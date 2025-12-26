@@ -1,13 +1,5 @@
 import { JSX } from 'react'
-
-interface AnomalySliderProps {
-  highlightTop: boolean
-  highlightBottom: boolean
-  percent: number
-  onToggleTop: (v: boolean) => void
-  onToggleBottom: (v: boolean) => void
-  onChangePercent: (v: number) => void
-}
+import { AnomalySliderProps } from '../../../utils/types'
 
 export default function AnomalySlider({
   highlightTop,

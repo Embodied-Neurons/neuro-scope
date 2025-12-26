@@ -7,8 +7,8 @@ import {
   colorGraphNodes,
   highlightByActivation,
   initializeRendererAndCamera,
-  registerClickNodeListener,
-  registerClickStageListener,
+  createClickNodeListener,
+  createClickStageListener,
   restrictCameraMovement
 } from '../../../utils/neural_graph_utils'
 import { NeuralGraphProps, NeuralNetworkData } from '../../../utils/types'
@@ -26,6 +26,8 @@ export default function NeuralGraph({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
+  const clickNodeListenerRef = useRef<({ node }) => void>((): void => {})
+  const clickStageListenerRef = useRef<() => void>((): void => {})
 
   const { epochs } = useModel()
 
@@ -51,15 +53,29 @@ export default function NeuralGraph({
 
       if (destroyed) return
 
-      const { renderer, camera } = initializeRendererAndCamera(
-        graph,
-        containerRef.current,
-        rendererRef
-      )
+      const { renderer, camera } = initializeRendererAndCamera(graph, containerRef.current)
+      rendererRef.current = renderer
 
       restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
-      registerClickNodeListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
-      registerClickStageListener(renderer, graphRef, selectedNodeRef, onNodeSelect, nodes, data)
+      clickNodeListenerRef.current = createClickNodeListener(
+        graphRef,
+        selectedNodeRef,
+        onNodeSelect,
+        nodes,
+        data
+      )
+
+      clickStageListenerRef.current = createClickStageListener(
+        graphRef,
+        selectedNodeRef,
+        onNodeSelect,
+        nodes,
+        data
+      )
+
+      // Register event listeners
+      renderer.on('clickNode', clickNodeListenerRef.current)
+      renderer.on('clickStage', clickStageListenerRef.current)
     }
 
     init()
@@ -74,9 +90,30 @@ export default function NeuralGraph({
 
   useEffect(() => {
     if (!graphRef.current) return
+
+    // Disable event listeners
+    rendererRef.current?.off('clickNode', clickNodeListenerRef.current)
+    rendererRef.current?.off('clickStage', clickStageListenerRef.current)
+
+    if (highlightBottom || highlightTop) {
+      // Clear edges if there are any
+      if (selectedNodeRef.current) {
+        graphRef.current.edges().forEach((edge) => {
+          graphRef.current!.dropEdge(edge)
+        })
+      }
+
+      // Clear node selection
+      onNodeSelect(null)
+    } else {
+      // Restore event listeners
+      rendererRef.current?.on('clickNode', clickNodeListenerRef.current)
+      rendererRef.current?.on('clickStage', clickStageListenerRef.current)
+    }
+
     highlightByActivation(graphRef.current, highlightTop, highlightBottom, highlightPercent)
     rendererRef.current?.refresh()
-  }, [highlightTop, highlightBottom, highlightPercent, graphRef])
+  }, [highlightTop, highlightBottom, highlightPercent, onNodeSelect, graphRef])
 
   return (
     <div className="w-full h-full relative">
