@@ -1,13 +1,5 @@
 import { JSX } from 'react'
-
-interface AnomalySliderProps {
-  highlightTop: boolean
-  highlightBottom: boolean
-  percent: number
-  onToggleTop: (v: boolean) => void
-  onToggleBottom: (v: boolean) => void
-  onChangePercent: (v: number) => void
-}
+import { AnomalySliderProps } from '../../../utils/types'
 
 export default function AnomalySlider({
   highlightTop,
@@ -18,7 +10,7 @@ export default function AnomalySlider({
   onChangePercent
 }: AnomalySliderProps): JSX.Element {
   return (
-    <div className="bg-white p-4">
+    <div className="bg-white p-2">
       <label className="flex items-center gap-2">
         <input
           type="checkbox"
@@ -54,6 +46,7 @@ export default function AnomalySlider({
           className="w-full accent-black"
         />
       </div>
+      <p className="text-gray-500 text-xs italic">Note: first layer (input layer) is excluded</p>
     </div>
   )
 }

@@ -15,9 +15,7 @@ export default function ImageFileSelector({
         window.api.runImageInput(outputDir, modelName, imagePath)
 
         console.log(`Selected image (absolute path): ${imagePath}`)
-
-        // Convention: setting epoch to negative value
-        onSelect(-1)
+        onSelect(imagePath)
       } else {
         console.log('INFO: Image selection cancelled!')
       }
@@ -27,11 +25,11 @@ export default function ImageFileSelector({
   }
 
   return (
-    <div id="image-selector" className="flex flex-col items-center space-y-3">
+    <div id="image-selector" className="flex flex-col items-center space-y-3 p-2">
       <button
         onClick={handleButtonClick}
         type="button"
-        className="bg-black text-white rounded-xl px-4 py-2 font-medium hover:bg-gray-700 transition"
+        className="bg-black text-white rounded-lg px-3 py-1 hover:bg-gray-700 transition"
       >
         Select image to feed to the model
       </button>

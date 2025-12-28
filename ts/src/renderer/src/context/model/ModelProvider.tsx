@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ModelContext } from '@renderer/context/ModelContext'
+import { ModelContext } from '@renderer/context/model/ModelContext'
 
 export const ModelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [outputDir, setOutputDir] = useState('')

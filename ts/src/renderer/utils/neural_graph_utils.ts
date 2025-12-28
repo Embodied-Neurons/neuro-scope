@@ -2,7 +2,7 @@ import { RefObject } from 'react'
 import Sigma from 'sigma'
 import * as types from './types'
 import { calculateBounds } from './camera_bounding'
-import { buildEdges } from './graph_building'
+import { findNodeLayer, buildEdges } from './graph_building'
 
 export function colorGraphNodes(graph: types.Graph): void {
   const graphNodes = graph.nodes()
@@ -15,8 +15,7 @@ export function colorGraphNodes(graph: types.Graph): void {
 
 export function initializeRendererAndCamera(
   graph: types.Graph,
-  container: HTMLDivElement,
-  rendererRef: RefObject<Sigma<types.Attributes, types.Attributes, types.Attributes> | null>
+  container: HTMLDivElement
 ): { renderer: types.SigmaRenderer; camera: types.Camera } {
   const renderer = new Sigma(graph, container, {
     minCameraRatio: 0.05,
@@ -24,7 +23,6 @@ export function initializeRendererAndCamera(
     zIndex: true
   })
 
-  rendererRef.current = renderer
   const camera = renderer.getCamera()
   camera.setState({ x: 0.5, y: 0.5, ratio: 1.0 })
 
@@ -49,15 +47,14 @@ export function restrictCameraMovement(
   })
 }
 
-export function registerClickNodeListener(
-  renderer: types.SigmaRenderer,
+export function createClickNodeListener(
   graphRef: RefObject<types.Graph | null>,
   selectedNodeRef: RefObject<string | null>,
   onNodeSelect: (nodeData: Record<string, unknown> | null) => void,
   nodes: types.Node[][],
   data: types.NeuralNetworkData
-): void {
-  renderer.on('clickNode', ({ node }: { node: string }) => {
+): ({ node }: { node: string }) => void {
+  return ({ node }: { node: string }) => {
     if (!graphRef.current) return
 
     const graph = graphRef.current
@@ -65,9 +62,16 @@ export function registerClickNodeListener(
     if (selectedNodeRef.current) {
       const prevNode = selectedNodeRef.current
       const prevEdges = graph.edges(prevNode)
-      graph.setNodeAttribute(prevNode, 'zIndex', 1)
+      const prevNodeLayer = findNodeLayer(Number(prevNode), data.layerSizes)
       prevEdges.forEach((edge) => {
         graph.dropEdge(edge)
+      })
+
+      nodes[prevNodeLayer].forEach((n) => {
+        const weight = graph.getNodeAttribute(n.id, 'weight') as number
+        const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
+        graph.setNodeAttribute(n.id, 'color', color)
+        graph.setNodeAttribute(n.id, 'zIndex', 1)
       })
     }
 
@@ -76,19 +80,59 @@ export function registerClickNodeListener(
       buildEdges(graph, nodes, data.gradients ?? null, node, data.layerSizes)
 
       const nodeData = graph.getNodeAttributes(node)
+      const nodeLayer = findNodeLayer(Number(node), data.layerSizes)
       graph.setNodeAttribute(node, 'zIndex', 2)
+      nodes[nodeLayer].forEach((n) => {
+        if (n.id !== node) {
+          const weight = graph.getNodeAttribute(n.id, 'weight') as number
+          const color = `rgb(${Math.round(85 * (1 - weight))}, ${Math.round(85 * weight)}, 0)`
+          graph.setNodeAttribute(n.id, 'color', color)
+        }
+      })
+
       onNodeSelect({ ...nodeData })
     } else {
       selectedNodeRef.current = null
       onNodeSelect(null)
     }
-  })
+  }
 }
 
-import { Graph } from './types'
+export function createClickStageListener(
+  graphRef: RefObject<types.Graph | null>,
+  selectedNodeRef: RefObject<string | null>,
+  onNodeSelect: (nodeData: Record<string, unknown> | null) => void,
+  nodes: types.Node[][],
+  data: types.NeuralNetworkData
+): () => void {
+  return () => {
+    if (!graphRef.current) return
+
+    const graph = graphRef.current
+
+    if (selectedNodeRef.current) {
+      const prevNode = selectedNodeRef.current
+      const prevEdges = graph.edges(prevNode)
+      const prevNodeLayer = findNodeLayer(Number(prevNode), data.layerSizes)
+      prevEdges.forEach((edge) => {
+        graph.dropEdge(edge)
+      })
+
+      nodes[prevNodeLayer].forEach((n) => {
+        const weight = graph.getNodeAttribute(n.id, 'weight') as number
+        const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
+        graph.setNodeAttribute(n.id, 'color', color)
+        graph.setNodeAttribute(n.id, 'zIndex', 1)
+      })
+
+      selectedNodeRef.current = null
+      onNodeSelect(null)
+    }
+  }
+}
 
 export function highlightByActivation(
-  graph: Graph,
+  graph: types.Graph,
   top: boolean,
   bottom: boolean,
   percent: number
@@ -96,7 +140,10 @@ export function highlightByActivation(
   const ids = graph.nodes()
 
   if (!top && !bottom) {
-    colorGraphNodes(graph)
+    // Check if there is any selected node (which means, there are edges present)
+    const edges = graph.edges()
+
+    if (!edges.length) colorGraphNodes(graph)
     return
   }
 
@@ -129,4 +176,47 @@ export function highlightByActivation(
       graph.setNodeAttribute(id, 'color', '#808080')
     }
   })
+}
+export function findExtremeGradients(
+  neuronIdx: string,
+  graph: types.Graph
+): {
+  min: number | null
+  max: number | null
+  minEdge: string | null
+  maxEdge: string | null
+} {
+  let min: number | null = null
+  let max: number | null = null
+  let minEdge: string | null = null
+  let maxEdge: string | null = null
+
+  graph.forEachEdge(neuronIdx, (edgeKey, attributes) => {
+    const value = attributes.val
+    if (typeof value !== 'number') return
+
+    if (min === null || value < min) {
+      min = value
+      minEdge = edgeKey
+    }
+
+    if (max === null || value > max) {
+      max = value
+      maxEdge = edgeKey
+    }
+  })
+
+  return { min, max, minEdge, maxEdge }
+}
+
+export function clearEdgeHighlight(graph: types.Graph, edgeKey: string | null): void {
+  if (!edgeKey) return
+  graph.setEdgeAttribute(edgeKey, 'color', graph.getEdgeAttribute(edgeKey, 'originalColor'))
+  graph.removeEdgeAttribute(edgeKey, 'size')
+}
+
+export function highlightEdge(graph: types.Graph, edgeKey: string | null, color: string): void {
+  if (!edgeKey) return
+  graph.setEdgeAttribute(edgeKey, 'color', color)
+  graph.setEdgeAttribute(edgeKey, 'size', 2.5)
 }

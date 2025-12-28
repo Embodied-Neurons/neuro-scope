@@ -53,15 +53,35 @@ export type NeuralNetworkData = {
   layerSizes: number[]
 }
 
+// Neural animation state used for animation
+export type NeuralAnimationState = {
+  isAnimating: boolean
+  toggle: () => void
+  speed: number
+  setSpeed: (v: number) => void
+  currentEpoch: number
+}
+
 // Properties types for various components
 export type EpochControlsProps = {
+  currentEpoch: number
   maxEpoch: number
   onSelectEpoch: (epoch: number) => void
-  outputDir: string
 }
 
 export type StatsPanelProps = {
   nodeData: Record<string, unknown> | null
+  graphRef: RefObject<Graph | null>
+  allowGrads: boolean
+}
+
+export type AnomalySliderProps = {
+  highlightTop: boolean
+  highlightBottom: boolean
+  percent: number
+  onToggleTop: (v: boolean) => void
+  onToggleBottom: (v: boolean) => void
+  onChangePercent: (v: number) => void
 }
 
 export type NeuralGraphProps = {
@@ -71,6 +91,21 @@ export type NeuralGraphProps = {
   highlightTop: boolean
   highlightBottom: boolean
   highlightPercent: number
+  graphRef: RefObject<Graph | null>
+}
+
+export type NeuralImageInputProps = {
+  imagePath: string
+  onNodeSelect: (nodeData: Record<string, unknown> | null) => void
+  outputDir: string
+  highlightTop: boolean
+  highlightBottom: boolean
+  highlightPercent: number
+  graphRef: RefObject<Graph | null>
+}
+
+export type NeuralAnimationControlsProps = {
+  epochCount: number
 }
 
 export type FileDialogProps = {
@@ -80,16 +115,20 @@ export type FileDialogProps = {
 export type ImageDialogProps = {
   outputDir: string
   modelName: string
-  onSelect: (epoch: number) => void
+  onSelect: (imagePath: string) => void
 }
 
 // Stats types for activations and gradients
 export type ActivStats = {
   raw: number[]
   norm: number[]
+  extremes: number[]
 }
 
-export type linearActivStats = Array<{ raw: number; norm: number }>
+export type linearActivStats = {
+  linear: Array<{ raw: number; norm: number }>
+  extremes: number[][]
+}
 
 export type GradStats = {
   raw: number[][]
@@ -97,4 +136,6 @@ export type GradStats = {
 }
 
 export type linearGradStats = Array<{ raw: number[]; norm: number[] }>
+
+// Model training status
 export type trainingStatus = 'idle' | 'running' | 'done' | 'error'

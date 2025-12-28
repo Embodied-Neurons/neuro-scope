@@ -16,24 +16,29 @@ export function performTrainingIfNeeded(
 
       const files = fs.readdirSync(fullOutputPath)
 
-      // Expected filenames
-      const expected = new Set<string>([
+      // Names of the required files
+      const required = new Set<string>([
         'graph_structure.json',
         ...Array.from({ length: epochs }, (_, i) => `epoch_${i}_activations.json`),
         ...Array.from({ length: epochs }, (_, i) => `epoch_${i}_gradients.json`)
       ])
+
+      // Names of the allowed files
+      const allowed = new Set<string>(['test_activations.json', ...required])
+
       let valid = true
-      // If file not in expected
+
+      // Check if there is a not allowed file
       for (const file of files) {
-        if (!expected.has(file)) {
+        if (!allowed.has(file)) {
           valid = false
           console.log(`Unexpected file detected: ${file}`)
           break
         }
       }
 
-      // Check for gradients,activations and structure
-      for (const file of expected) {
+      // Check for required files - gradients, activations and structure
+      for (const file of required) {
         if (!files.includes(file)) {
           valid = false
           console.log(`Missing expected file: ${file}`)
@@ -42,12 +47,14 @@ export function performTrainingIfNeeded(
       }
 
       if (valid) {
-        console.log('All expected files are present. Skipping training.')
+        console.log(
+          'All expected files are present and there are no unexpected files. Skipping training.'
+        )
         resolve()
         return
       }
 
-      // Folder is invalid in some way so clean it
+      // Folder is 'invalid' in some way, so clean it
       try {
         fs.rmSync(fullOutputPath, { recursive: true, force: true })
       } catch (err) {
@@ -58,7 +65,6 @@ export function performTrainingIfNeeded(
 
     const args = ['--model-name', modelName, '--output-dir', outputDir, '--epochs', epochs]
     const command = `cd ${OUTPUT_DIR_BASE} && py run_training.py ${args.join(' ')}`
-
     const child = exec(command, { env: { ...process.env } })
 
     child.stdout?.on('data', (d) => console.log(d))

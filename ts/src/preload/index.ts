@@ -9,9 +9,6 @@ const api = {
   getActivationsFromImageInput: (outputDir: string) =>
     ipcRenderer.invoke('getActivationsFromImageInput', outputDir),
 
-  detectEpoch: (outputDir: string, epoch: number) =>
-    ipcRenderer.invoke('detectEpoch', outputDir, epoch),
-
   performTrainingIfNeeded: (outputDir: string, modelName: string, epochs: number) =>
     ipcRenderer.invoke('performTrainingIfNeeded', outputDir, modelName, epochs),
 

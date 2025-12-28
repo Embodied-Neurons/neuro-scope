@@ -1,5 +1,5 @@
 import { useRef, ChangeEvent, JSX } from 'react'
-import { useModel } from '@renderer/context/useModel'
+import { useModel } from '@renderer/context/model/useModel'
 
 export default function ModelFileSelector(): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null)

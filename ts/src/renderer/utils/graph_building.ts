@@ -1,24 +1,47 @@
 import { Graph, Node, linearActivStats, linearGradStats } from './types'
 
 export function buildGraph(graph: Graph, nodes: Node[][], activations: linearActivStats): void {
+  const { linear, extremes } = activations
   let counter = 0
+  let layerCounter = 0
   const firstLayer = nodes[0].length
   nodes.forEach((layer) => {
     layer.forEach((node) => {
       graph.addNode(node.id, {
+        idx: node.id,
         x: node.x,
         y: node.y,
         size: 5,
         zIndex: 1,
         color: '#b1b1b1',
-        weight: activations[counter].norm,
-        activation: activations[counter].raw,
-        firstLayer: counter >= firstLayer
+        weight: linear[counter].norm,
+        activation: linear[counter].raw,
+        firstLayer: counter >= firstLayer,
+        layer: layerCounter,
+        layerMin: extremes[layerCounter][0],
+        layerMax: extremes[layerCounter][1]
       })
-
       counter += 1
     })
+    layerCounter += 1
   })
+}
+
+export function findNodeLayer(nodeId: number, layerSizes: number[]): number {
+  const numLayers = layerSizes.length
+  let layerIdx = numLayers
+  let neuronCount = 0
+
+  for (let i = 0; i < numLayers; i++) {
+    if (neuronCount <= nodeId && nodeId < neuronCount + layerSizes[i]) {
+      layerIdx = i
+      break
+    }
+
+    neuronCount += layerSizes[i]
+  }
+
+  return layerIdx
 }
 
 export function buildEdges(
@@ -28,19 +51,10 @@ export function buildEdges(
   node: string,
   layerSizes: number[]
 ): void {
-  let layerIdx = 0
   const idNumber = Number(node)
   const numLayers = layerSizes.length
-  let neuronCount = 0
-
-  for (let i = 0; i < numLayers; i++) {
-    if (neuronCount <= idNumber && idNumber < neuronCount + layerSizes[i]) {
-      layerIdx = i
-      break
-    }
-
-    neuronCount += layerSizes[i]
-  }
+  const layerIdx = findNodeLayer(idNumber, layerSizes)
+  const neuronCount = layerSizes.slice(0, layerIdx).reduce((a, b) => a + b, 0)
 
   if (layerIdx > 0) {
     if (layerIdx == 1 && gradients === null) {
@@ -55,14 +69,18 @@ export function buildEdges(
       }
     } else {
       const ws = gradients !== null ? gradients[idNumber - layerSizes[0]].norm : []
+      const vals = gradients !== null ? gradients[idNumber - layerSizes[0]].raw : []
       let counter = 0
 
       nodes[layerIdx - 1].forEach((prevNode) => {
         const w = ws.length > 0 ? ws[counter] : 0.8
+        const val = vals.length > 0 ? vals[counter] : 0.8
         const color = `rgb(${Math.round(255 * w)}, ${Math.round(255 * w)}, ${Math.round(255 * w)})`
         graph.addEdge(prevNode.id, node, {
           id: `edge_${prevNode.id}-${node}`,
-          color: color
+          originalColor: color,
+          color: color,
+          val: val
         })
 
         counter += 1
@@ -76,10 +94,13 @@ export function buildEdges(
 
     nodes[layerIdx + 1].forEach((nextNode) => {
       const w = gradients !== null ? gradients[shift + counter].norm[idNumber - neuronCount] : 0.8
+      const val = gradients !== null ? gradients[shift + counter].raw[idNumber - neuronCount] : 0.8
       const color = `rgb(${Math.round(255 * w)}, ${Math.round(255 * w)}, ${Math.round(255 * w)})`
       graph.addEdge(node, nextNode.id, {
         id: `edge_${node}-${nextNode.id}`,
-        color: color
+        originalColor: color,
+        color: color,
+        val: val
       })
 
       counter += 1

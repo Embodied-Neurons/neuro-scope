@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import { JSX } from 'react'
-import { useModel } from '@renderer/context/useModel'
+import { useModel } from '@renderer/context/model/useModel'
 
 export default function DemoPage(): JSX.Element {
   const navigate = useNavigate()
   const { setOutputDir, setModelName, setEpochs } = useModel()
 
-  const modelSelect = (modelName: string): void => {
-    const outputDir: string = `\\outputs_${modelName}`
+  const demoModelSelect = (demoModelName: string): void => {
+    const outputDir: string = `\\outputs_${demoModelName}`
     setOutputDir(outputDir)
-    setModelName(modelName)
+    setModelName(demoModelName)
     setEpochs(10)
     navigate('/visualizer')
   }
@@ -45,7 +45,8 @@ export default function DemoPage(): JSX.Element {
           <button
             className="mt-6 bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition"
             onClick={() => {
-              modelSelect('simple_mnist')
+              // We assume user does not name their own model this exact name - can we do better?
+              demoModelSelect('demo_simple_mnist_!1x3v6b')
             }}
           >
             Load Demo

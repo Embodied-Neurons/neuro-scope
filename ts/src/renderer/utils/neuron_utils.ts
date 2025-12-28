@@ -11,28 +11,37 @@ function normalizeMatrix(matrix: number[][], min: number, max: number): number[]
 }
 
 function processGradients(gradients: Record<string, number[][]>): Record<string, GradStats> {
-  let globalMin = Infinity
-  let globalMax = -Infinity
+  const extremes: number[][] = []
 
   for (const [key, matrix] of Object.entries(gradients)) {
     if (!key.endsWith('.grad')) continue
+
+    let layerMin = Infinity
+    let layerMax = -Infinity
 
     for (const row of matrix) {
       for (const v of row) {
-        if (v < globalMin) globalMin = v
-        if (v > globalMax) globalMax = v
+        if (v < layerMin) layerMin = v
+        if (v > layerMax) layerMax = v
       }
     }
+
+    extremes.push([layerMin, layerMax])
   }
 
   const out: Record<string, GradStats> = {}
+  let idx = 0
 
   for (const [key, matrix] of Object.entries(gradients)) {
     if (!key.endsWith('.grad')) continue
 
+    const layerMin = extremes[idx][0]
+    const layerMax = extremes[idx][1]
+    idx++
+
     out[key] = {
       raw: matrix,
-      norm: normalizeMatrix(matrix, globalMin, globalMax)
+      norm: normalizeMatrix(matrix, layerMin, layerMax)
     }
   }
 
@@ -58,25 +67,32 @@ export function linearizeGradients(
 }
 
 function processActivations(activations: Record<string, number[]>): Record<string, ActivStats> {
-  let globalMin = Infinity
-  let globalMax = -Infinity
-
-  for (const [, list] of Object.entries(activations)) {
-    for (const v of list) {
-      if (v < globalMin) globalMin = v
-      if (v > globalMax) globalMax = v
-    }
-  }
-
-  const out: Record<string, ActivStats> = {}
+  const extremes: number[][] = []
 
   for (const [key, list] of Object.entries(activations)) {
     if (!key.endsWith('.activ')) continue
 
+    const layerMin = Math.min(...list)
+    const layerMax = Math.max(...list)
+
+    extremes.push([layerMin, layerMax])
+  }
+
+  const out: Record<string, ActivStats> = {}
+  let idx = 0
+
+  for (const [key, list] of Object.entries(activations)) {
+    if (!key.endsWith('.activ')) continue
+
+    const layerMin = extremes[idx][0]
+    const layerMax = extremes[idx][1]
+
     out[key] = {
       raw: list,
-      norm: normalizeList(list, globalMin, globalMax)
+      norm: normalizeList(list, layerMin, layerMax),
+      extremes: extremes[idx]
     }
+    idx++
   }
 
   return out
@@ -87,7 +103,8 @@ export function linearizeActivations(
   numLayers: number
 ): linearActivStats {
   const processedActivations = processActivations(activations)
-  const linearizedActivations: linearActivStats = []
+  const linearizedActivations: Array<{ raw: number; norm: number }> = []
+  const extremes: number[][] = []
 
   for (let i = 0; i < numLayers; i++) {
     const entry = processedActivations[`fc${i}.activ`]
@@ -95,7 +112,8 @@ export function linearizeActivations(
     for (let j = 0; j < entry.raw.length; j++) {
       linearizedActivations.push({ raw: entry.raw[j], norm: entry.norm[j] })
     }
+    extremes.push(entry.extremes)
   }
 
-  return linearizedActivations
+  return { linear: linearizedActivations, extremes: extremes }
 }
