@@ -43,9 +43,14 @@ export default function StatsPanel({
     if (showMax) highlightEdge(graph, maxEdge, '#00ff00')
   }, [showMin, showMax, nodeData, graphRef, allowGrads])
 
+  const formatValue = (value: number | null): string => {
+    if (value === null) return ''
+    return Math.abs(value) < 1e-5 ? value.toFixed(10) : value.toFixed(5)
+  }
+
   if (!nodeData) {
     return (
-      <div className="p-2 text-gray-500 flex items-center justify-center">
+      <div className="flex items-center justify-center p-2 text-gray-500">
         Click a node to inspect its behavior
       </div>
     )
@@ -54,9 +59,9 @@ export default function StatsPanel({
   const { idx, layer, activation, color, layerMin, layerMax } = nodeData
 
   return (
-    <div className="p-2 space-y-4 animate-fade-in">
+    <div className="animate-fade-in space-y-4 p-2">
       <div>
-        <h2 className="text-lg font-semibold">Neuron</h2>
+        <h2 className="text-lg font-semibold text-primary">Neuron</h2>
         <p className="text-sm text-gray-500">
           Layer {String(layer)} · ID {String(idx)}
         </p>
@@ -64,14 +69,14 @@ export default function StatsPanel({
 
       <div className="flex items-center gap-4">
         <div
-          className="w-14 h-14 rounded-full border shadow-inner"
+          className="h-14 w-14 rounded-full border shadow-inner"
           style={{ backgroundColor: String(color) }}
         />
-        <p className="text-sm font-medium">Activation Color</p>
+        <p className="text-sm font-medium text-primary">Activation Color</p>
       </div>
 
       <StatsBar
-        label="Activation"
+        fixed={formatValue(Number(activation))}
         value={Number(activation)}
         min={Number(layerMin)}
         max={Number(layerMax)}
@@ -80,38 +85,38 @@ export default function StatsPanel({
       {allowGrads && (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-primary">
               <input
                 type="checkbox"
                 checked={showMin}
                 onChange={(e) => setShowMin(e.target.checked)}
-                className="accent-black"
+                className="accent-primary"
               />
               Highlight min gradient
             </label>
             {showMin && extremes.min !== null && (
               <span className="flex items-center gap-2 font-mono text-red-600">
-                <span className="w-2 h-2 rounded-full bg-red-600" />
-                {extremes.min}
+                <span className="h-2 w-2 rounded-full bg-red-600" />
+                {formatValue(extremes.min)}
               </span>
             )}
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-primary">
               <input
                 type="checkbox"
                 checked={showMax}
                 onChange={(e) => setShowMax(e.target.checked)}
-                className="accent-black"
+                className="accent-primary"
               />
               Highlight max gradient
             </label>
 
             {showMax && extremes.max !== null && (
               <span className="flex items-center gap-2 font-mono text-green-600">
-                <span className="w-2 h-2 rounded-full bg-green-600" />
-                {extremes.max}
+                <span className="h-2 w-2 rounded-full bg-green-600" />
+                {formatValue(extremes.max)}
               </span>
             )}
           </div>
@@ -119,7 +124,7 @@ export default function StatsPanel({
           {showMin && showMax && extremes.min === extremes.max && extremes.min !== null && (
             <div className="flex items-center justify-end text-sm">
               <span className="flex items-center gap-2 font-mono text-purple-600">
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                <span className="h-2 w-2 rounded-full bg-purple-500" />
                 {extremes.min}
               </span>
             </div>

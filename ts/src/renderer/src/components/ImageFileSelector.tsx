@@ -1,6 +1,5 @@
 import { JSX } from 'react'
 import { ImageDialogProps } from '../../utils/types'
-
 export default function ImageFileSelector({
   outputDir,
   modelName,
@@ -9,7 +8,6 @@ export default function ImageFileSelector({
   const handleButtonClick = async (): Promise<void> => {
     try {
       const imagePath: string | undefined = await window.api.showImageFileDialog()
-
       if (imagePath && typeof imagePath === 'string') {
         // Using absolute path of the selected image
         window.api.runImageInput(outputDir, modelName, imagePath)
@@ -29,11 +27,11 @@ export default function ImageFileSelector({
       <button
         onClick={handleButtonClick}
         type="button"
-        className="bg-black text-white rounded-lg px-3 py-1 hover:bg-gray-700 transition"
+        className="rounded-lg bg-primary font-medium px-3 py-2 text-white transition hover:bg-gray-700"
       >
         Select image to feed to the model
       </button>
-      <p className="text-gray-500 text-xs italic">Supported formats: .png, .jpg, .jpeg, .bmp</p>
+      <p className="text-xs text-gray-500 italic">Supported formats: .png, .jpg, .jpeg, .bmp</p>
     </div>
   )
 }

@@ -31,7 +31,6 @@ export default function MainPage(): JSX.Element {
   }
 
   const onContinue = async (): Promise<void> => {
-    console.log(epochs, outputDir, modelName)
     if (!outputDir || !modelName || !epochs) return
     setTrainingStatus('running')
     try {
@@ -44,24 +43,24 @@ export default function MainPage(): JSX.Element {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 space-y-8">
-        <h1 className="text-4xl font-bold">Neural Network Visualizer</h1>
-        <div className="flex flex-col space-y-4 w-64">
+      <div className="flex min-h-screen flex-col items-center justify-center space-y-8 bg-gray-200">
+        <h1 className="text-primary text-4xl font-bold">Neural Network Visualizer</h1>
+        <div className="flex w-64 flex-col space-y-4">
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-black text-white rounded-xl py-3 font-medium hover:bg-gray-700 transition"
+            className="bg-primary rounded-xl py-3 font-medium text-white transition hover:bg-gray-700"
           >
             Start application
           </button>
           <button
             onClick={() => navigate('/demo')}
-            className="bg-black text-white rounded-xl py-3 font-medium hover:bg-gray-700 transition"
+            className="bg-primary rounded-xl py-3 font-medium text-white transition hover:bg-gray-700"
           >
             Demo
           </button>
           <button
             onClick={() => navigate('/instructions')}
-            className="bg-black text-white rounded-xl py-3 font-medium hover:bg-gray-700 transition"
+            className="bg-primary rounded-xl py-3 font-medium text-white transition hover:bg-gray-700"
           >
             Instructions
           </button>
@@ -69,29 +68,47 @@ export default function MainPage(): JSX.Element {
       </div>
       <Modal open={modalOpen} onClose={onModalClose} disableClose={trainingStatus === 'running'}>
         {trainingStatus === 'idle' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            <div className="text-primary text-sm font-semibold tracking-wide">
+              Select your model file to begin
+            </div>
+
             <ModelFileSelector />
 
-            <div className="flex flex-col space-y-1">
-              <label className="text-black font-medium">Number of Epochs</label>
-              <input
-                id="epochsInput"
-                type="number"
-                min={1}
-                max={20}
-                value={epochs}
-                onChange={(e) => setEpochs(e.target.valueAsNumber)}
-                className="w-full px-4 py-2 border border-black rounded-xl text-black"
-              />
-            </div>
+            {modelName && (
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-medium text-primary">Number of Epochs</label>
+
+                <input
+                  id="epochsInput"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={epochs}
+                  onChange={(e) => {
+                    let value = e.target.valueAsNumber
+                    if (value < 1) value = 1
+                    if (value > 20) value = 20
+                    setEpochs(value)
+                  }}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-black
+              transition-all duration-200 ease-out
+              focus:border-black focus:outline-none"
+                />
+
+                <p className="text-xs leading-relaxed text-gray-500">
+                  More epochs can improve accuracy, but will increase training time.
+                </p>
+              </div>
+            )}
 
             <button
               onClick={onContinue}
-              disabled={!epochs && !modelName && !outputDir}
-              className={`w-full py-3 rounded-xl font-medium transition ${
+              disabled={!epochs || !modelName || !outputDir}
+              className={`w-full rounded-xl py-3 text-sm font-medium transition-all duration-200 ${
                 outputDir && modelName && epochs
-                  ? 'bg-black text-white hover:bg-gray-900'
-                  : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  ? 'bg-primary text-white hover:bg-gray-700 active:scale-[0.98]'
+                  : 'cursor-not-allowed bg-gray-300 text-gray-600'
               }`}
             >
               Continue
@@ -100,25 +117,30 @@ export default function MainPage(): JSX.Element {
         )}
 
         {trainingStatus === 'running' && (
-          <div className="flex flex-col items-center space-y-3">
-            <p className="text-black font-medium">Training in progress...</p>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
+          <div className="flex flex-col items-center justify-center space-y-4 py-6">
+            <p className="text-sm font-medium text-primary">Training in progress</p>
+
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-800" />
           </div>
         )}
 
         {trainingStatus === 'done' && (
-          <div className="flex flex-col items-center space-y-4">
-            <p className="text-black font-medium">Training complete!</p>
+          <div className="flex flex-col items-center space-y-4 py-6">
+            <p className="text-sm font-medium text-black">Training complete</p>
+
             <button
               onClick={onTrainingFinish}
-              className="bg-black text-white rounded-xl px-4 py-2 hover:bg-gray-900"
+              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white
+              transition hover:bg-gray-900 active:scale-[0.98]"
             >
               Continue to Visualization
             </button>
           </div>
         )}
 
-        {trainingStatus === 'error' && <p className="text-red-600">Error during training.</p>}
+        {trainingStatus === 'error' && (
+          <p className="text-sm font-medium text-red-600">Error during training.</p>
+        )}
       </Modal>
     </>
   )

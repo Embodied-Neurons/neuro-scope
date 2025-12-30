@@ -26,16 +26,17 @@ export default function VisualizerPage(): JSX.Element {
   // Distinct selected nodes and graph refs for visualization and image input tabs
   const [selectedNodeVis, setSelectedNodeVis] = useState<Record<string, unknown> | null>(null)
   const [selectedNodeImg, setSelectedNodeImg] = useState<Record<string, unknown> | null>(null)
+
   const graphRefVis = useRef<Graph | null>(null)
   const graphRefImg = useRef<Graph | null>(null)
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
-      <div className="flex justify-between items-center p-4 bg-white shadow border-b border-gray-200">
+    <div className="flex h-screen flex-col overflow-hidden bg-gray-100">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white p-4 shadow">
         <h2 className="text-xl font-semibold">Neural Graph Visualization</h2>
         <button
           onClick={() => navigate('/')}
-          className="bg-black text-white rounded-lg px-3 py-1 hover:bg-gray-700 transition"
+          className="rounded-lg bg-black px-3 py-1 text-white transition hover:bg-gray-700"
         >
           Back to Home
         </button>
@@ -45,9 +46,9 @@ export default function VisualizerPage(): JSX.Element {
       <div className="flex border-b bg-gray-50 px-4">
         <button
           onClick={() => setTab('visualization')}
-          className={`px-4 py-2 border-b-2 transition ${
+          className={`border-b-2 px-4 py-2 transition ${
             tab === 'visualization'
-              ? 'border-black font-semibold bg-white'
+              ? 'border-black bg-white font-semibold'
               : 'border-transparent text-gray-500 hover:text-black'
           }`}
         >
@@ -56,9 +57,9 @@ export default function VisualizerPage(): JSX.Element {
 
         <button
           onClick={() => setTab('image-input')}
-          className={`px-4 py-2 border-b-2 transition ${
+          className={`border-b-2 px-4 py-2 transition ${
             tab === 'image-input'
-              ? 'border-black font-semibold bg-white'
+              ? 'border-black bg-white font-semibold'
               : 'border-transparent text-gray-500 hover:text-black'
           }`}
         >
@@ -67,9 +68,9 @@ export default function VisualizerPage(): JSX.Element {
 
         <button
           onClick={() => setTab('animation')}
-          className={`px-4 py-2 border-b-2 transition ${
+          className={`border-b-2 px-4 py-2 transition ${
             tab === 'animation'
-              ? 'border-black font-semibold bg-white'
+              ? 'border-black bg-white font-semibold'
               : 'border-transparent text-gray-500 hover:text-black'
           }`}
         >
@@ -79,8 +80,8 @@ export default function VisualizerPage(): JSX.Element {
 
       {/* Visualization tab */}
       {tab === 'visualization' && (
-        <div className="flex flex-1 overflow-hidden p-4 gap-4">
-          <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
+        <div className="flex flex-1 gap-4 overflow-hidden p-4">
+          <div className="h-full w-2/3 overflow-hidden rounded-xl bg-blue-950 shadow">
             <NeuralGraph
               epoch={epoch}
               onNodeSelect={setSelectedNodeVis}
@@ -92,14 +93,14 @@ export default function VisualizerPage(): JSX.Element {
             />
           </div>
 
-          <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
-            <div className="bg-white p-4 rounded-xl shadow">
-              <h3 className="font-semibold mb-2 text-black">Epoch Controls</h3>
+          <div className="flex h-full w-1/3 flex-col gap-4 overflow-y-auto">
+            <div className="rounded-xl bg-white p-4 shadow">
+              <h3 className="mb-2 font-semibold text-black">Epoch Controls</h3>
               <EpochControls currentEpoch={epoch} maxEpoch={epochs} onSelectEpoch={setEpoch} />
             </div>
 
-            <div className="bg-white p-4 rounded-xl shadow">
-              <h3 className="font-semibold mb-2 text-black">Activation Highlights</h3>
+            <div className="rounded-xl bg-white p-4 shadow">
+              <h3 className="mb-2 font-semibold text-black">Activation Highlights</h3>
               <AnomalySlider
                 highlightTop={highlightTop}
                 highlightBottom={highlightBottom}
@@ -110,8 +111,8 @@ export default function VisualizerPage(): JSX.Element {
               />
             </div>
 
-            <div className="bg-white p-4 rounded-xl shadow flex-1">
-              <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
+            <div className="flex-1 rounded-xl bg-white p-4 shadow">
+              <h3 className="mb-2 font-semibold text-black">Node Stats</h3>
               <StatsPanel nodeData={selectedNodeVis} graphRef={graphRefVis} allowGrads={true} />
             </div>
           </div>
@@ -120,9 +121,9 @@ export default function VisualizerPage(): JSX.Element {
 
       {/* Image input tab */}
       {tab === 'image-input' && (
-        <div className="flex flex-1 overflow-hidden p-4 gap-4">
+        <div className="flex flex-1 gap-4 overflow-hidden p-4">
           {imagePath && (
-            <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
+            <div className="h-full w-2/3 overflow-hidden rounded-xl bg-blue-950 shadow">
               <NeuralImageInput
                 imagePath={imagePath}
                 onNodeSelect={setSelectedNodeImg}
@@ -136,16 +137,16 @@ export default function VisualizerPage(): JSX.Element {
           )}
 
           {!imagePath && (
-            <div className="w-2/3 h-full flex items-center justify-center bg-blue-950 rounded-xl shadow overflow-hidden">
-              <p className="text-white text-lg italic">
+            <div className="flex h-full w-2/3 items-center justify-center overflow-hidden rounded-xl bg-blue-950 shadow">
+              <p className="text-lg text-white italic">
                 No image selected. Please select an image.
               </p>
             </div>
           )}
 
-          <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
-            <div className="bg-white p-4 rounded-xl shadow">
-              <h3 className="font-semibold mb-2 text-black">Feed Image to Model</h3>
+          <div className="flex h-full w-1/3 flex-col gap-4 overflow-y-auto">
+            <div className="rounded-xl bg-white p-4 shadow">
+              <h3 className="mb-2 font-semibold text-black">Feed Image to Model</h3>
               <ImageFileSelector
                 outputDir={outputDir}
                 modelName={modelName}
@@ -154,8 +155,8 @@ export default function VisualizerPage(): JSX.Element {
             </div>
 
             {imagePath && (
-              <div className="bg-white p-4 rounded-xl shadow">
-                <h3 className="font-semibold mb-2 text-black">Activation Highlights</h3>
+              <div className="rounded-xl bg-white p-4 shadow">
+                <h3 className="mb-2 font-semibold text-black">Activation Highlights</h3>
                 <AnomalySlider
                   highlightTop={highlightTop}
                   highlightBottom={highlightBottom}
@@ -168,8 +169,8 @@ export default function VisualizerPage(): JSX.Element {
             )}
 
             {imagePath && (
-              <div className="bg-white p-4 rounded-xl shadow flex-1">
-                <h3 className="font-semibold mb-2 text-black">Node Stats</h3>
+              <div className="flex-1 rounded-xl bg-white p-4 shadow">
+                <h3 className="mb-2 font-semibold text-black">Node Stats</h3>
                 <StatsPanel nodeData={selectedNodeImg} graphRef={graphRefImg} allowGrads={false} />
               </div>
             )}

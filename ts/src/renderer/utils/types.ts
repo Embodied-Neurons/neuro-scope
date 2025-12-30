@@ -60,6 +60,10 @@ export type NeuralAnimationState = {
   speed: number
   setSpeed: (v: number) => void
   currentEpoch: number
+  stepEpoch: (v: number) => void
+  graphRef: RefObject<Graph | null>
+  rendererRef: RefObject<SigmaRenderer | null>
+  layerSizesRef: RefObject<number[]>
 }
 
 // Properties types for various components

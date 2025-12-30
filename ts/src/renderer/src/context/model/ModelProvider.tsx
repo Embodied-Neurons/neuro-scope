@@ -7,7 +7,14 @@ export const ModelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [epochs, setEpochs] = useState(1)
   return (
     <ModelContext.Provider
-      value={{ outputDir, setOutputDir, modelName, setModelName, epochs, setEpochs }}
+      value={{
+        outputDir,
+        setOutputDir,
+        modelName,
+        setModelName,
+        epochs,
+        setEpochs
+      }}
     >
       {children}
     </ModelContext.Provider>

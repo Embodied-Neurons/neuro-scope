@@ -31,6 +31,7 @@ export default function NeuralImageInput({
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log(imagePath, outputDir, onNodeSelect, graphRef, loading)
     let destroyed = false
 
     async function init(): Promise<void> {
@@ -88,7 +89,7 @@ export default function NeuralImageInput({
       graphRef.current?.clear()
       onNodeSelect(null)
     }
-  }, [imagePath, outputDir, onNodeSelect, graphRef])
+  }, [imagePath, outputDir, onNodeSelect, graphRef, loading])
 
   useEffect(() => {
     if (!graphRef.current) return
@@ -130,12 +131,12 @@ export default function NeuralImageInput({
   const idx = Math.floor(Math.random() * loadingMessages.length)
 
   return (
-    <div className="w-full h-full relative">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 gap-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-black" />
-          <span className="text-black font-medium text-lg">{loadingMessages[idx]}</span>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-white">
+          <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-black" />
+          <span className="text-lg font-medium text-black">{loadingMessages[idx]}</span>
         </div>
       )}
     </div>

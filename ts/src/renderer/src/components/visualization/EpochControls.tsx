@@ -7,33 +7,31 @@ export default function EpochControls({
   onSelectEpoch
 }: EpochControlsProps): JSX.Element {
   const [selectedEpoch, setSelectedEpoch] = useState<number>(currentEpoch)
-  const epochs: number[] = []
 
-  for (let epoch = 0; epoch < maxEpoch; epoch++) {
-    epochs.push(epoch)
-  }
+  const epochs = Array.from({ length: maxEpoch }, (_, i) => i)
 
   return (
-    <div id="epoch-panel" className="p-2">
-      {epochs.length < 0 ? (
-        'No epochs found'
+    <div className="flex items-center gap-3 p-2">
+      {epochs.length === 0 ? (
+        <span className="text-sm text-gray-500">No epochs found</span>
       ) : (
         <>
           <select
             value={selectedEpoch}
             onChange={(e) => setSelectedEpoch(Number(e.target.value))}
-            className="mr-3 px-2 py-0.75 border-black border"
+            className="text-primary rounded-xl border border-gray-300 bg-white px-3 py-2 transition
+             focus:border-primary focus:ring-0 focus:outline-none"
           >
-            {epochs.map((b) => (
-              <option key={b} value={b}>
-                {/* Display epoch starting from 1 */}
-                Epoch {b + 1}
+            {epochs.map((epoch) => (
+              <option key={epoch} value={epoch}>
+                Epoch {epoch + 1}
               </option>
             ))}
           </select>
+
           <button
             onClick={() => onSelectEpoch(selectedEpoch)}
-            className="bg-black text-white rounded-lg px-3 py-1 hover:bg-gray-700 transition"
+            className="bg-primary text-white hover:bg-gray-700 rounded-xl px-3 py-2 font-medium transition"
           >
             Load Epoch
           </button>
