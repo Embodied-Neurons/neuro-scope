@@ -1,8 +1,0 @@
-{
-  "devDependencies": {
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "electron": "^39.2.4"
-  }
-}
