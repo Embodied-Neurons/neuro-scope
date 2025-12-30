@@ -26,6 +26,7 @@ function createWindow(): void {
     maximizable: false,
     fullscreenable: false,
     show: false,
+    icon: path.join(__dirname, '../../resources/neuroscope.ico'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -91,7 +92,10 @@ app.whenReady().then(() => {
       title: 'Select image file',
       properties: ['openFile'],
       filters: [
-        { name: 'Supported image files', extensions: ['jpg', 'jpeg', 'png', 'bmp'] },
+        {
+          name: 'Supported image files',
+          extensions: ['jpg', 'jpeg', 'png', 'bmp']
+        },
         { name: 'All files', extensions: ['*'] }
       ]
     })
