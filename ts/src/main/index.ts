@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { performTrainingIfNeeded } from '../renderer/utils/training_util'
+import { checkDir, performTrainingIfNeeded } from '../renderer/utils/training_util'
 import { runImageInput } from '../renderer/utils/image_input_util'
 import {
   getNeuralNetworkVisualization,
@@ -113,6 +113,9 @@ app.whenReady().then(() => {
       return runImageInput(outputDir, modelName, imagePath)
     }
   )
+  ipcMain.handle('listFilesInDirectory', async (_, dir) => {
+    return checkDir(dir)
+  })
 
   createWindow()
 

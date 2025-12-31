@@ -10,7 +10,6 @@ export function performTrainingIfNeeded(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const fullOutputPath = path.join(OUTPUT_DIR_BASE, outputDir)
-
     if (fs.existsSync(fullOutputPath)) {
       console.log('Output folder exists, checking its contents...')
 
@@ -63,7 +62,14 @@ export function performTrainingIfNeeded(
       }
     }
 
-    const args = ['--model-name', modelName, '--output-dir', outputDir, '--epochs', epochs]
+    const args = [
+      '--model-name',
+      String(modelName),
+      '--output-dir',
+      String(outputDir),
+      '--epochs',
+      String(epochs)
+    ]
     const command = `cd ${OUTPUT_DIR_BASE} && py run_training.py ${args.join(' ')}`
     const child = exec(command, { env: { ...process.env } })
 
@@ -75,4 +81,12 @@ export function performTrainingIfNeeded(
       else reject(new Error(`Training failed with exit code ${code}`))
     })
   })
+}
+export function checkDir(dir: string): string[] {
+  try {
+    const files = fs.readdirSync(path.join(OUTPUT_DIR_BASE, dir))
+    return files
+  } catch {
+    return []
+  }
 }

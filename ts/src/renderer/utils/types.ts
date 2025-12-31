@@ -64,6 +64,7 @@ export type NeuralAnimationState = {
   graphRef: RefObject<Graph | null>
   rendererRef: RefObject<SigmaRenderer | null>
   layerSizesRef: RefObject<number[]>
+  clear: () => void
 }
 
 // Properties types for various components

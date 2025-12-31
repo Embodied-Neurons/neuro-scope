@@ -23,9 +23,8 @@ export default function MetricBar({
       <div className="relative h-4 w-full overflow-hidden rounded bg-gray-200">
         <div
           className="absolute top-0 left-0 h-full w-full"
-          style={{ background: 'linear-gradient(90deg, #ef4444, #22c55e)' }}
+          style={{ background: 'linear-gradient(90deg, #fa4141, #fae641)' }}
         />
-
         <div
           className="absolute top-0 right-0 h-full bg-gray-200 transition-all duration-500 ease-out"
           style={{ width: `${100 - fillFraction * 100}%` }}

@@ -5,11 +5,11 @@ export function runImageInput(outputDir: string, modelName: string, imagePath: s
   try {
     const args: string[] = [
       '--model-name',
-      modelName,
+      String(modelName),
       '--output-dir',
-      outputDir,
+      String(outputDir),
       '--image-path',
-      imagePath
+      String(imagePath)
     ]
 
     const command = `cd ${OUTPUT_DIR_BASE} && py run_image_input.py ${args.join(' ')}`

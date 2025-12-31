@@ -8,10 +8,16 @@ export const VisualizationProvider = ({ children }: { children: ReactNode }): JS
 
   const graphRefVis = useRef<Graph | null>(null)
   const graphRefImg = useRef<Graph | null>(null)
+  const clear = (): void => {
+    setEpoch(0)
+    setImagePath('')
+    graphRefImg.current = null
+    graphRefVis.current = null
+  }
 
   return (
     <VisualizationContext.Provider
-      value={{ epoch, setEpoch, imagePath, setImagePath, graphRefVis, graphRefImg }}
+      value={{ epoch, setEpoch, imagePath, setImagePath, graphRefVis, graphRefImg, clear }}
     >
       {children}
     </VisualizationContext.Provider>

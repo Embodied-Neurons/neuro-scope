@@ -4,6 +4,7 @@ import Modal from '../components/Modal'
 import ModelFileSelector from '../components/ModelFileSelector'
 import { trainingStatus } from '../../utils/types'
 import { useModel } from '@renderer/context/model/useModel'
+import TrainingProgressBar from '@renderer/components/TrainingProgressBar'
 
 export default function MainPage(): JSX.Element {
   const { setModelName, setOutputDir, setEpochs, epochs, modelName, outputDir } = useModel()
@@ -117,10 +118,10 @@ export default function MainPage(): JSX.Element {
         )}
 
         {trainingStatus === 'running' && (
-          <div className="flex flex-col items-center justify-center space-y-4 py-6">
-            <p className="text-sm font-medium text-primary">Training in progress</p>
+          <div className="flex w-full flex-col space-y-6 py-4">
+            <p className="text-sm font-medium text-primary text-center">Training in progress</p>
 
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-800" />
+            <TrainingProgressBar outputDir={outputDir} totalEpochs={epochs} pollIntervalMs={500} />
           </div>
         )}
 

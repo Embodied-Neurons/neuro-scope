@@ -8,6 +8,7 @@ export type VisualizationState = {
   setImagePath: (imagePath: string) => void
   graphRefVis: RefObject<Graph | null>
   graphRefImg: RefObject<Graph | null>
+  clear: () => void
 }
 
 export const VisualizationContext = createContext<VisualizationState | undefined>(undefined)

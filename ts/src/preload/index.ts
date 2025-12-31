@@ -15,7 +15,9 @@ const api = {
   showImageFileDialog: () => ipcRenderer.invoke('showImageFileDialog'),
 
   runImageInput: (outputDir: string, modelName: string, imagePath: string) =>
-    ipcRenderer.invoke('runImageInput', outputDir, modelName, imagePath)
+    ipcRenderer.invoke('runImageInput', outputDir, modelName, imagePath),
+
+  listFilesInDirectory: (dir: string) => ipcRenderer.invoke('listFilesInDirectory', dir)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

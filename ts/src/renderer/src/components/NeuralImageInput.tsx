@@ -28,19 +28,14 @@ export default function NeuralImageInput({
   const clickNodeListenerRef = useRef<({ node }) => void>((): void => {})
   const clickStageListenerRef = useRef<() => void>((): void => {})
 
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    console.log(imagePath, outputDir, onNodeSelect, graphRef, loading)
-    let destroyed = false
-
     async function init(): Promise<void> {
       if (!containerRef.current) return
-
       setLoading(true)
       try {
         const data: NeuralNetworkData = await window.api.getActivationsFromImageInput(outputDir)
-        if (destroyed) return
 
         const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
         const posInfo = getNodesPosInfo(nodes)
@@ -50,8 +45,6 @@ export default function NeuralImageInput({
 
         buildGraph(graph, nodes, data.activations)
         colorGraphNodes(graph)
-
-        if (destroyed) return
 
         const { renderer, camera } = initializeRendererAndCamera(graph, containerRef.current)
         rendererRef.current = renderer
@@ -77,19 +70,12 @@ export default function NeuralImageInput({
         renderer.on('clickNode', clickNodeListenerRef.current)
         renderer.on('clickStage', clickStageListenerRef.current)
       } finally {
-        if (!destroyed) setLoading(false)
+        setLoading(false)
       }
     }
 
     init()
-
-    return () => {
-      destroyed = true
-      rendererRef.current?.kill()
-      graphRef.current?.clear()
-      onNodeSelect(null)
-    }
-  }, [imagePath, outputDir, onNodeSelect, graphRef, loading])
+  }, [imagePath, outputDir, onNodeSelect, graphRef])
 
   useEffect(() => {
     if (!graphRef.current) return

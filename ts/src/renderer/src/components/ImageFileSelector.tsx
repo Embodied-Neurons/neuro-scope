@@ -1,19 +1,23 @@
 import { JSX } from 'react'
 import { ImageDialogProps } from '../../utils/types'
+import { useVisualization } from '@renderer/context/visualization/useVisualization'
 export default function ImageFileSelector({
   outputDir,
   modelName,
   onSelect
 }: ImageDialogProps): JSX.Element {
+  const { imagePath } = useVisualization()
   const handleButtonClick = async (): Promise<void> => {
     try {
-      const imagePath: string | undefined = await window.api.showImageFileDialog()
-      if (imagePath && typeof imagePath === 'string') {
-        // Using absolute path of the selected image
-        window.api.runImageInput(outputDir, modelName, imagePath)
+      const currentImagePath: string | undefined = await window.api.showImageFileDialog()
+      if (currentImagePath && typeof currentImagePath === 'string') {
+        if (imagePath != currentImagePath) {
+          // Using absolute path of the selected image
+          window.api.runImageInput(outputDir, modelName, currentImagePath)
 
-        console.log(`Selected image (absolute path): ${imagePath}`)
-        onSelect(imagePath)
+          console.log(`Selected image (absolute path): ${currentImagePath}`)
+          onSelect(currentImagePath)
+        }
       } else {
         console.log('INFO: Image selection cancelled!')
       }

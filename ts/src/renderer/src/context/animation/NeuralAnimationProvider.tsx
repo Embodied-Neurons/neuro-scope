@@ -22,6 +22,17 @@ export const NeuralAnimationProvider = ({
   const rendererRef = useRef<Sigma | null>(null)
   const layerSizesRef = useRef<number[]>([])
 
+  const clear = (): void => {
+    setIsAnimating(false)
+    setSpeed(500)
+    setCurrentEpoch(0)
+    timeoutRef.current = null
+    epochRef.current = 0
+    graphRef.current = null
+    rendererRef.current = null
+    layerSizesRef.current = []
+  }
+
   const applyEpochColors = useCallback(
     async (epoch: number) => {
       if (!graphRef.current || !layerSizesRef.current.length) return
@@ -88,7 +99,8 @@ export const NeuralAnimationProvider = ({
         stepEpoch,
         graphRef,
         rendererRef,
-        layerSizesRef
+        layerSizesRef,
+        clear
       }}
     >
       {children}

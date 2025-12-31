@@ -39,8 +39,8 @@ export default function StatsPanel({
       return
     }
 
-    if (showMin) highlightEdge(graph, minEdge, '#ff0000')
-    if (showMax) highlightEdge(graph, maxEdge, '#00ff00')
+    if (showMin) highlightEdge(graph, minEdge, '#fa4141')
+    if (showMax) highlightEdge(graph, maxEdge, '#fae641')
   }, [showMin, showMax, nodeData, graphRef, allowGrads])
 
   const formatValue = (value: number | null): string => {
@@ -95,8 +95,8 @@ export default function StatsPanel({
               Highlight min gradient
             </label>
             {showMin && extremes.min !== null && (
-              <span className="flex items-center gap-2 font-mono text-red-600">
-                <span className="h-2 w-2 rounded-full bg-red-600" />
+              <span className="flex items-center gap-2 font-mono text-[#fa4141]">
+                <span className="h-2 w-2 rounded-full bg-[#fa4141]" />
                 {formatValue(extremes.min)}
               </span>
             )}
@@ -114,8 +114,8 @@ export default function StatsPanel({
             </label>
 
             {showMax && extremes.max !== null && (
-              <span className="flex items-center gap-2 font-mono text-green-600">
-                <span className="h-2 w-2 rounded-full bg-green-600" />
+              <span className="flex items-center gap-2 font-mono text-[#fae641]">
+                <span className="h-2 w-2 rounded-full bg-[#fae641]" />
                 {formatValue(extremes.max)}
               </span>
             )}
