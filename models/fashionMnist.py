@@ -1,3 +1,4 @@
+# models/fashion_mlp.py
 import os
 import time
 import torch
@@ -11,55 +12,55 @@ from model_interface import NeuralNetInterface
 from scripts.extract_data import extract_graph_structure, ActivationTracker
 from registry import register_model, register_trainer, register_runner
 
-# changing to main directory if it is not current working directory
-if os.getcwd().endswith("models"):
-    os.chdir(os.path.join(".."))
-
 
 @register_model
-class SimpleNN(NeuralNetInterface):
+class FashionMLP(NeuralNetInterface):
     def __init__(self):
-        super(SimpleNN, self).__init__()
+        super().__init__()
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(28 * 28, 128)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(128, 10)
-
+        self.fc1 = nn.Linear(28 * 28, 256)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(256, 128)
+        self.relu2 = nn.ReLU()
+        self.fc3 = nn.Linear(128, 10)
 
     def forward(self, x):
         x = self.flatten(x)
-        x = self.fc1(x)
-        x = self.relu(x)
-        x = self.fc2(x)
-        return x
+        x = self.relu1(self.fc1(x))
+        x = self.relu2(self.fc2(x))
+        return self.fc3(x)
 
 
 @register_trainer
-class Trainer():
+class FashionTrainer:
     @staticmethod
-    def train(model: NeuralNetInterface, tracker: ActivationTracker, num_epochs: int, output_dir: str):
+    def train(model: NeuralNetInterface, tracker: ActivationTracker,
+              num_epochs: int, output_dir: str):
+
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
         ])
 
-        train_dataset = torchvision.datasets.MNIST(
-            root="./data", train=True, transform=transform, download=True)
-        train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
+        dataset = torchvision.datasets.FashionMNIST(
+            root="./data", train=True, transform=transform, download=True
+        )
+
+        loader = DataLoader(dataset, batch_size=256, shuffle=True)
 
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-        start = time.perf_counter()
-        model.train()
+        extract_graph_structure(model, save_path=f"./{output_dir}/graph_structure.json")
 
+        start = time.time()
+        model.train()
         for epoch in range(num_epochs):
             if tracker:
                 tracker.clear()
-            end = time.perf_counter()
+            end = time.time()
             print(end - start)
-
-            for _, (images, labels) in enumerate(train_loader):
+            for images, labels in loader:
                 optimizer.zero_grad()
                 outputs = model(images)
                 loss = criterion(outputs, labels)
@@ -71,20 +72,24 @@ class Trainer():
             if tracker:
                 tracker.save_to_json(epoch, save_dir=output_dir)
 
-        print(f"Finished training. {num_epochs} epochs processed.")
         if tracker:
             tracker.remove_hooks()
 
 
 @register_runner
-def run(model: NeuralNetInterface, tracker: ActivationTracker, input_tensor: torch.Tensor, saved_model_path: str, output_dir: str):
+def run(model: NeuralNetInterface,
+        tracker: ActivationTracker,
+        input_tensor: torch.Tensor,
+        saved_model_path: str,
+        output_dir: str):
+
     model.load_state_dict(torch.load(saved_model_path))
     model.eval()
 
     with torch.no_grad():
         tracker.clear()
         model(input_tensor)
-        tracker.save_test_to_json(save_dir=f"{output_dir}")
+        tracker.save_test_to_json(save_dir=output_dir)
 
-    print("Finished running the model on the input image.")
+    print("Finished running Fashion-MNIST MLP on input image.")
     tracker.remove_hooks()
