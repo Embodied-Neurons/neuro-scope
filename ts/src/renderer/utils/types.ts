@@ -54,13 +54,16 @@ export type NeuralNetworkData = {
 }
 
 // Neural animation state used for animation
-export type NeuralAnimationState = {
+export interface NeuralAnimationState {
   isAnimating: boolean
   toggle: () => void
   speed: number
   setSpeed: (v: number) => void
   currentEpoch: number
+  stepForward: () => void
+  stepBackward: () => void
 }
+
 
 // Properties types for various components
 export type EpochControlsProps = {

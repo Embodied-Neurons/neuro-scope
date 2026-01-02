@@ -30,7 +30,7 @@ export default function NeuralAnimation({ outputDir }: { outputDir: string }): J
 
       const data: NeuralNetworkData = await window.api.getNeuralNetworkVisualization(
         outputDir,
-        0 // initial epoch is always 0
+        0
       )
 
       const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
@@ -65,10 +65,8 @@ export default function NeuralAnimation({ outputDir }: { outputDir: string }): J
     }
   }, [outputDir, epochs])
 
-  // Helper function (component?) to prepare animation data
   const animation = useNeuralAnimation(graphRef, rendererRef, outputDir, epochs, layerSizesRef)
 
-  // Returned element is more complex because of easier access to animation variables
   return (
     <div className="flex flex-1 overflow-hidden p-4 gap-4">
       <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">

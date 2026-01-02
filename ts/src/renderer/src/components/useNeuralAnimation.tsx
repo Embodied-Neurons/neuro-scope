@@ -14,12 +14,16 @@ export default function useNeuralAnimation(
   const [isAnimating, setIsAnimating] = useState(false)
   const [speed, setSpeed] = useState(500)
 
-  // Initial epoch is always 0
   const initialEpoch = 0
-
   const [currentEpoch, setCurrentEpoch] = useState(initialEpoch)
-  const timeoutRef = useRef<number | null>(null)
+
   const epochRef = useRef(initialEpoch)
+  const timeoutRef = useRef<number | null>(null)
+  const isAnimatingRef = useRef(isAnimating)
+
+  useEffect(() => {
+    isAnimatingRef.current = isAnimating
+  }, [isAnimating])
 
   const applyEpochColors = useCallback(
     async (epoch: number) => {
@@ -48,28 +52,59 @@ export default function useNeuralAnimation(
     [graphRef, layerSizesRef, outputDir, rendererRef]
   )
 
-  useEffect(() => {
-    if (!isAnimating || epochCount === 0) return
+  const goToEpoch = useCallback(
+    async (epoch: number) => {
+      if (epochCount === 0) return
 
-    const loop = async (): Promise<void> => {
-      await applyEpochColors(epochRef.current)
-      epochRef.current = (epochRef.current + 1) % epochCount
-      setCurrentEpoch(epochRef.current)
-      timeoutRef.current = window.setTimeout(loop, speed)
+      const safeEpoch = ((epoch % epochCount) + epochCount) % epochCount
+      epochRef.current = safeEpoch
+      setCurrentEpoch(safeEpoch)
+
+      await applyEpochColors(safeEpoch)
+
+      if (isAnimatingRef.current) {
+        timeoutRef.current = window.setTimeout(() => {
+          goToEpoch(epochRef.current + 1)
+        }, speed)
+      }
+    },
+    [applyEpochColors, epochCount, speed]
+  )
+
+  useEffect(() => {
+    if (!isAnimating) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+      return
     }
 
-    loop()
+    goToEpoch(epochRef.current)
 
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
     }
-  }, [isAnimating, speed, epochCount, applyEpochColors])
+  }, [isAnimating, goToEpoch])
 
   return {
     isAnimating,
     toggle: () => setIsAnimating((v) => !v),
     speed,
     setSpeed,
-    currentEpoch
+    currentEpoch,
+
+    stepForward: () => {
+      setIsAnimating(false)
+      goToEpoch(epochRef.current + 1)
+    },
+
+    stepBackward: () => {
+      setIsAnimating(false)
+      goToEpoch(epochRef.current - 1)
+    }
   }
 }

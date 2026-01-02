@@ -1,29 +1,41 @@
-import { JSX } from 'react'
-import { NeuralAnimationControlsProps } from '../../utils/types'
+import { NeuralAnimationState } from '../../utils/types'
 
-export default function NeuralAnimationControls(props: NeuralAnimationControlsProps): JSX.Element {
-  const { isAnimating, toggle, speed, setSpeed, currentEpoch } = props.animation
+interface Props {
+  animation: NeuralAnimationState
+  epochCount: number
+}
 
+export default function NeuralAnimationControls({ animation, epochCount }: Props) {
   return (
-    <div className="bg-white/80 p-4 rounded shadow-lg space-y-3">
-      <button onClick={toggle} className="px-3 py-1 bg-black text-white rounded">
-        {isAnimating ? 'Pause' : 'Start'}
-      </button>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <button onClick={animation.stepBackward} className="px-3 py-1 bg-gray-200 rounded">
+          ⏮
+        </button>
 
-      <div>
-        <label>Speed: {speed} </label>
+        <button onClick={animation.toggle} className="px-3 py-1 bg-blue-600 text-white rounded">
+          {animation.isAnimating ? 'Pause' : 'Start'}
+        </button>
+
+        <button onClick={animation.stepForward} className="px-3 py-1 bg-gray-200 rounded">
+          ⏭
+        </button>
+      </div>
+
+      <div className="text-sm text-gray-700">
+        Epoch: {animation.currentEpoch + 1} / {epochCount}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <span className="text-sm">Speed</span>
         <input
           type="range"
           min={200}
           max={1000}
           step={50}
-          value={1200 - speed}
-          onChange={(e) => setSpeed(1200 - Number(e.target.value))}
+          value={1400 - animation.speed}
+          onChange={(e) => animation.setSpeed(1400 - Number(e.target.value))}
         />
-      </div>
-
-      <div>
-        Epoch: {currentEpoch + 1} / {props.epochCount}
       </div>
     </div>
   )
