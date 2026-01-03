@@ -1,21 +1,24 @@
 import { JSX } from 'react'
 import { ImageDialogProps } from '../../utils/types'
-
+import { useVisualization } from '@renderer/context/visualization/useVisualization'
 export default function ImageFileSelector({
   outputDir,
   modelName,
   onSelect
 }: ImageDialogProps): JSX.Element {
+  const { imagePath } = useVisualization()
+
   const handleButtonClick = async (): Promise<void> => {
     try {
-      const imagePath: string | undefined = await window.api.showImageFileDialog()
+      const currentImagePath: string | undefined = await window.api.showImageFileDialog()
+      if (currentImagePath && typeof currentImagePath === 'string') {
+        if (imagePath != currentImagePath) {
+          // Using absolute path of the selected image
+          window.api.runImageInput(outputDir, modelName, currentImagePath)
 
-      if (imagePath && typeof imagePath === 'string') {
-        // Using absolute path of the selected image
-        window.api.runImageInput(outputDir, modelName, imagePath)
-
-        console.log(`Selected image (absolute path): ${imagePath}`)
-        onSelect(imagePath)
+          console.log(`Selected image (absolute path): ${currentImagePath}`)
+          onSelect(currentImagePath)
+        }
       } else {
         console.log('INFO: Image selection cancelled!')
       }
@@ -29,11 +32,11 @@ export default function ImageFileSelector({
       <button
         onClick={handleButtonClick}
         type="button"
-        className="bg-black text-white rounded-lg px-3 py-1 hover:bg-gray-700 transition"
+        className="bg-primary rounded-lg px-3 py-2 font-medium text-white transition hover:bg-gray-700"
       >
         Select image to feed to the model
       </button>
-      <p className="text-gray-500 text-xs italic">Supported formats: .png, .jpg, .jpeg, .bmp</p>
+      <p className="text-xs text-gray-500 italic">Supported formats: .png, .jpg, .jpeg, .bmp</p>
     </div>
   )
 }

@@ -35,14 +35,14 @@ export default function ModelFileSelector(): JSX.Element {
       <button
         onClick={handleButtonClick}
         type="button"
-        className="bg-black text-white  rounded-xl px-4 py-2 font-medium hover:bg-gray-700 transition"
+        className="bg-primary rounded-xl px-4 py-2 font-medium text-white transition hover:bg-gray-700"
       >
-        Select model file
+        Select model
       </button>
       {modelName ? (
-        <p className="text-gray-500 text-xs italic">Selected {modelName}</p>
+        <p className="text-xs text-gray-500 italic">Selected {modelName}</p>
       ) : (
-        <p className="text-gray-500 text-xs italic">Supported format: .py</p>
+        <p className="text-xs text-gray-500 italic">Supported format: .py</p>
       )}
 
       <input

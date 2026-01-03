@@ -1,5 +1,4 @@
 import Graph from 'graphology'
-import Sigma from 'sigma'
 import { JSX, useEffect, useRef } from 'react'
 import { buildGraph } from '../../../utils/graph_building'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../../utils/node_manipulation'
@@ -9,22 +8,15 @@ import {
   restrictCameraMovement
 } from '../../../utils/neural_graph_utils'
 import { NeuralNetworkData, Node } from '../../../utils/types'
-import { useModel } from '../../context/model/useModel'
 import NeuralAnimationControls from './NeuralAnimationControls'
-import { NeuralAnimationProvider } from '@renderer/context/animation/NeuralAnimationProvider'
+import useNeuralAnimation from '@renderer/context/animation/useNeuralAnimation'
 
 export default function NeuralAnimation({ outputDir }: { outputDir: string }): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const rendererRef = useRef<Sigma | null>(null)
-  const graphRef = useRef<Graph | null>(null)
   const nodeLayersRef = useRef<Node[][]>(null)
-  const layerSizesRef = useRef<number[]>([])
-
-  const { epochs } = useModel()
+  const { graphRef, layerSizesRef, rendererRef } = useNeuralAnimation()
 
   useEffect(() => {
-    let destroyed = false
-
     async function init(): Promise<void> {
       if (!containerRef.current) return
 
@@ -39,52 +31,40 @@ export default function NeuralAnimation({ outputDir }: { outputDir: string }): J
 
       const posInfo = getNodesPosInfo(nodes)
 
-      const graph = new Graph()
-      graphRef.current = graph
+      if (!graphRef.current) {
+        const graph = new Graph()
+        graphRef.current = graph
 
-      buildGraph(graph, nodes, data.activations)
-      colorGraphNodes(graph)
+        buildGraph(graph, nodes, data.activations)
+      }
+      colorGraphNodes(graphRef.current)
 
-      if (destroyed) return
-
-      const { renderer, camera } = initializeRendererAndCamera(graph, containerRef.current)
+      const { renderer, camera } = initializeRendererAndCamera(
+        graphRef.current,
+        containerRef.current
+      )
       rendererRef.current = renderer
 
       restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
     }
 
     init()
+  }, [outputDir, graphRef, layerSizesRef, rendererRef])
 
-    return () => {
-      destroyed = true
-      rendererRef.current?.kill()
-      graphRef.current?.clear()
-    }
-  }, [outputDir, epochs])
-
-  // Returned element is more complex because of easier access to animation variables
   return (
-    <NeuralAnimationProvider
-      graphRef={graphRef}
-      rendererRef={rendererRef}
-      outputDir={outputDir}
-      epochCount={epochs}
-      layerSizesRef={layerSizesRef}
-    >
-      <div className="flex flex-1 overflow-hidden p-4 gap-4">
-        <div className="w-2/3 h-full bg-blue-950 rounded-xl shadow overflow-hidden">
-          <div className="w-full h-full relative">
-            <div ref={containerRef} className="w-full h-full" />
-          </div>
-        </div>
-
-        <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="font-semibold mb-2 text-black">Animation Controls</h3>
-            <NeuralAnimationControls epochCount={epochs} />
-          </div>
+    <div className="flex flex-1 gap-4 overflow-hidden p-4">
+      <div className="bg-primary h-full w-2/3 overflow-hidden rounded-xl shadow">
+        <div className="relative h-full w-full">
+          <div ref={containerRef} className="h-full w-full" />
         </div>
       </div>
-    </NeuralAnimationProvider>
+
+      <div className="flex h-full w-1/3 flex-col gap-4 overflow-y-auto">
+        <div className="rounded-xl bg-white p-4 shadow">
+          <h3 className="mb-2 font-semibold text-black">Animation Controls</h3>
+          <NeuralAnimationControls />
+        </div>
+      </div>
+    </div>
   )
 }

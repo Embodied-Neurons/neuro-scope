@@ -3,24 +3,14 @@ import Sigma from 'sigma'
 import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { NeuralAnimationContext } from './NeuralAnimationContext'
 import { colorGraphNodes } from '../../../utils/neural_graph_utils'
-
-interface Props {
-  children: React.ReactNode
-  graphRef: React.RefObject<Graph | null>
-  rendererRef: React.RefObject<Sigma | null>
-  outputDir: string
-  epochCount: number
-  layerSizesRef: React.RefObject<number[]>
-}
+import { useModel } from '../../context/model/useModel'
 
 export const NeuralAnimationProvider = ({
-  children,
-  graphRef,
-  rendererRef,
-  outputDir,
-  epochCount,
-  layerSizesRef
-}: Props): JSX.Element => {
+  children
+}: {
+  children: React.ReactNode
+}): JSX.Element => {
+  const { outputDir, epochs } = useModel()
   const [isAnimating, setIsAnimating] = useState(false)
   const [speed, setSpeed] = useState(500)
   const [currentEpoch, setCurrentEpoch] = useState(0)
@@ -28,9 +18,24 @@ export const NeuralAnimationProvider = ({
   const timeoutRef = useRef<number | null>(null)
   const epochRef = useRef(0)
 
+  const graphRef = useRef<Graph | null>(null)
+  const rendererRef = useRef<Sigma | null>(null)
+  const layerSizesRef = useRef<number[]>([])
+
+  const clear = (): void => {
+    setIsAnimating(false)
+    setSpeed(500)
+    setCurrentEpoch(0)
+    timeoutRef.current = null
+    epochRef.current = 0
+    graphRef.current = null
+    rendererRef.current = null
+    layerSizesRef.current = []
+  }
+
   const applyEpochColors = useCallback(
     async (epoch: number) => {
-      if (!graphRef.current) return
+      if (!graphRef.current || !layerSizesRef.current.length) return
 
       const data = await window.api.getNeuralNetworkVisualization(outputDir, epoch)
       const activations = data.activations.linear
@@ -52,22 +57,18 @@ export const NeuralAnimationProvider = ({
       colorGraphNodes(graphRef.current)
       rendererRef.current?.refresh()
     },
-    [graphRef, layerSizesRef, outputDir, rendererRef]
+    [outputDir]
   )
 
   useEffect(() => {
-    if (!isAnimating || epochCount === 0) return
+    if (!isAnimating || epochs === 0) return
 
     const loop = async (): Promise<void> => {
       if (!isAnimating) return
-
-      epochRef.current = (epochRef.current + 1) % epochCount
+      epochRef.current = (epochRef.current + 1) % epochs
       await applyEpochColors(epochRef.current)
       setCurrentEpoch(epochRef.current)
-
-      if (isAnimating) {
-        timeoutRef.current = window.setTimeout(loop, speed)
-      }
+      if (isAnimating) timeoutRef.current = window.setTimeout(loop, speed)
     }
 
     loop()
@@ -75,7 +76,17 @@ export const NeuralAnimationProvider = ({
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
-  }, [isAnimating, speed, epochCount, applyEpochColors])
+  }, [isAnimating, speed, epochs, applyEpochColors])
+
+  const stepEpoch = useCallback(
+    async (val: number) => {
+      const nextEpoch = (epochRef.current + val + epochs) % epochs
+      epochRef.current = nextEpoch
+      await applyEpochColors(nextEpoch)
+      setCurrentEpoch(nextEpoch)
+    },
+    [applyEpochColors, epochs]
+  )
 
   return (
     <NeuralAnimationContext.Provider
@@ -84,7 +95,12 @@ export const NeuralAnimationProvider = ({
         toggle: () => setIsAnimating((v) => !v),
         speed,
         setSpeed,
-        currentEpoch
+        currentEpoch,
+        stepEpoch,
+        graphRef,
+        rendererRef,
+        layerSizesRef,
+        clear
       }}
     >
       {children}

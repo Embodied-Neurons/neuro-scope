@@ -11,28 +11,28 @@ export default function AnomalySlider({
 }: AnomalySliderProps): JSX.Element {
   return (
     <div className="bg-white p-2">
-      <label className="flex items-center gap-2">
+      <label className="text-primary flex items-center gap-2">
         <input
           type="checkbox"
           checked={highlightTop}
           onChange={(e) => onToggleTop(e.target.checked)}
-          className="accent-black"
+          className="accent-primary"
         />
         Top activations
       </label>
 
-      <label className="flex items-center gap-2 mt-2">
+      <label className="text-primary mt-2 flex items-center gap-2">
         <input
           type="checkbox"
           checked={highlightBottom}
           onChange={(e) => onToggleBottom(e.target.checked)}
-          className="accent-black"
+          className="accent-primary"
         />
         Bottom activations
       </label>
 
       <div className="mt-3">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="text-primary mb-1 block text-sm font-medium">
           Highlight percentage: {percent}%
         </label>
 
@@ -43,10 +43,11 @@ export default function AnomalySlider({
           step={1}
           value={percent}
           onChange={(e) => onChangePercent(Number(e.target.value))}
-          className="w-full accent-black"
+          className="accent-primary w-full"
+          disabled={!(highlightTop || highlightBottom)}
         />
       </div>
-      <p className="text-gray-500 text-xs italic">Note: first layer (input layer) is excluded</p>
+      <p className="text-xs text-gray-500 italic">Note: first layer (input layer) is excluded</p>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { performTrainingIfNeeded } from '../renderer/utils/training_util'
+import { checkDir, performTrainingIfNeeded } from '../renderer/utils/training_util'
 import { runImageInput } from '../renderer/utils/image_input_util'
 import {
   getNeuralNetworkVisualization,
@@ -26,6 +26,7 @@ function createWindow(): void {
     maximizable: false,
     fullscreenable: false,
     show: false,
+    icon: path.join(__dirname, '../../resources/neuroscope.ico'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -91,7 +92,10 @@ app.whenReady().then(() => {
       title: 'Select image file',
       properties: ['openFile'],
       filters: [
-        { name: 'Supported image files', extensions: ['jpg', 'jpeg', 'png', 'bmp'] },
+        {
+          name: 'Supported image files',
+          extensions: ['jpg', 'jpeg', 'png', 'bmp']
+        },
         { name: 'All files', extensions: ['*'] }
       ]
     })
@@ -109,6 +113,9 @@ app.whenReady().then(() => {
       return runImageInput(outputDir, modelName, imagePath)
     }
   )
+  ipcMain.handle('listFilesInDirectory', async (_, dir) => {
+    return checkDir(dir)
+  })
 
   createWindow()
 

@@ -116,8 +116,8 @@ export default function NeuralGraph({
   }, [highlightTop, highlightBottom, highlightPercent, onNodeSelect, graphRef])
 
   return (
-    <div className="w-full h-full relative">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
     </div>
   )
 }

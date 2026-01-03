@@ -5,27 +5,40 @@ export default function InstructionsPage(): JSX.Element {
   const navigate = useNavigate()
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6">
-      <div className="max-w-2xl space-y-8">
-        <h2 className="text-3xl font-bold text-center">User Manual</h2>
-
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold">1. Registering the Tracker</h3>
-          <p>
-            Before visualizing a neural network, you must register an activation tracker on your
-            model. To do this, apply the <strong>@register_trainer</strong> decorator to your
-            training class, and add the <strong>@staticmethod</strong> decorator to the method that
-            runs the training loop.
+    <div className="relative min-h-screen bg-black px-6 py-12 text-white">
+      <button
+        onClick={() => navigate('/')}
+        className="text-primary fixed top-4 right-4 z-50 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200"
+      >
+        Back to home
+      </button>
+      <div className="mx-auto max-w-3xl space-y-14">
+        <div className="space-y-3 text-center">
+          <h1 className="text-4xl font-bold tracking-tight">User Manual</h1>
+          <p className="text-sm text-gray-400">
+            Guide for preparing, training, and visualizing your neural network
           </p>
+        </div>
 
-          <p>
-            Afterward, create an instance of <code>ActivationTracker</code> and extract the network
-            structure using <code>extract_graph_structure</code>.
-          </p>
+        <section className="space-y-10">
+          <h2 className="border-b border-gray-800 pb-3 text-2xl font-semibold">
+            Preparing Your Own Model
+          </h2>
 
-          <div className="bg-gray-900 p-4 rounded-lg">
-            <p className="text-sm text-gray-400 ">Example decorators usage:</p>
-            <pre className="bg-gray-900 px-4 rounded-lg overflow-auto text-sm">
+          <div className="space-y-4">
+            <h3 className="text-xl font-medium">1. Registering the Tracker</h3>
+            <p className="leading-relaxed text-gray-300">
+              Before visualizing a neural network, you must register an activation tracker on your
+              model. Apply the <strong>@register_trainer</strong> decorator to your training class
+              and add <strong>@staticmethod</strong> to the training method.
+            </p>
+
+            <p className="text-gray-300">
+              Then create an <code>ActivationTracker</code> instance and extract the network
+              structure using <code>extract_graph_structure</code>.
+            </p>
+
+            <pre className="overflow-x-auto rounded-lg border border-gray-800 bg-gray-950 p-4 text-sm">
               <code>
                 {`
 @register_trainer
@@ -38,26 +51,21 @@ class Trainer(TrainerInterface):
         output_dir: str,
         epochs: int = 5
     ):
-    ....
+        ...
 `}
               </code>
             </pre>
           </div>
-        </section>
 
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold">2. Modifying the Training Loop</h3>
-          <p>
-            At the start of each training iteration, call <code>tracker.clear()</code> to remove old
-            data. At the end of the inner training loop call{' '}
-            <code>tracker.reset_after_batch()</code> Once the forward and backward passes finish,
-            call <code>tracker.save_to_json()</code> to store activations and gradients for the
-            current epoch.
-          </p>
+          <div className="space-y-4">
+            <h3 className="text-xl font-medium">2. Modifying the Training Loop</h3>
+            <p className="leading-relaxed text-gray-300">
+              Clear previous data with <code>tracker.clear()</code> at the start of each epoch.
+              After each batch, call <code>tracker.reset_after_batch()</code>. Once an epoch
+              completes, store activations using <code>tracker.save_to_json()</code>.
+            </p>
 
-          <div className="bg-gray-900 p-4 rounded-lg">
-            <p className="text-sm text-gray-400">Example training loop modification:</p>
-            <pre className="bg-gray-900 px-4 rounded-lg overflow-auto text-sm">
+            <pre className="overflow-x-auto rounded-lg border border-gray-800 bg-gray-950 p-4 text-sm">
               <code>
                 {`
 for epoch in range(num_epochs):
@@ -75,77 +83,53 @@ for epoch in range(num_epochs):
         tracker.reset_after_batch()
 
     tracker.save_to_json(epoch, save_dir=output_dir)
-tracker.remove_hooks()`}
+
+tracker.remove_hooks()
+`}
               </code>
             </pre>
           </div>
 
-          <p>
-            When training is finished, run <code>tracker.remove_hooks()</code> to detach all hooks.
-            This step prevents performance issues during future use of the model.
-          </p>
-        </section>
+          <div className="space-y-3">
+            <h3 className="text-xl font-medium">3. Starting the Application</h3>
+            <p className="text-gray-300">Launch the visualizer once tracking is complete:</p>
 
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold">3. Starting the Application</h3>
-          <p>Once the tracking setup is complete, launch the visualizer using:</p>
-
-          <div className="bg-gray-900 p-4 rounded-lg">
-            <pre className="text-sm">
+            <pre className="rounded-lg border border-gray-800 bg-gray-950 p-3 text-sm">
               <code>npm start</code>
             </pre>
           </div>
 
-          <p>
-            You will see three options: <strong>Start</strong>, <strong>Demo</strong>, and
-            <strong> Instructions</strong>. Select <strong>Start</strong> to choose your model file.
-          </p>
+          <div className="space-y-3">
+            <h3 className="text-xl font-medium">4. Loading a Model</h3>
+            <p className="text-gray-300">
+              In main menu press start and select your own model and number of training epochs. If
+              no tracking data exists, training will run automatically. Otherwise, stored data loads
+              instantly. Either way wait for the <strong>Training complete</strong> message before
+              proceeding.
+            </p>
+          </div>
         </section>
 
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold">4. Loading a Model</h3>
-          <p>
-            If tracking data does not exist for the selected model, the application will
-            automatically run the training process. Otherwise, existing tracking data will load
-            automatically.
-          </p>
-          <p>
-            Wait for the <strong>Training complete</strong> message before proceeding.
-          </p>
-        </section>
+        <section className="space-y-8">
+          <h2 className="border-b border-gray-800 pb-3 text-2xl font-semibold">
+            Available Functions
+          </h2>
 
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold">5. Exploring the Visualization</h3>
-          <p>The main view displays your neural network’s structure. Use the mouse to:</p>
-          <ul className="list-disc list-inside text-gray-300 space-y-1">
-            <li>Drag to pan the network</li>
-            <li>Scroll to zoom in/out</li>
-            <li>
-              Click on a neuron to see:
-              <ul className="list-disc pl-10">
-                <li>Activation values</li>
-                <li>Gradient information</li>
-              </ul>
-            </li>
-          </ul>
-        </section>
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Network Visualization</h3>
+            <p className="text-sm text-gray-400">{/* Description goes here */}</p>
+          </div>
 
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold">6. Loading example data</h3>
-        </section>
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Image Input</h3>
+            <p className="text-sm text-gray-400">{/* Description goes here */}</p>
+          </div>
 
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold">7. Training animation</h3>
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Training Animation</h3>
+            <p className="text-sm text-gray-400">{/* Description goes here */}</p>
+          </div>
         </section>
-
-        <div className="flex justify-center pt-4">
-          <button
-            onClick={() => navigate('/')}
-            className="bg-white text-black px-5 py-2 rounded-lg hover:bg-gray-200 transition"
-          >
-            Back to Home
-          </button>
-        </div>
       </div>
     </div>
   )

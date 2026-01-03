@@ -28,18 +28,14 @@ export default function NeuralImageInput({
   const clickNodeListenerRef = useRef<({ node }) => void>((): void => {})
   const clickStageListenerRef = useRef<() => void>((): void => {})
 
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    let destroyed = false
-
     async function init(): Promise<void> {
       if (!containerRef.current) return
-
       setLoading(true)
       try {
         const data: NeuralNetworkData = await window.api.getActivationsFromImageInput(outputDir)
-        if (destroyed) return
 
         const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
         const posInfo = getNodesPosInfo(nodes)
@@ -49,8 +45,6 @@ export default function NeuralImageInput({
 
         buildGraph(graph, nodes, data.activations)
         colorGraphNodes(graph)
-
-        if (destroyed) return
 
         const { renderer, camera } = initializeRendererAndCamera(graph, containerRef.current)
         rendererRef.current = renderer
@@ -76,18 +70,11 @@ export default function NeuralImageInput({
         renderer.on('clickNode', clickNodeListenerRef.current)
         renderer.on('clickStage', clickStageListenerRef.current)
       } finally {
-        if (!destroyed) setLoading(false)
+        setLoading(false)
       }
     }
 
     init()
-
-    return () => {
-      destroyed = true
-      rendererRef.current?.kill()
-      graphRef.current?.clear()
-      onNodeSelect(null)
-    }
   }, [imagePath, outputDir, onNodeSelect, graphRef])
 
   useEffect(() => {
@@ -130,12 +117,12 @@ export default function NeuralImageInput({
   const idx = Math.floor(Math.random() * loadingMessages.length)
 
   return (
-    <div className="w-full h-full relative">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 gap-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-black" />
-          <span className="text-black font-medium text-lg">{loadingMessages[idx]}</span>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-white">
+          <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-black" />
+          <span className="text-lg font-medium text-black">{loadingMessages[idx]}</span>
         </div>
       )}
     </div>

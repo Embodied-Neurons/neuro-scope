@@ -8,7 +8,7 @@ export function colorGraphNodes(graph: types.Graph): void {
   const graphNodes = graph.nodes()
   graphNodes.forEach((node) => {
     const weight = graph.getNodeAttribute(node, 'weight') as number
-    const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
+    const color = `rgb(250, ${Math.round(65 + 165 * weight)}, 65)`
     graph.setNodeAttribute(node, 'color', color)
   })
 }
@@ -69,7 +69,7 @@ export function createClickNodeListener(
 
       nodes[prevNodeLayer].forEach((n) => {
         const weight = graph.getNodeAttribute(n.id, 'weight') as number
-        const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
+        const color = `rgb(250, ${Math.round(65 + 165 * weight)}, 65)`
         graph.setNodeAttribute(n.id, 'color', color)
         graph.setNodeAttribute(n.id, 'zIndex', 1)
       })
@@ -85,7 +85,7 @@ export function createClickNodeListener(
       nodes[nodeLayer].forEach((n) => {
         if (n.id !== node) {
           const weight = graph.getNodeAttribute(n.id, 'weight') as number
-          const color = `rgb(${Math.round(85 * (1 - weight))}, ${Math.round(85 * weight)}, 0)`
+          const color = `rgb(250, ${Math.round(65 + 165 * weight)}, 65)`
           graph.setNodeAttribute(n.id, 'color', color)
         }
       })
@@ -120,7 +120,7 @@ export function createClickStageListener(
 
       nodes[prevNodeLayer].forEach((n) => {
         const weight = graph.getNodeAttribute(n.id, 'weight') as number
-        const color = `rgb(${Math.round(255 * (1 - weight))}, ${Math.round(255 * weight)}, 0)`
+        const color = `rgb(250, ${Math.round(65 + 165 * weight)}, 65)`
         graph.setNodeAttribute(n.id, 'color', color)
         graph.setNodeAttribute(n.id, 'zIndex', 1)
       })
@@ -169,9 +169,9 @@ export function highlightByActivation(
 
   ids.forEach((id) => {
     if (top && topSet.has(id)) {
-      graph.setNodeAttribute(id, 'color', '#00ff00')
+      graph.setNodeAttribute(id, 'color', `rgb(250, ${Math.round(65 + 165)}, 65)`)
     } else if (bottom && bottomSet.has(id)) {
-      graph.setNodeAttribute(id, 'color', '#ff0000')
+      graph.setNodeAttribute(id, 'color', `rgb(250, ${Math.round(65)}, 65)`)
     } else {
       graph.setNodeAttribute(id, 'color', '#808080')
     }
