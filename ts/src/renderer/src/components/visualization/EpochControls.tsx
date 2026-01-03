@@ -19,8 +19,7 @@ export default function EpochControls({
           <select
             value={selectedEpoch}
             onChange={(e) => setSelectedEpoch(Number(e.target.value))}
-            className="text-primary rounded-xl border border-gray-300 bg-white px-3 py-2 transition
-             focus:border-primary focus:ring-0 focus:outline-none"
+            className="text-primary focus:border-primary rounded-xl border border-gray-300 bg-white px-3 py-2 transition focus:ring-0 focus:outline-none"
           >
             {epochs.map((epoch) => (
               <option key={epoch} value={epoch}>
@@ -31,7 +30,7 @@ export default function EpochControls({
 
           <button
             onClick={() => onSelectEpoch(selectedEpoch)}
-            className="bg-primary text-white hover:bg-gray-700 rounded-xl px-3 py-2 font-medium transition"
+            className="bg-primary rounded-xl px-3 py-2 font-medium text-white transition hover:bg-gray-700"
           >
             Load Epoch
           </button>

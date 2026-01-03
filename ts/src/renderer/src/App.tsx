@@ -15,7 +15,6 @@ export default function App(): JSX.Element {
         <Route path="/" element={<MainPage />} />
         <Route path="/demo" element={<DemoPage />} />
         <Route path="/instructions" element={<InstructionPage />} />
-
         <Route path="/visualizer" element={<VisualizerLayout />}>
           <Route index element={<VisualizationView />} />
           <Route path="image-input" element={<ImageInputView />} />

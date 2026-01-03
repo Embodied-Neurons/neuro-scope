@@ -46,5 +46,8 @@ function getCenterCoords(
   // Checking if ref type
   const div = 'current' in container ? container.current : container
 
-  return renderer.viewportToGraph({ x: div.offsetWidth / 2, y: div.offsetHeight / 2 })
+  return renderer.viewportToGraph({
+    x: div.offsetWidth / 2,
+    y: div.offsetHeight / 2
+  })
 }

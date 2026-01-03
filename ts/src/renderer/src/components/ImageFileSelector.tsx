@@ -7,6 +7,7 @@ export default function ImageFileSelector({
   onSelect
 }: ImageDialogProps): JSX.Element {
   const { imagePath } = useVisualization()
+
   const handleButtonClick = async (): Promise<void> => {
     try {
       const currentImagePath: string | undefined = await window.api.showImageFileDialog()
@@ -31,7 +32,7 @@ export default function ImageFileSelector({
       <button
         onClick={handleButtonClick}
         type="button"
-        className="rounded-lg bg-primary font-medium px-3 py-2 text-white transition hover:bg-gray-700"
+        className="bg-primary rounded-lg px-3 py-2 font-medium text-white transition hover:bg-gray-700"
       >
         Select image to feed to the model
       </button>

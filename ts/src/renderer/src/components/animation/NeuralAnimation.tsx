@@ -52,16 +52,16 @@ export default function NeuralAnimation({ outputDir }: { outputDir: string }): J
   }, [outputDir, graphRef, layerSizesRef, rendererRef])
 
   return (
-    <div className="flex flex-1 overflow-hidden p-4 gap-4">
-      <div className="w-2/3 h-full bg-primary rounded-xl shadow overflow-hidden">
-        <div className="w-full h-full relative">
-          <div ref={containerRef} className="w-full h-full" />
+    <div className="flex flex-1 gap-4 overflow-hidden p-4">
+      <div className="bg-primary h-full w-2/3 overflow-hidden rounded-xl shadow">
+        <div className="relative h-full w-full">
+          <div ref={containerRef} className="h-full w-full" />
         </div>
       </div>
 
-      <div className="w-1/3 flex flex-col gap-4 h-full overflow-y-auto">
-        <div className="bg-white p-4 rounded-xl shadow">
-          <h3 className="font-semibold mb-2 text-black">Animation Controls</h3>
+      <div className="flex h-full w-1/3 flex-col gap-4 overflow-y-auto">
+        <div className="rounded-xl bg-white p-4 shadow">
+          <h3 className="mb-2 font-semibold text-black">Animation Controls</h3>
           <NeuralAnimationControls />
         </div>
       </div>

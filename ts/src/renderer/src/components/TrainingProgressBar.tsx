@@ -1,16 +1,11 @@
 import { JSX, useEffect, useState } from 'react'
-
-interface Props {
-  outputDir: string
-  totalEpochs: number
-  pollIntervalMs: number
-}
+import { TrainingBarProps } from '../../utils/types'
 
 export default function TrainingProgressBar({
   outputDir,
   totalEpochs,
-  pollIntervalMs = 500
-}: Props): JSX.Element {
+  pollIntervalMs
+}: TrainingBarProps): JSX.Element {
   const [completed, setCompleted] = useState(0)
 
   useEffect(() => {
@@ -64,7 +59,7 @@ export default function TrainingProgressBar({
 
   return (
     <div className="w-full space-y-3">
-      <div className="flex justify-between text-sm font-medium text-primary">
+      <div className="text-primary flex justify-between text-sm font-medium">
         <span>
           {completed} / {totalEpochs} epochs
         </span>

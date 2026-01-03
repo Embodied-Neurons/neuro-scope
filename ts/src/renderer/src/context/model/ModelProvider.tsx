@@ -5,6 +5,7 @@ export const ModelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [outputDir, setOutputDir] = useState('')
   const [modelName, setModelName] = useState('')
   const [epochs, setEpochs] = useState(1)
+
   return (
     <ModelContext.Provider
       value={{

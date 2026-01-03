@@ -1,12 +1,6 @@
-import { JSX, ReactNode } from 'react'
+import { JSX } from 'react'
 import { IoMdClose } from 'react-icons/io'
-
-interface ModalProps {
-  open: boolean
-  onClose: () => void
-  children: ReactNode
-  disableClose: boolean
-}
+import { ModalProps } from '../../utils/types'
 
 export default function Modal({
   open,
@@ -21,7 +15,7 @@ export default function Modal({
         {!disableClose && (
           <button
             onClick={onClose}
-            className="absolute top-2 right-3 text-primary hover:text-gray-700"
+            className="text-primary absolute top-2 right-3 hover:text-gray-700"
           >
             <IoMdClose />
           </button>

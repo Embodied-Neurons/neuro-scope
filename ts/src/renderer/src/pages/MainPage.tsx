@@ -25,6 +25,7 @@ export default function MainPage(): JSX.Element {
     setOutputDir('')
     setEpochs(1)
   }
+
   const onTrainingFinish = (): void => {
     setTrainingStatus('idle')
     setModalOpen(false)
@@ -78,8 +79,7 @@ export default function MainPage(): JSX.Element {
 
             {modelName && (
               <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium text-primary">Number of Epochs</label>
-
+                <label className="text-primary text-sm font-medium">Number of Epochs</label>
                 <input
                   id="epochsInput"
                   type="number"
@@ -92,9 +92,7 @@ export default function MainPage(): JSX.Element {
                     if (value > 20) value = 20
                     setEpochs(value)
                   }}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-black
-              transition-all duration-200 ease-out
-              focus:border-black focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-black transition-all duration-200 ease-out focus:border-black focus:outline-none"
                 />
 
                 <p className="text-xs leading-relaxed text-gray-500">
@@ -119,7 +117,7 @@ export default function MainPage(): JSX.Element {
 
         {trainingStatus === 'running' && (
           <div className="flex w-full flex-col space-y-6 py-4">
-            <p className="text-sm font-medium text-primary text-center">Training in progress</p>
+            <p className="text-primary text-center text-sm font-medium">Training in progress</p>
 
             <TrainingProgressBar outputDir={outputDir} totalEpochs={epochs} pollIntervalMs={500} />
           </div>
@@ -131,8 +129,7 @@ export default function MainPage(): JSX.Element {
 
             <button
               onClick={onTrainingFinish}
-              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white
-              transition hover:bg-gray-900 active:scale-[0.98]"
+              className="bg-primary rounded-xl px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-900 active:scale-[0.98]"
             >
               Continue to Visualization
             </button>

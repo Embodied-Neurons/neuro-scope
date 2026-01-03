@@ -10,7 +10,7 @@ export default function NeuralAnimationControls(): JSX.Element {
   return (
     <div className="flex w-full flex-col gap-4 rounded-2xl p-2">
       <div className="flex flex-col gap-1">
-        <label className="font-medium text-primary">Speed: {speed}ms</label>
+        <label className="text-primary font-medium">Speed: {speed}ms</label>
         <input
           type="range"
           min={200}
@@ -18,11 +18,11 @@ export default function NeuralAnimationControls(): JSX.Element {
           step={50}
           value={1200 - speed}
           onChange={(e) => setSpeed(1200 - Number(e.target.value))}
-          className="h-2 w-full cursor-pointer rounded-lg bg-primary accent-primary"
+          className="bg-primary accent-primary h-2 w-full cursor-pointer rounded-lg"
         />
       </div>
 
-      <div className="text-center font-medium text-primary">
+      <div className="text-primary text-center font-medium">
         Epoch: {currentEpoch + 1} / {epochCount}
       </div>
 
@@ -32,11 +32,7 @@ export default function NeuralAnimationControls(): JSX.Element {
         </button>
 
         <button onClick={toggle}>
-          {isAnimating ? (
-            <FaPause className="text-primary " />
-          ) : (
-            <FaPlay className="text-primary " />
-          )}
+          {isAnimating ? <FaPause className="text-primary" /> : <FaPlay className="text-primary" />}
         </button>
 
         <button onClick={() => stepEpoch(1)} disabled={isAnimating}>

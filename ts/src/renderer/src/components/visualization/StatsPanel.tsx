@@ -61,7 +61,7 @@ export default function StatsPanel({
   return (
     <div className="animate-fade-in space-y-4 p-2">
       <div>
-        <h2 className="text-lg font-semibold text-primary">Neuron</h2>
+        <h2 className="text-primary text-lg font-semibold">Neuron</h2>
         <p className="text-sm text-gray-500">
           Layer {String(layer)} · ID {String(idx)}
         </p>
@@ -72,7 +72,7 @@ export default function StatsPanel({
           className="h-14 w-14 rounded-full border shadow-inner"
           style={{ backgroundColor: String(color) }}
         />
-        <p className="text-sm font-medium text-primary">Activation Color</p>
+        <p className="text-primary text-sm font-medium">Activation Color</p>
       </div>
 
       <StatsBar
@@ -85,7 +85,7 @@ export default function StatsPanel({
       {allowGrads && (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 text-primary">
+            <label className="text-primary flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={showMin}
@@ -103,7 +103,7 @@ export default function StatsPanel({
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 text-primary">
+            <label className="text-primary flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={showMax}

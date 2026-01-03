@@ -17,7 +17,7 @@ export default function MetricBar({
   return (
     <div className="space-y-1">
       <div className="r text-sm">
-        <span className="font-medium text-primary">Activation: {fixed}</span>
+        <span className="text-primary font-medium">Activation: {fixed}</span>
       </div>
 
       <div className="relative h-4 w-full overflow-hidden rounded bg-gray-200">

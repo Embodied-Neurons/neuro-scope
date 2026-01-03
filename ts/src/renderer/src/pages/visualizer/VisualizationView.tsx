@@ -13,8 +13,8 @@ export default function VisualizationView(): JSX.Element {
   const [highlightTop, setHighlightTop] = useState(false)
   const [highlightBottom, setHighlightBottom] = useState(false)
   const [highlightPercent, setHighlightPercent] = useState(10)
-
   const [selectedNodeVis, setSelectedNodeVis] = useState<Record<string, unknown> | null>(null)
+
   return (
     <div className="flex flex-1 gap-4 overflow-hidden p-4">
       <div className="bg-primary h-full w-2/3 overflow-hidden rounded-xl shadow">
@@ -31,12 +31,12 @@ export default function VisualizationView(): JSX.Element {
 
       <div className="flex h-full w-1/3 flex-col gap-4 overflow-y-auto">
         <div className="rounded-xl bg-white p-4 shadow">
-          <h3 className="mb-2 font-semibold text-primary">Epoch Controls</h3>
+          <h3 className="text-primary mb-2 font-semibold">Epoch Controls</h3>
           <EpochControls currentEpoch={epoch} maxEpoch={epochs} onSelectEpoch={setEpoch} />
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow">
-          <h3 className="mb-2 font-semibold text-primary">Activation Highlights</h3>
+          <h3 className="text-primary mb-2 font-semibold">Activation Highlights</h3>
           <AnomalySlider
             highlightTop={highlightTop}
             highlightBottom={highlightBottom}
@@ -48,7 +48,7 @@ export default function VisualizationView(): JSX.Element {
         </div>
 
         <div className="flex-1 rounded-xl bg-white p-4 shadow">
-          <h3 className="mb-2 font-semibold text-primary">Neuron Stats</h3>
+          <h3 className="text-primary mb-2 font-semibold">Neuron Stats</h3>
           <StatsPanel nodeData={selectedNodeVis} graphRef={graphRefVis} allowGrads={true} />
         </div>
       </div>

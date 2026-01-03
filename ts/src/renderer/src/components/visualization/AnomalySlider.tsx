@@ -11,7 +11,7 @@ export default function AnomalySlider({
 }: AnomalySliderProps): JSX.Element {
   return (
     <div className="bg-white p-2">
-      <label className="flex items-center gap-2 text-primary">
+      <label className="text-primary flex items-center gap-2">
         <input
           type="checkbox"
           checked={highlightTop}
@@ -21,7 +21,7 @@ export default function AnomalySlider({
         Top activations
       </label>
 
-      <label className="mt-2 flex items-center gap-2 text-primary">
+      <label className="text-primary mt-2 flex items-center gap-2">
         <input
           type="checkbox"
           checked={highlightBottom}
@@ -32,7 +32,7 @@ export default function AnomalySlider({
       </label>
 
       <div className="mt-3">
-        <label className="mb-1 block text-sm font-medium text-primary">
+        <label className="text-primary mb-1 block text-sm font-medium">
           Highlight percentage: {percent}%
         </label>
 
@@ -43,7 +43,7 @@ export default function AnomalySlider({
           step={1}
           value={percent}
           onChange={(e) => onChangePercent(Number(e.target.value))}
-          className="w-full accent-primary"
+          className="accent-primary w-full"
           disabled={!(highlightTop || highlightBottom)}
         />
       </div>

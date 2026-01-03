@@ -8,6 +8,7 @@ export const VisualizationProvider = ({ children }: { children: ReactNode }): JS
 
   const graphRefVis = useRef<Graph | null>(null)
   const graphRefImg = useRef<Graph | null>(null)
+
   const clear = (): void => {
     setEpoch(0)
     setImagePath('')

@@ -4,7 +4,7 @@
 
 import type SigmaDefault from 'sigma'
 import type GraphDefault from 'graphology'
-import type { RefObject } from 'react'
+import { ReactNode, RefObject } from 'react'
 
 // Attributes type, used in Sigma
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -144,3 +144,16 @@ export type linearGradStats = Array<{ raw: number[]; norm: number[] }>
 
 // Model training status
 export type trainingStatus = 'idle' | 'running' | 'done' | 'error'
+
+export type TrainingBarProps = {
+  outputDir: string
+  totalEpochs: number
+  pollIntervalMs: number
+}
+
+export type ModalProps = {
+  open: boolean
+  onClose: () => void
+  children: ReactNode
+  disableClose: boolean
+}
