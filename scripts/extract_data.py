@@ -38,20 +38,26 @@ class ActivationTracker:
 
         return hook
 
-
     def _register_hooks(self):
-        prev_layer = None
-        flag = True
+        linear_layers = []
 
         for _, module in self.model.named_modules():
             if isinstance(module, nn.Linear):
-                if prev_layer is not None and flag:
-                    self.handles.append(prev_layer.register_forward_hook(self._save_activation()))
-                    flag = False
+                linear_layers.append(module)
+        # we connect to input of first linear layer instead of prev layer
+        if len(linear_layers) > 0:
+            def input_hook(module, input, output):
+                self.activations[f"fc{self.activations_idx}.activ"].append(
+                    input[0].detach().mean(dim=0).cpu().numpy().tolist()
+                )
+                self.activations_idx += 1
 
-                self.handles.append(module.register_forward_hook(self._save_activation()))
-            
-            prev_layer = module
+            self.handles.append(
+                linear_layers[0].register_forward_hook(input_hook)
+            )
+
+        for layer in linear_layers:
+            self.handles.append(layer.register_forward_hook(self._save_activation()))
 
         for name, param in self.model.named_parameters():
             self.handles.append(param.register_hook(self._save_gradient(name)))

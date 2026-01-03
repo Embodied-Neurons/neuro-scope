@@ -27,14 +27,19 @@ export default function DemoPage(): JSX.Element {
       <div className="grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
         <div className="bg-primary flex flex-col justify-between rounded-xl border border-white/20 p-6">
           <div>
-            <h3 className="mb-2 text-xl font-semibold">Jute Pest Classifier</h3>
+            <h3 className="mb-2 text-xl font-semibold">Fashion MNIST Model</h3>
             <p className="text-sm text-gray-300">
-              A demo model trained to recognize common pests and diseases affecting jute plants.
-              Useful for visualizing real-world CNN activations.
+              A demo model trained to recognize common clothing types. Consists of 3 Linear layers
+              and was train for 10 epochs.
             </p>
           </div>
 
-          <button className="text-primary mt-6 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200">
+          <button
+            className="text-primary mt-6 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200"
+            onClick={() => {
+              demoModelSelect('demo_fashion_mnist_@2y4n7a')
+            }}
+          >
             Load Demo
           </button>
         </div>
@@ -43,8 +48,8 @@ export default function DemoPage(): JSX.Element {
           <div>
             <h3 className="mb-2 text-xl font-semibold">Simple MNIST Model</h3>
             <p className="text-sm text-gray-300">
-              A lightweight neural network trained on handwritten digits (MNIST). Great for
-              understanding basic neuron activations and layer behavior.
+              A lightweight neural network trained on handwritten digits (MNIST). Consists of 2
+              Linear layers and was train for 10 epochs.
             </p>
           </div>
 
@@ -53,6 +58,25 @@ export default function DemoPage(): JSX.Element {
             onClick={() => {
               // We assume user does not name their own model this exact name - can we do better?
               demoModelSelect('demo_simple_mnist_!1x3v6b')
+            }}
+          >
+            Load Demo
+          </button>
+        </div>
+
+        <div className="bg-primary flex flex-col justify-between rounded-xl border border-white/20 p-6">
+          <div>
+            <h3 className="mb-2 text-xl font-semibold">Iris Model</h3>
+            <p className="text-sm text-gray-300">
+              A lightweight neural network trained on iris flower species. Consists of 3 Linear
+              layers and was train for 10 epochs.
+            </p>
+          </div>
+
+          <button
+            className="text-primary mt-6 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200"
+            onClick={() => {
+              demoModelSelect('demo_iris_%8d5g0l')
             }}
           >
             Load Demo
