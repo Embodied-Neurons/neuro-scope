@@ -85,7 +85,7 @@ export function createClickNodeListener(
       nodes[nodeLayer].forEach((n) => {
         if (n.id !== node) {
           const weight = graph.getNodeAttribute(n.id, 'weight') as number
-          const color = `rgb(250, ${Math.round(65 + 165 * weight)}, 65)`
+          const color = `rgb(80, ${Math.round(20 + 55 * weight)}, 20)`
           graph.setNodeAttribute(n.id, 'color', color)
         }
       })
@@ -169,9 +169,9 @@ export function highlightByActivation(
 
   ids.forEach((id) => {
     if (top && topSet.has(id)) {
-      graph.setNodeAttribute(id, 'color', `rgb(250, ${Math.round(65 + 165)}, 65)`)
+      graph.setNodeAttribute(id, 'color', `rgb(250, 230, 65)`)
     } else if (bottom && bottomSet.has(id)) {
-      graph.setNodeAttribute(id, 'color', `rgb(250, ${Math.round(65)}, 65)`)
+      graph.setNodeAttribute(id, 'color', `rgb(250, 65, 65)`)
     } else {
       graph.setNodeAttribute(id, 'color', '#808080')
     }

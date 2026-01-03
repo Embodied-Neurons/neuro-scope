@@ -11,12 +11,13 @@ function generateMlpLayout(layerSizes: number[]): types.Position[] {
 
   for (let layerIdx = 0; layerIdx < numLayers; layerIdx++) {
     const xMid = layerIdx * xStep
-    const xBurst = 0.01 * Math.sqrt(layerSizes[layerIdx])
-    const yBurst = 0.01 / Math.sqrt(layerSizes[layerIdx])
-    const yFactor = Math.sqrt(Math.log10(layerSizes[layerIdx]))
+    const size = layerSizes[layerIdx]
+    const xBurst = 0.01 * Math.sqrt(size)
+    const yBurst = 0.01 / Math.sqrt(size)
+    const yFactor = Math.sqrt(Math.log10(size))
 
-    for (let i = 0; i < layerSizes[layerIdx]; i++) {
-      const yMid = yFactor * (layerSizes[layerIdx] > 1 ? i / (layerSizes[layerIdx] - 1) - 0.5 : 0.0)
+    for (let i = 0; i < size; i++) {
+      const yMid = yFactor * (size > 1 ? i / (size - 1) - 0.5 : 0.0)
       const y = -yMid - yBurst * (Math.random() - 0.5)
 
       const xCurvature = 0.8 * yMid * yMid
@@ -43,12 +44,13 @@ function generateModifiedMlpLayout(layerSizes: number[]): types.Position[] {
 
   for (let layerIdx = 1; layerIdx < numLayers; layerIdx++) {
     const xMid = 0.8 - 0.01 * Math.sqrt(layerSizes[0]) + layerIdx * xStep
-    const xBurst = 0.01 * Math.sqrt(layerSizes[layerIdx])
-    const yBurst = 0.01 / Math.sqrt(layerSizes[layerIdx])
-    const yFactor = Math.sqrt(Math.log10(layerSizes[layerIdx]))
+    const size = layerSizes[layerIdx]
+    const xBurst = 0.01 * Math.sqrt(size)
+    const yBurst = 0.01 / Math.sqrt(size)
+    const yFactor = Math.sqrt(Math.log10(size))
 
-    for (let i = 0; i < layerSizes[layerIdx]; i++) {
-      const yMid = yFactor * (layerSizes[layerIdx] > 1 ? i / (layerSizes[layerIdx] - 1) - 0.5 : 0.0)
+    for (let i = 0; i < size; i++) {
+      const yMid = yFactor * (size > 1 ? i / (size - 1) - 0.5 : 0.0)
       const y = -yMid - yBurst * (Math.random() - 0.5)
 
       const xCurvature = 0.8 * yMid * yMid
