@@ -31,11 +31,16 @@ export default function NeuralImageInput({
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
+
     async function init(): Promise<void> {
       if (!containerRef.current) return
       setLoading(true)
+
       try {
         const data: NeuralNetworkData = await window.api.getActivationsFromImageInput(outputDir)
+
+        if (!isMounted) return
 
         const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
         const posInfo = getNodesPosInfo(nodes)
@@ -47,9 +52,11 @@ export default function NeuralImageInput({
         colorGraphNodes(graph)
 
         const { renderer, camera } = initializeRendererAndCamera(graph, containerRef.current)
+
         rendererRef.current = renderer
 
         restrictCameraMovement(camera, renderer, containerRef.current, posInfo)
+
         clickNodeListenerRef.current = createClickNodeListener(
           graphRef,
           selectedNodeRef,
@@ -66,16 +73,29 @@ export default function NeuralImageInput({
           data
         )
 
-        // Register event listeners
         renderer.on('clickNode', clickNodeListenerRef.current)
         renderer.on('clickStage', clickStageListenerRef.current)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     init()
-  }, [imagePath, outputDir, onNodeSelect, graphRef])
+
+    return () => {
+      isMounted = false
+
+      if (rendererRef.current) {
+        rendererRef.current.kill()
+        rendererRef.current = null
+      }
+
+      if (graphRef.current) {
+        graphRef.current.clear()
+        graphRef.current = null
+      }
+    }
+  }, [imagePath, outputDir])
 
   useEffect(() => {
     if (!graphRef.current) return
