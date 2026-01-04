@@ -11,6 +11,8 @@ export default function MainPage(): JSX.Element {
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
   const [trainingStatus, setTrainingStatus] = useState<trainingStatus>('idle')
+  type ModalStep = 'selectModel' | 'configureTraining'
+  const [modalStep, setModalStep] = useState<ModalStep>('selectModel')
 
   useEffect(() => {
     setModelName('')
@@ -21,9 +23,15 @@ export default function MainPage(): JSX.Element {
   const onModalClose = (): void => {
     setTrainingStatus('idle')
     setModalOpen(false)
+    setModalStep('selectModel')
     setModelName('')
     setOutputDir('')
     setEpochs(1)
+  }
+
+  const onModelContinue = (): void => {
+    if (!outputDir || !modelName) return
+    setModalStep('configureTraining')
   }
 
   const onTrainingFinish = (): void => {
@@ -32,7 +40,7 @@ export default function MainPage(): JSX.Element {
     navigate('/visualizer')
   }
 
-  const onContinue = async (): Promise<void> => {
+  const onStartTraining = async (): Promise<void> => {
     if (!outputDir || !modelName || !epochs) return
     setTrainingStatus('running')
     try {
@@ -69,7 +77,7 @@ export default function MainPage(): JSX.Element {
         </div>
       </div>
       <Modal open={modalOpen} onClose={onModalClose} disableClose={trainingStatus === 'running'}>
-        {trainingStatus === 'idle' && (
+        {trainingStatus === 'idle' && modalStep === 'selectModel' && (
           <div className="space-y-6">
             <div className="text-primary text-sm font-semibold tracking-wide">
               Select your model file to begin
@@ -77,40 +85,52 @@ export default function MainPage(): JSX.Element {
 
             <ModelFileSelector />
 
-            {modelName && (
-              <div className="flex flex-col space-y-2">
-                <label className="text-primary text-sm font-medium">Number of Epochs</label>
-                <input
-                  id="epochsInput"
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={epochs}
-                  onChange={(e) => {
-                    let value = e.target.valueAsNumber
-                    if (value < 1) value = 1
-                    if (value > 20) value = 20
-                    setEpochs(value)
-                  }}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-black transition-all duration-200 ease-out focus:border-black focus:outline-none"
-                />
-
-                <p className="text-xs leading-relaxed text-gray-500">
-                  More epochs can improve accuracy, but will increase training time.
-                </p>
-              </div>
-            )}
-
             <button
-              onClick={onContinue}
-              disabled={!epochs || !modelName || !outputDir}
+              onClick={onModelContinue}
+              disabled={!modelName || !outputDir}
               className={`w-full rounded-xl py-3 text-sm font-medium transition-all duration-200 ${
-                outputDir && modelName && epochs
+                modelName && outputDir
                   ? 'bg-primary text-white hover:bg-gray-700 active:scale-[0.98]'
                   : 'cursor-not-allowed bg-gray-300 text-gray-600'
               }`}
             >
               Continue
+            </button>
+          </div>
+        )}
+        {trainingStatus === 'idle' && modalStep === 'configureTraining' && (
+          <div className="space-y-6">
+            <div className="text-primary text-sm font-semibold tracking-wide">
+              Configure training
+            </div>
+
+            <div className="flex flex-col space-y-2">
+              <label className="text-primary text-sm font-medium">Number of Epochs</label>
+              <input
+                id="epochsInput"
+                type="number"
+                min={1}
+                max={20}
+                value={epochs}
+                onChange={(e) => {
+                  let value = e.target.valueAsNumber
+                  if (value < 1) value = 1
+                  if (value > 20) value = 20
+                  setEpochs(value)
+                }}
+                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-black transition-all duration-200 ease-out focus:border-black focus:outline-none"
+              />
+
+              <p className="text-xs leading-relaxed text-gray-500">
+                More epochs can improve accuracy, but will increase training time.
+              </p>
+            </div>
+
+            <button
+              onClick={onStartTraining}
+              className="bg-primary w-full rounded-xl py-3 text-sm font-medium text-white transition hover:bg-gray-700 active:scale-[0.98]"
+            >
+              Start Training
             </button>
           </div>
         )}

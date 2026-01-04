@@ -24,27 +24,8 @@ export default function DemoPage(): JSX.Element {
       </button>
       <h2 className="mb-10 text-3xl font-bold">Demo Models</h2>
 
-      <div className="grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="bg-primary flex flex-col justify-between rounded-xl border border-white/20 p-6">
-          <div>
-            <h3 className="mb-2 text-xl font-semibold">Fashion MNIST Model</h3>
-            <p className="text-sm text-gray-300">
-              A demo model trained to recognize common clothing types. Consists of 3 Linear layers
-              and was train for 10 epochs.
-            </p>
-          </div>
-
-          <button
-            className="text-primary mt-6 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200"
-            onClick={() => {
-              demoModelSelect('demo_fashion_mnist_@2y4n7a')
-            }}
-          >
-            Load Demo
-          </button>
-        </div>
-
-        <div className="bg-primary flex flex-col justify-between rounded-xl border border-white/20 p-6">
+      <div className="grid w-full max-w-4xl grid-cols-2 gap-6">
+        <div className="bg-primary col-span-2 flex flex-col justify-between rounded-xl border border-white/20 p-6">
           <div>
             <h3 className="mb-2 text-xl font-semibold">Simple MNIST Model</h3>
             <p className="text-sm text-gray-300">
@@ -56,7 +37,6 @@ export default function DemoPage(): JSX.Element {
           <button
             className="text-primary mt-6 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200"
             onClick={() => {
-              // We assume user does not name their own model this exact name - can we do better?
               demoModelSelect('demo_simple_mnist_!1x3v6b')
             }}
           >
@@ -77,6 +57,25 @@ export default function DemoPage(): JSX.Element {
             className="text-primary mt-6 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200"
             onClick={() => {
               demoModelSelect('demo_iris_%8d5g0l')
+            }}
+          >
+            Load Demo
+          </button>
+        </div>
+
+        <div className="bg-primary flex flex-col justify-between rounded-xl border border-white/20 p-6">
+          <div>
+            <h3 className="mb-2 text-xl font-semibold">Fashion MNIST Model</h3>
+            <p className="text-sm text-gray-300">
+              A demo model trained to recognize common clothing types. Consists of 3 Linear layers
+              and was train for 10 epochs.
+            </p>
+          </div>
+
+          <button
+            className="text-primary mt-6 rounded-lg bg-white px-4 py-2 font-medium transition hover:bg-gray-200"
+            onClick={() => {
+              demoModelSelect('demo_fashion_mnist_@2y4n7a')
             }}
           >
             Load Demo

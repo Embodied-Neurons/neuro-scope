@@ -1,7 +1,7 @@
 import { exec } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import {OUTPUT_DIR_BASE, PY_DIR_BASE} from '../../main'
+import { OUTPUT_DIR_BASE, PY_DIR_BASE } from '../../main'
 
 export function performTrainingIfNeeded(
   outputDir: string,

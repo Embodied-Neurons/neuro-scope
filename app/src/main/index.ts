@@ -8,8 +8,8 @@ import {
   getActivationsFromImageInput
 } from '../renderer/utils/network_utils'
 
-export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..',"outputs")
-export const PY_DIR_BASE =path.join(app.getAppPath(), '..',"python_scripts")
+export const OUTPUT_DIR_BASE = path.join(app.getAppPath(), '..', 'outputs')
+export const PY_DIR_BASE = path.join(app.getAppPath(), '..', 'python_scripts')
 
 function createWindow(): void {
   const display = screen.getPrimaryDisplay()

@@ -1,11 +1,7 @@
 import child_process from 'child_process'
-import { PY_DIR_BASE } from "../../main";
+import { PY_DIR_BASE } from '../../main'
 
-export function runImageInput(
-  outputDir: string,
-  modelName: string,
-  imagePath: string
-): void {
+export function runImageInput(outputDir: string, modelName: string, imagePath: string): void {
   try {
     const result = child_process.spawnSync(
       'py',
