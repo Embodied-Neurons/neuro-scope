@@ -2,6 +2,7 @@ import os
 import importlib.util
 import sys
 import argparse
+import torch
 
 from scripts.extract_data import ActivationTracker
 from registry import model_registry, runner_registry
@@ -29,7 +30,8 @@ def transform_image_and_run_test():
     input_image = Image.open(IMAGE_PATH).convert("L")
     preprocess = transforms.Compose([
         transforms.Resize((input_size, input_size)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Lambda(torch.flatten)
     ])
 
     input_tensor = preprocess(input_image)

@@ -17,7 +17,7 @@ function generateMlpLayout(layerSizes: number[]): types.Position[] {
     const yFactor = Math.sqrt(Math.log10(size))
 
     for (let i = 0; i < size; i++) {
-      const yMid = yFactor * (size > 1 ? i / (size - 1) - 0.5 : 0.0)
+      const yMid = yFactor * (size > 1 ? i / (size - 1) - 0.5 : 0)
       const y = -yMid - yBurst * (Math.random() - 0.5)
 
       const xCurvature = 0.8 * yMid * yMid
@@ -35,22 +35,27 @@ function generateModifiedMlpLayout(layerSizes: number[]): types.Position[] {
   const numLayers = layerSizes.length
   const xStep = numLayers > 1 ? 1.5 / (numLayers - 1) : 0
   const side = Math.round(Math.sqrt(layerSizes[0]))
+  const xShift = 0.03 * side
 
-  for (let i = 0; i < side; i++) {
-    for (let j = 0; j < side; j++) {
-      layout.push({ x: (0.8 * j) / side, y: -0.8 * (i / side - 0.5) })
+  if (side < 2) {
+    layout.push({ x: 0, y: 0 })
+  } else {
+    for (let i = 0; i < side; i++) {
+      for (let j = 0; j < side; j++) {
+        layout.push({ x: (xShift * j) / (side - 1), y: -xShift * (i / (side - 1) - 0.5) })
+      }
     }
   }
 
   for (let layerIdx = 1; layerIdx < numLayers; layerIdx++) {
-    const xMid = 0.8 - 0.01 * Math.sqrt(layerSizes[0]) + layerIdx * xStep
+    const xMid = xShift + layerIdx * xStep
     const size = layerSizes[layerIdx]
     const xBurst = 0.01 * Math.sqrt(size)
     const yBurst = 0.01 / Math.sqrt(size)
     const yFactor = Math.sqrt(Math.log10(size))
 
     for (let i = 0; i < size; i++) {
-      const yMid = yFactor * (size > 1 ? i / (size - 1) - 0.5 : 0.0)
+      const yMid = yFactor * (size > 1 ? i / (size - 1) - 0.5 : 0)
       const y = -yMid - yBurst * (Math.random() - 0.5)
 
       const xCurvature = 0.8 * yMid * yMid
