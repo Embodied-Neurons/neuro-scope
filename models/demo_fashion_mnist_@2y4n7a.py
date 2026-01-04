@@ -1,4 +1,3 @@
-import os
 import time
 import torch
 import torch.nn as nn
@@ -8,7 +7,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
 from model_interface import NeuralNetInterface
-from scripts.extract_data import extract_graph_structure, ActivationTracker
+from python_scripts.extract_data import extract_graph_structure, ActivationTracker
 from registry import register_model, register_trainer, register_runner
 
 

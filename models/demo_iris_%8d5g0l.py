@@ -1,4 +1,3 @@
-import os
 import torch
 import time
 import torch.nn as nn
@@ -9,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from model_interface import NeuralNetInterface
-from scripts.extract_data import extract_graph_structure, ActivationTracker
+from python_scripts.extract_data import extract_graph_structure, ActivationTracker
 from registry import register_model, register_trainer, register_runner
 
 
