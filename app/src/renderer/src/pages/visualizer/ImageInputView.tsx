@@ -59,7 +59,7 @@ export default function ImageInputView(): JSX.Element {
 
         {imagePath && (
           <div className="flex-1 rounded-xl bg-white p-4 shadow">
-            <h3 className="text-primary mb-2 font-semibold">Node Stats</h3>
+            <h3 className="text-primary mb-2 font-semibold">Neuron Stats</h3>
             <StatsPanel nodeData={selectedNodeImg} graphRef={graphRefImg} allowGrads={false} />
           </div>
         )}

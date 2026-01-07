@@ -95,7 +95,7 @@ export default function NeuralImageInput({
         graphRef.current = null
       }
     }
-  }, [imagePath, outputDir])
+  }, [imagePath, outputDir, onNodeSelect, graphRef])
 
   useEffect(() => {
     if (!graphRef.current) return
