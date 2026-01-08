@@ -26,6 +26,8 @@ export default function VisualizationView(): JSX.Element {
           highlightBottom={highlightBottom}
           highlightPercent={highlightPercent}
           graphRef={graphRefVis}
+          onToggleTop={setHighlightTop}
+          onToggleBottom={setHighlightBottom}
         />
       </div>
 

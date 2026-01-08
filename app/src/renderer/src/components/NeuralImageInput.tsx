@@ -1,6 +1,6 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
-import { JSX, useEffect, useRef, useState } from 'react'
+import { JSX, useEffect, useRef } from 'react'
 import { buildGraph } from '../../utils/graph_building'
 import { getAllNodesByLayers, getNodesPosInfo } from '../../utils/node_manipulation'
 import {
@@ -20,15 +20,17 @@ export default function NeuralImageInput({
   highlightTop,
   highlightBottom,
   highlightPercent,
-  graphRef
+  graphRef,
+  loading,
+  setLoading,
+  onToggleTop,
+  onToggleBottom
 }: NeuralImageInputProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const selectedNodeRef = useRef<string | null>(null)
   const clickNodeListenerRef = useRef<({ node }) => void>((): void => {})
   const clickStageListenerRef = useRef<() => void>((): void => {})
-
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -73,8 +75,13 @@ export default function NeuralImageInput({
           data
         )
 
+        // Register event listeners
         renderer.on('clickNode', clickNodeListenerRef.current)
         renderer.on('clickStage', clickStageListenerRef.current)
+
+        // Reset activation highlights
+        onToggleTop(false)
+        onToggleBottom(false)
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -84,6 +91,7 @@ export default function NeuralImageInput({
 
     return () => {
       isMounted = false
+      setLoading(true)
 
       if (rendererRef.current) {
         rendererRef.current.kill()
@@ -95,7 +103,7 @@ export default function NeuralImageInput({
         graphRef.current = null
       }
     }
-  }, [imagePath, outputDir, onNodeSelect, graphRef])
+  }, [imagePath, outputDir, onNodeSelect, graphRef, setLoading, onToggleTop, onToggleBottom])
 
   useEffect(() => {
     if (!graphRef.current) return

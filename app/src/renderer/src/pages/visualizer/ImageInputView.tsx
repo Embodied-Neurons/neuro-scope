@@ -14,6 +14,7 @@ export default function ImageInputView(): JSX.Element {
   const [highlightBottom, setHighlightBottom] = useState(false)
   const [highlightPercent, setHighlightPercent] = useState(10)
   const [selectedNodeImg, setSelectedNodeImg] = useState<Record<string, unknown> | null>(null)
+  const [loading, setLoading] = useState(false)
 
   return (
     <div className="flex flex-1 gap-4 overflow-hidden p-4">
@@ -27,6 +28,10 @@ export default function ImageInputView(): JSX.Element {
             highlightBottom={highlightBottom}
             highlightPercent={highlightPercent}
             graphRef={graphRefImg}
+            loading={loading}
+            setLoading={setLoading}
+            onToggleTop={setHighlightTop}
+            onToggleBottom={setHighlightBottom}
           />
         </div>
       )}
@@ -43,7 +48,7 @@ export default function ImageInputView(): JSX.Element {
           <ImageFileSelector outputDir={outputDir} modelName={modelName} onSelect={setImagePath} />
         </div>
 
-        {imagePath && (
+        {imagePath && !loading && (
           <div className="rounded-xl bg-white p-4 shadow">
             <h3 className="text-primary mb-2 font-semibold">Activation Highlights</h3>
             <AnomalySlider
@@ -57,7 +62,7 @@ export default function ImageInputView(): JSX.Element {
           </div>
         )}
 
-        {imagePath && (
+        {imagePath && !loading && (
           <div className="flex-1 rounded-xl bg-white p-4 shadow">
             <h3 className="text-primary mb-2 font-semibold">Neuron Stats</h3>
             <StatsPanel nodeData={selectedNodeImg} graphRef={graphRefImg} allowGrads={false} />

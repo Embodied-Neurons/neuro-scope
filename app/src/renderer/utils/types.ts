@@ -99,6 +99,8 @@ export type NeuralGraphProps = {
   highlightBottom: boolean
   highlightPercent: number
   graphRef: RefObject<Graph | null>
+  onToggleTop: (v: boolean) => void
+  onToggleBottom: (v: boolean) => void
 }
 
 export type NeuralImageInputProps = {
@@ -109,6 +111,10 @@ export type NeuralImageInputProps = {
   highlightBottom: boolean
   highlightPercent: number
   graphRef: RefObject<Graph | null>
+  loading: boolean
+  setLoading: (v: boolean) => void
+  onToggleTop: (v: boolean) => void
+  onToggleBottom: (v: boolean) => void
 }
 
 export type NeuralAnimationControlsProps = {

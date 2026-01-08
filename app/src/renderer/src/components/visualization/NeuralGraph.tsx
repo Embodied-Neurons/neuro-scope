@@ -21,7 +21,9 @@ export default function NeuralGraph({
   highlightTop,
   highlightBottom,
   highlightPercent,
-  graphRef
+  graphRef,
+  onToggleTop,
+  onToggleBottom
 }: NeuralGraphProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
@@ -76,6 +78,10 @@ export default function NeuralGraph({
       // Register event listeners
       renderer.on('clickNode', clickNodeListenerRef.current)
       renderer.on('clickStage', clickStageListenerRef.current)
+
+      // Reset activation highlights
+      onToggleTop(false)
+      onToggleBottom(false)
     }
 
     init()
@@ -86,7 +92,7 @@ export default function NeuralGraph({
       graphRef.current?.clear()
       onNodeSelect(null)
     }
-  }, [epoch, outputDir, onNodeSelect, epochs, graphRef])
+  }, [epoch, outputDir, onNodeSelect, epochs, graphRef, onToggleTop, onToggleBottom])
 
   useEffect(() => {
     if (!graphRef.current) return
