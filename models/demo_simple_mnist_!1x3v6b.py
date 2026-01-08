@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
 from model_interface import NeuralNetInterface, TrainerInterface
-from scripts.extract_data import extract_graph_structure, ActivationTracker
+from python_scripts.extract_data import extract_graph_structure, ActivationTracker
 from registry import register_model, register_trainer, register_runner
 
 # changing to main directory if it is not current working directory
