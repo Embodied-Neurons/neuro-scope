@@ -24,6 +24,9 @@ media/
 *.jpeg
 *.webp
 
+# Images for manual
+!**/manual_images/*.png
+
 # JSON rules
 *.json
 !**/package.json
@@ -43,7 +46,8 @@ media/
 .DS_Store
 Thumbs.db
 
-# Compressed files
+# Models training data and compressed files
+*-ubyte
 *.gz
 
 # Node modules

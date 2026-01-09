@@ -19,6 +19,7 @@ export default function NeuralAnimationControls(): JSX.Element {
           value={1200 - speed}
           onChange={(e) => setSpeed(1200 - Number(e.target.value))}
           className="bg-primary accent-primary h-2 w-full cursor-pointer rounded-lg"
+          disabled={isAnimating}
         />
       </div>
 

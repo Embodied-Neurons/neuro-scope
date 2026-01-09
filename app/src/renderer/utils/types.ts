@@ -64,6 +64,7 @@ export type NeuralAnimationState = {
   graphRef: RefObject<Graph | null>
   rendererRef: RefObject<SigmaRenderer | null>
   layerSizesRef: RefObject<number[]>
+  selectedNodeRef: RefObject<string | null>
   clear: () => void
 }
 
@@ -78,6 +79,7 @@ export type StatsPanelProps = {
   nodeData: Record<string, unknown> | null
   graphRef: RefObject<Graph | null>
   allowGrads: boolean
+  epoch?: number
 }
 
 export type AnomalySliderProps = {
@@ -97,6 +99,8 @@ export type NeuralGraphProps = {
   highlightBottom: boolean
   highlightPercent: number
   graphRef: RefObject<Graph | null>
+  onToggleTop: (v: boolean) => void
+  onToggleBottom: (v: boolean) => void
 }
 
 export type NeuralImageInputProps = {
@@ -107,6 +111,10 @@ export type NeuralImageInputProps = {
   highlightBottom: boolean
   highlightPercent: number
   graphRef: RefObject<Graph | null>
+  loading: boolean
+  setLoading: (v: boolean) => void
+  onToggleTop: (v: boolean) => void
+  onToggleBottom: (v: boolean) => void
 }
 
 export type NeuralAnimationControlsProps = {

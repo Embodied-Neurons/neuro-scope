@@ -10,7 +10,8 @@ import {
 export default function StatsPanel({
   nodeData,
   graphRef,
-  allowGrads
+  allowGrads,
+  epoch
 }: StatsPanelProps): JSX.Element {
   const [showMin, setShowMin] = useState(false)
   const [showMax, setShowMax] = useState(false)
@@ -41,7 +42,7 @@ export default function StatsPanel({
 
     if (showMin) highlightEdge(graph, minEdge, '#fa4141')
     if (showMax) highlightEdge(graph, maxEdge, '#fae641')
-  }, [showMin, showMax, nodeData, graphRef, allowGrads])
+  }, [showMin, showMax, nodeData, graphRef, allowGrads, epoch])
 
   const formatValue = (value: number | null): string => {
     if (value === null) return ''

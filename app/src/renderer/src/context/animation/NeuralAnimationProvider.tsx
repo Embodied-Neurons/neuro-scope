@@ -2,7 +2,12 @@ import Graph from 'graphology'
 import Sigma from 'sigma'
 import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { NeuralAnimationContext } from './NeuralAnimationContext'
-import { colorGraphNodes } from '../../../utils/neural_graph_utils'
+import { getAllNodesByLayers } from '../../../utils/node_manipulation'
+import {
+  colorGraphNodes,
+  colorGraphEdges,
+  prepareNodesColorDecay
+} from '../../../utils/neural_graph_utils'
 import { useModel } from '../../context/model/useModel'
 
 export const NeuralAnimationProvider = ({
@@ -21,6 +26,7 @@ export const NeuralAnimationProvider = ({
   const graphRef = useRef<Graph | null>(null)
   const rendererRef = useRef<Sigma | null>(null)
   const layerSizesRef = useRef<number[]>([])
+  const selectedNodeRef = useRef<string | null>(null)
 
   const clear = (): void => {
     setIsAnimating(false)
@@ -40,6 +46,7 @@ export const NeuralAnimationProvider = ({
       const data = await window.api.getNeuralNetworkVisualization(outputDir, epoch)
       const activations = data.activations.linear
       const firstLayerSize = layerSizesRef.current[0]
+      const selectedNode = selectedNodeRef.current
 
       let counter = 0
       graphRef.current.forEachNode((nodeId) => {
@@ -55,6 +62,13 @@ export const NeuralAnimationProvider = ({
       })
 
       colorGraphNodes(graphRef.current)
+
+      if (selectedNode) {
+        const nodes = getAllNodesByLayers(data.nodes, data.layerSizes)
+        colorGraphEdges(graphRef.current, data.gradients!, selectedNode, data.layerSizes)
+        prepareNodesColorDecay(graphRef.current, nodes, selectedNode, data.layerSizes)
+      }
+
       rendererRef.current?.refresh()
     },
     [outputDir]
@@ -100,6 +114,7 @@ export const NeuralAnimationProvider = ({
         graphRef,
         rendererRef,
         layerSizesRef,
+        selectedNodeRef,
         clear
       }}
     >

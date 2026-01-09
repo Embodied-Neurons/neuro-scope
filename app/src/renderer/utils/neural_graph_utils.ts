@@ -13,6 +13,46 @@ export function colorGraphNodes(graph: types.Graph): void {
   })
 }
 
+export function colorGraphEdges(
+  graph: types.Graph,
+  gradients: types.linearGradStats,
+  node: string,
+  layerSizes: number[]
+): void {
+  const idNumber = Number(node)
+  const layerIdx = findNodeLayer(idNumber, layerSizes)
+  const neuronCount = layerSizes.slice(0, layerIdx).reduce((a, b) => a + b, 0)
+  const firstPart = layerIdx > 0 ? layerSizes[layerIdx - 1] : 0
+  let counter = 0
+
+  graph.edges().forEach((edge) => {
+    if (counter < firstPart) {
+      const ws = gradients[idNumber - layerSizes[0]].norm
+      const vals = gradients[idNumber - layerSizes[0]].raw
+      const w = ws.length > 0 ? ws[counter] : 0.8
+      const val = vals.length > 0 ? vals[counter] : 0.8
+      const color = `rgb(${Math.round(255 * w)}, ${Math.round(255 * w)}, ${Math.round(255 * w)})`
+
+      graph.setEdgeAttribute(edge, 'color', color)
+      graph.setEdgeAttribute(edge, 'originalColor', color)
+      graph.setEdgeAttribute(edge, 'val', val)
+
+      counter += 1
+    } else {
+      const shift = neuronCount + layerSizes[layerIdx] - layerSizes[0] - firstPart
+      const w = gradients[shift + counter].norm[idNumber - neuronCount]
+      const val = gradients[shift + counter].raw[idNumber - neuronCount]
+      const color = `rgb(${Math.round(255 * w)}, ${Math.round(255 * w)}, ${Math.round(255 * w)})`
+
+      graph.setEdgeAttribute(edge, 'color', color)
+      graph.setEdgeAttribute(edge, 'originalColor', color)
+      graph.setEdgeAttribute(edge, 'val', val)
+
+      counter += 1
+    }
+  })
+}
+
 export function initializeRendererAndCamera(
   graph: types.Graph,
   container: HTMLDivElement
@@ -43,6 +83,23 @@ export function restrictCameraMovement(
       const newCameraX = cameraState.x - x + newX
       const newCameraY = cameraState.y - y + newY
       camera.setState({ x: newCameraX, y: newCameraY })
+    }
+  })
+}
+
+export function prepareNodesColorDecay(
+  graph: types.Graph,
+  nodes: types.Node[][],
+  node: string,
+  layerSizes: number[]
+): void {
+  const nodeLayer = findNodeLayer(Number(node), layerSizes)
+  graph.setNodeAttribute(node, 'zIndex', 2)
+  nodes[nodeLayer].forEach((n) => {
+    if (n.id !== node) {
+      const weight = graph.getNodeAttribute(n.id, 'weight') as number
+      const color = `rgb(80, ${Math.round(20 + 55 * weight)}, 20)`
+      graph.setNodeAttribute(n.id, 'color', color)
     }
   })
 }
@@ -80,16 +137,7 @@ export function createClickNodeListener(
       buildEdges(graph, nodes, data.gradients ?? null, node, data.layerSizes)
 
       const nodeData = graph.getNodeAttributes(node)
-      const nodeLayer = findNodeLayer(Number(node), data.layerSizes)
-      graph.setNodeAttribute(node, 'zIndex', 2)
-      nodes[nodeLayer].forEach((n) => {
-        if (n.id !== node) {
-          const weight = graph.getNodeAttribute(n.id, 'weight') as number
-          const color = `rgb(80, ${Math.round(20 + 55 * weight)}, 20)`
-          graph.setNodeAttribute(n.id, 'color', color)
-        }
-      })
-
+      prepareNodesColorDecay(graph, nodes, node, data.layerSizes)
       onNodeSelect({ ...nodeData })
     } else {
       selectedNodeRef.current = null
