@@ -68,8 +68,8 @@ class YourModel(NeuralNetInterface):
             <p className="leading-relaxed text-gray-300">
               The next step is to register the training tracker on your model. Apply the&nbsp;
               <strong>@register_trainer</strong> decorator to your training class and add&nbsp;
-              <strong>@staticmethod</strong> decorator to the training method. Make sure your model
-              class inherits from <code>TrainerInterface</code>.
+              <strong>@staticmethod</strong> decorator to the training method. Make sure your
+              training class inherits from <code>TrainerInterface</code>.
             </p>
 
             <p className="text-gray-300">
