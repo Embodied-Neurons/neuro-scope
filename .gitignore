@@ -24,6 +24,9 @@ media/
 *.jpeg
 *.webp
 
+# Images for manual
+!**/manual_images/*.png
+
 # JSON rules
 *.json
 !**/package.json

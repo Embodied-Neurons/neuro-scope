@@ -29,8 +29,8 @@ export default function DemoPage(): JSX.Element {
           <div>
             <h3 className="mb-2 text-xl font-semibold">Simple MNIST Model</h3>
             <p className="text-sm text-gray-300">
-              A lightweight neural network trained on handwritten digits (MNIST). Consists of 2
-              Linear layers and was train for 10 epochs.
+              A baseline neural network trained on handwritten digits (MNIST database). Consists of
+              1 hidden layer and was trained for 10 epochs.
             </p>
           </div>
 
@@ -48,8 +48,8 @@ export default function DemoPage(): JSX.Element {
           <div>
             <h3 className="mb-2 text-xl font-semibold">Iris Model</h3>
             <p className="text-sm text-gray-300">
-              A lightweight neural network trained on iris flower species. Consists of 3 Linear
-              layers and was train for 10 epochs.
+              A lightweight neural network trained on iris flower species. Consists of 2 hidden
+              layers containing a few neurons and was trained for 10 epochs.
             </p>
           </div>
 
@@ -65,10 +65,10 @@ export default function DemoPage(): JSX.Element {
 
         <div className="bg-primary flex flex-col justify-between rounded-xl border border-white/20 p-6">
           <div>
-            <h3 className="mb-2 text-xl font-semibold">Fashion MNIST Model</h3>
+            <h3 className="mb-2 text-xl font-semibold">Fashion-MNIST Model</h3>
             <p className="text-sm text-gray-300">
-              A demo model trained to recognize common clothing types. Consists of 3 Linear layers
-              and was train for 10 epochs.
+              A more complex model trained to recognize common clothing types. Consists of 2 hidden
+              layers containing a few hundred neurons and was trained for 10 epochs.
             </p>
           </div>
 
